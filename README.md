@@ -1,1 +1,2 @@
-# applications.security.amber.trustauthority-client-for-java
+# amber.client.java.test
+Java test client for Amber
