@@ -135,25 +135,10 @@
       <artifactId>maven-shade-plugin</artifactId>
       <version>3.2.4</version>
     </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>5.9.0</version> <!-- Use the latest version available -->
+    </dependency>
   </dependencies>
-    <!-- <executions>
-      <execution>
-          <id>copy-native-libs</id>
-          <goals>
-              <goal>copy-resources</goal>
-          </goals>
-          <phase>compile</phase>
-          <configuration>
-              <outputDirectory>${project.build.directory}/natives</outputDirectory>
-              <resources>
-                  <resource>
-                      <directory>src/main/native</directory>
-                      <includes>
-                          <include>*.so</include>
-                      </includes>
-                  </resource>
-              </resources>
-          </configuration>
-      </execution>
-    </executions> -->
 </project>

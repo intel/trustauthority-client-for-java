@@ -287,22 +287,8 @@ class GetTokenArgs {
     }
 }
 
-// TODO: Revert this to interface and implementation will be
-// part of sgx/tdx
-class EvidenceAdapter {
-
-    public EvidenceAdapter() {
-    }
-
-    // TODO: This will be replaced by sgx/tdx implementation
-    Evidence collectEvidence(byte[] nonce) {
-
-        // TODO: This is just to mimic collectEvidence() of sgx/tdx
-        byte[] evidence_sample_bytes = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
-        Evidence evidence = new Evidence(1, evidence_sample_bytes, evidence_sample_bytes, evidence_sample_bytes);
-        
-        return evidence;
-    }
+interface EvidenceAdapter {
+    Evidence collectEvidence(byte[] nonce) throws Exception;
 }
 
 class AttestArgs {
@@ -724,14 +710,8 @@ public class TrustAuthorityConnector {
         byte[] combinedNonce = new byte[nonceValue.length + iat.length];
         System.arraycopy(nonceValue, 0, combinedNonce, 0, nonceValue.length);
         System.arraycopy(iat, 0, combinedNonce, nonceValue.length, iat.length);
-        
-        // TODO: Replace this with sgx/tdx evidence
-        // Evidence evidence = args.getAdapter().collectEvidence(combinedNonce);
 
-        // For testing only
-        EvidenceAdapter evidenceAdapter = new EvidenceAdapter();
-        Evidence evidence = evidenceAdapter.collectEvidence(combinedNonce);
-        // For testing only
+        Evidence evidence = args.getAdapter().collectEvidence(combinedNonce);
         
         if (evidence.getError() != null) {
             throw new Exception("Failed to collect evidence from adapter: " + evidence.getError());
