@@ -882,7 +882,7 @@ public class TrustAuthorityConnector {
         }
     }
 
-    public void verifyCRL(X509CRL crl, X509Certificate leafCert, X509Certificate caCert) throws Exception {
+    public boolean verifyCRL(X509CRL crl, X509Certificate leafCert, X509Certificate caCert) throws Exception {
         if (leafCert == null || caCert == null || crl == null) {
             throw new Exception("Leaf Cert or CA Cert or CRL is null");
         }
@@ -901,6 +901,7 @@ public class TrustAuthorityConnector {
                 throw new Exception("Certificate was Revoked");
             }
         }
+        return true;
     }
 
     public List<X509Certificate> getX509CertChainFromJWK(JWK jwk) throws CertificateException {

@@ -13,7 +13,7 @@ If you are running behind a proxy, follow https://www.baeldung.com/maven-behind-
 
 ## Install
 
-Install the latest version of the module with the following command:
+Install the latest version of the module with the following command from the `TrustAuthority` directory:
 
 ```sh
 mvn -X -e clean compile install package
