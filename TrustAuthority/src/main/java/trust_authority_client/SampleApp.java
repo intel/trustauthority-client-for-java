@@ -24,8 +24,25 @@ public class SampleApp {
     public static void main(String[] args) throws Exception {
         System.out.println("Starting Sample App...");
 
-        // Initialize config required for connector
-        Config cfg = new Config("http://localhost:8080", "http://localhost:8080", "");
+        // Setting default arguments in case BaseURL, apiURL and apiKey are not provided
+        String BaseURL = "http://localhost:8080";
+        String apiURL = "http://localhost:8080";
+        String apiKey = "";
+
+        System.out.println("Number of arguments: " + args.length);
+
+        if (args.length != 3) {
+            System.out.println("Incorrect arguments provided, using default arguments...");
+        } else {
+            BaseURL = args[0];
+            apiURL = args[1];
+            apiKey = args[2];
+        }
+
+        System.out.println("BaseURL: " + BaseURL + ", apiURL: " + apiURL + ", apiKey: " + apiKey);
+
+        // Initialize config required for connector using BaseURL, apiURL and apiKey
+        Config cfg = new Config(BaseURL, apiURL, apiKey);
 
         // Initializing connector with the config
         TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg, "", "", "");

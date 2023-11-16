@@ -14,7 +14,7 @@ The Client provides following modules which can be imported by an application to
 
 ## Java Requirement
 
-Use <b>openjdk version "19.0.2" or newer</b>. Follow https://www.java.com/en/download/manual.jsp for installation of Java.
+Use <b>openjdk version "17.0.8.1" or newer</b>. Follow https://www.java.com/en/download/manual.jsp for installation of Java.
 
 ## Maven Requirement
 
