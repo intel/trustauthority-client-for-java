@@ -29,28 +29,49 @@ mvn -X -e test
 
 See the example test in `test/java/trust_authority_client/ConnectorTest.java` for an example of a test.
 
-## Usage
+## Usage for running SgxSampleApp and TdxSampleApp
 
-Refer the [SampleApp](./src/main/java/trust_authority_client/SampleApp.java), an application testing all the APIs of the Java connector.
+The [SgxSampleApp](./src/main/java/trust_authority_client/SgxSampleApp.java) and [TdxSampleApp](./src/main/java/trust_authority_client/TdxSampleApp.java) are sample applications to fetch and verify an SGX/TDX quote from an SGX/TDX enabled platform respectively.
 
-The [SampleApp](./src/main/java/trust_authority_client/SampleApp.java) demonstrates how to use the Trust Authority Java Client from an external third party application perspective.
-
-The [SampleAppServer](./src/main/java/trust_authority_client/SampleAppServer.java) mimics the functionalities of Amber Server serving the required tokens, certs etc with its
-respective REST API calls.
-
-Run the `SampleAppServer` with the following command in a new terminal:
+Compile the latest version of `SgxSampleApp` and `TdxSampleApp` with the following command from the `TrustAuthority` directory:
 
 ```sh
-java -cp target/trust-authority-client-java-1.0.0.jar trust_authority_client.SampleAppServer
+mvn -X -e clean compile install package
 ```
 
-Run the `SampleApp` with the following command:
+Run the `SgxSampleApp`:
+
+Since the `SgxSampleApp` requires an enclave to be initialized, run this step to generate a signed enclave:
 
 ```sh
-java -cp ~/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:~/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:~/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:target/trust-authority-client-java-1.0.0.jar:~/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:~/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:~/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:~/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.4/nimbus-jose-jwt-9.4.jar trust_authority_client.SampleApp
+cd src/main/java/trust_authority_client/sgx-example-enclave/enclave/ && \
+make && \
+cd -
 ```
 
-## Usage for running SampleApp as a docker container
+Once the above step is complete and the `enclave.signed.so` file is generated, run the below command to run the `SgxSampleApp` to fetch the SGX quote:
+
+```sh
+java -Dhttps.proxyHost=proxy-fm.intel.com -Dhttps.proxyPort=911 -cp ~/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:~/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:~/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:~/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:target/trust-authority-client-java-1.0.0.jar:~/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:~/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:~/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:~/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar trust_authority_client.SgxSampleApp
+```
+
+## Note
+
+The proxy setting values for `https.proxyHost` and `https.proxyPort` have to be set by the user based on the system proxy settings.
+The example above uses one such proxy settings and this can vary from system to system, has to be set accordingly.
+
+Run the `TdxSampleApp` with the following command:
+
+```sh
+java -Dhttps.proxyHost=proxy-fm.intel.com -Dhttps.proxyPort=911 -cp ~/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:~/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:~/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:~/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:target/trust-authority-client-java-1.0.0.jar:~/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:~/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:~/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:~/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar trust_authority_client.TdxSampleApp
+```
+
+## Note
+
+The proxy setting values for `https.proxyHost` and `https.proxyPort` have to be set by the user based on the system proxy settings.
+The example above uses one such proxy settings and this can vary from system to system, has to be set accordingly.
+
+## Usage for running SampleApps as a docker container
 
 The [SampleApp](./src/main/java/trust_authority_client/SampleApp.java) and [SampleAppServer](./src/main/java/trust_authority_client/SampleAppServer.java) are encapsulated in containers, enabling them to be executed in containerized environments.
 
@@ -73,7 +94,7 @@ Run the `SampleApp` as a docker container with the following command:
 docker-compose up
 ```
 
-The arguments for the `SampleApp` being `BASE_URL`, `API_URL` and `API_KEY` can be changed at runtime if required by modifying the respective key-value pairs at [.env](.env).
+The arguments for the `SampleApp` being `TRUSTAUTHORITY_BASE_URL`, `TRUSTAUTHORITY_API_URL` and `TRUSTAUTHORITY_API_KEY` can be changed at runtime if required by modifying the respective key-value pairs at [.env](.env).
 
 User can just re-run the container without having to build again if changing any parameters at runtime in [.env](.env) with the following command:
 ```sh

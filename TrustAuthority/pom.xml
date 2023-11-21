@@ -22,14 +22,6 @@
               <target>1.8</target>
           </configuration>
       </plugin>
-      <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>exec-maven-plugin</artifactId>
-          <version>3.0.0</version>
-          <configuration>
-              <mainClass>MyJavaClass</mainClass>
-          </configuration>
-      </plugin>
     </plugins>
   </build>
  
@@ -103,7 +95,7 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
-      <version>9.4</version>
+      <version>9.10</version>
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>

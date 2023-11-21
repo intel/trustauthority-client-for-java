@@ -1,0 +1,15 @@
+# .gitignore file
+
+# Ignore build artifacts
+TrustAuthority/target/
+
+# Ignore enclave generated files
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave.o
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_t.c
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_t.h
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_t.o
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_u.c
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_u.h
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/enclave.signed.so
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/libutils.so
+TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/utils.o

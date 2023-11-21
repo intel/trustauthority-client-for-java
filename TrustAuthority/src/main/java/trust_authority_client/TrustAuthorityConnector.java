@@ -1,133 +1,101 @@
 package trust_authority_client;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.UUID;
+// Java Standard Library Imports
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.security.cert.X509Certificate;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.AccessController;
+import java.security.Security;
+import java.security.SecurityPermission;
+import java.security.PrivilegedAction;
+import java.security.Provider;
 import java.security.cert.CertificateException;
-import java.security.cert.TrustAnchor;
-import java.security.cert.PKIXParameters;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathBuilder;
+import java.security.cert.CertPathBuilderException;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
-import java.security.cert.PKIXRevocationChecker;
-import java.security.cert.X509CRL;
+import java.security.cert.CertPathValidatorResult;
 import java.security.cert.CRLSelector;
 import java.security.cert.CertStore;
 import java.security.cert.CertStoreException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.CertPath;
-import java.security.cert.CertPathBuilder;
-import java.security.cert.CertPathBuilderException;
 import java.security.cert.PKIXBuilderParameters;
-import java.security.cert.X509CertSelector;
-import java.security.Security;
-import java.security.Provider;
-import java.security.SecurityPermission;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.Arrays;
-import java.util.Set;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509TrustManager;
-import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.X509ExtendedTrustManager;
-
-import java.net.HttpURLConnection;
-import java.io.IOException;
-import java.net.URL;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Collections;
-import java.util.stream.Collectors;
-
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.cert.X509CRL;
-import java.security.cert.X509CertSelector;
-import java.security.cert.X509Certificate;
-import java.security.cert.X509CRLEntry;
-import java.security.cert.X509Extension;
-import java.security.cert.CertificateException;
-import java.security.Key;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.cert.CertPath;
-import java.security.cert.CertPathValidator;
-import java.security.cert.CertPathValidatorResult;
 import java.security.cert.PKIXParameters;
+import java.security.cert.PKIXRevocationChecker;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
-import java.security.cert.X509CRLSelector;
 import java.security.cert.X509Certificate;
-import java.security.cert.X509Extension;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.util.Base64;
-
-import com.google.common.io.ByteStreams;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonElement;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtParserBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.SigningKeyResolverAdapter;
-import io.jsonwebtoken.security.SignatureException;
-import io.jsonwebtoken.security.WeakKeyException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
-import java.security.cert.X509Certificate;
-import java.util.*;
+import java.security.cert.X509CRLEntry;
+import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.nio.charset.StandardCharsets;
-import org.apache.commons.io.IOUtils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+// Java Security Imports
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509ExtendedTrustManager;
+import javax.net.ssl.X509KeyManager;
 
+// Third-party Library Imports
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.JwtParserBuilder;
+import io.jsonwebtoken.SigningKeyResolverAdapter;
+import io.jsonwebtoken.security.SignatureException;
+import io.jsonwebtoken.security.WeakKeyException;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.*;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.jwk.*;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.util.Base64;
+import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.JWTClaimsSet;
 
-import java.security.cert.CertificateException;
 
+/**
+ * Constants class for holding all Constants required by the TrustAuthorityConnector
+ */
 class Constants {
     public static final String HEADER_X_API_KEY = "x-api-key";
     public static final String HEADER_ACCEPT = "Accept";
@@ -142,127 +110,214 @@ class Constants {
     public static final int DEFAULT_RETRY_WAIT_MAX_SECONDS = 10;
     public static final String SERVICE_UNAVAILABLE_ERROR = "service unavailable";
 
-    public static final String headerXApiKey = "X-Api-Key";
-    public static final String headerAccept = "Accept";
-    public static final String headerContentType = "Content-Type";
-    public static final String HeaderRequestId = "RequestId";
-    public static final String mimeApplicationJson = "application/json";
-
     public static final int AtsCertChainMaxLen = 5; // Set the maximum length of the certificate chain
 }
 
+/**
+ * GetNonceResponse class for holding the response obtained from GetNonce() API
+ */
 class GetNonceResponse {
+
     private VerifierNonce nonce;
     private Map<String, List<String>> headers;
     private String error;
 
+    /**
+     * Intializes the GetNonceResponse object.
+     */
     public GetNonceResponse() {
         headers = new HashMap<>();
     }
 
+    /**
+     * getter function for nonce
+     */
     public VerifierNonce getNonce() {
         return nonce;
     }
 
+    /**
+     * setter function for nonce
+     */
     public void setNonce(VerifierNonce nonce) {
         this.nonce = nonce;
     }
 
+    /**
+     * getter function for headers
+     */
     public Map<String, List<String>> getHeaders() {
         return headers;
     }
 
+    /**
+     * setter function for headers
+     */
     public void setHeaders(Map<String, List<String>> headers) {
         this.headers = headers;
     }
 
+    /**
+     * getter function for error
+     */
     public String getError() {
         return this.error;
     }
 
+    /**
+     * setter function for error
+     */
     public void setError(String error) {
         this.error = error;
     }
 }
 
+/**
+ * GetTokenResponse class for holding the response obtained from GetToken() API
+ */
 class GetTokenResponse {
+
     private String token;
     private Map<String, List<String>> headers;
     private String error;
 
+    /**
+     * Constructs a new GetTokenResponse object with the specified token and headers.
+     *
+     * @param token             token provided by the user.
+     * @param headers           headers provided by user.
+     */
     public GetTokenResponse(String token, Map<String, List<String>> headers) {
         this.token = token;
         this.headers = headers;
     }
 
+    /**
+     * getter function for token
+     */
     public String getToken() {
         return token;
     }
 
+    /**
+     * getter function for headers
+     */
     public Map<String, List<String>> getHeaders() {
         return headers;
     }
 
-    public void getToken(String token) {
+    /**
+     * setter function for token
+     */
+    public void setToken(String token) {
         this.token = token;
     }
 
+    /**
+     * setter function for headers
+     */
     public void setHeaders(Map<String, List<String>> headers) {
         this.headers = headers;
     }
 
+    /**
+     * getter function for error
+     */
     public String getError() {
         return this.error;
     }
 }
 
+/**
+ * AttestResponse class for holding the response obtained from attest() API
+ */
 class AttestResponse {
+
     private String token;
     private Map<String, List<String>> headers;
 
-    public AttestResponse() {
-    }
-
+    /**
+     * Constructs a new AttestResponse object with the specified token and headers.
+     *
+     * @param token         token provided by the user.
+     * @param headers       headers provided by user.
+     */
     public AttestResponse(String token, Map<String, List<String>> headers) {
         this.token = token;
         this.headers = headers;
     }
 
+    /**
+     * getter function for token
+     */
     public String getToken() {
         return token;
     }
 
+    /**
+     * getter function for headers
+     */
     public Map<String, List<String>> getHeaders() {
         return headers;
     }
 
+    /**
+     * setter function for headers
+     */
     public void setHeaders(Map<String, List<String>> headers) {
         this.headers = headers;
     }
 
+    /**
+     * setter function for token
+     */
     public void setToken(String token) {
         this.token = token;
     }
 }
 
+/**
+ * GetNonceArgs class for holding the request object to be sent to GetNonce() API
+ */
 class GetNonceArgs {
+
     private String requestId;
 
+    /**
+     * Constructs a new GetNonceArgs object with the specified requestId.
+     *
+     * @param requestId       requestId provided by user.
+     */
     public GetNonceArgs(String requestId) {
         this.requestId = requestId;
     }
 
+    /**
+     * getter function for requestId
+     */
     public String getRequestId() {
         return requestId;
     }
 }
 
+/**
+ * GetTokenArgs class for holding the request object to be sent to GetToken() API
+ */
 class GetTokenArgs {
+
     private VerifierNonce nonce;
     private Evidence evidence;
     private List<UUID> policyIds;
     private String requestId;
 
+    /**
+     * Constructs a new GetTokenArgs object with the specified nonce, evidence, policyIds and requestId.
+     *
+     * @param nonce          VerifierNonce provided by the user.
+     * @param evidence       Evidence object provided by user.
+     * @param policyIds      policyIds provided by the user.
+     * @param requestId      requestId provided by user.
+     */
     public GetTokenArgs(VerifierNonce nonce, Evidence evidence, List<UUID> policyIds, String requestId) {
         this.nonce = nonce;
         this.evidence = evidence;
@@ -270,73 +325,133 @@ class GetTokenArgs {
         this.requestId = requestId;
     }
 
+    /**
+     * getter function for nonce
+     */
     public VerifierNonce getNonce() {
         return nonce;
     }
 
+    /**
+     * getter function for evidence
+     */
     public Evidence getEvidence() {
         return evidence;
     }
 
+    /**
+     * getter function for policyIds
+     */
     public List<UUID> getPolicyIds() {
         return policyIds;
     }
 
+    /**
+     * getter function for requestId
+     */
     public String getRequestId() {
         return requestId;
     }
 }
 
+/**
+ * EvidenceAdapter interface for user to implement SGX/TDX based adapters
+ * The collectEvidence function is to be implemented by the user.
+ */
 interface EvidenceAdapter {
+    /**
+     * collectEvidence is used to get SGX/TDX quote using DCAP Quote Generation service
+     *
+     * @param nonce nonce value passed by user
+     * @return Evidence object containing the fetched SGX/TDX quote
+     */
     Evidence collectEvidence(byte[] nonce) throws Exception;
 }
 
+/**
+ * AttestArgs class for holding the request object to be sent to attest() API
+ */
 class AttestArgs {
+
     private EvidenceAdapter adapter;
     private List<UUID> policyIds;
     private String requestId;
 
-    public AttestArgs() {
-    }
-
+    /**
+     * Constructs a new AttestArgs object with the specified adapter, policyIds and requestId.
+     *
+     * @param adapter         adapter provided by the user.
+     * @param policyIds       policyIds provided by user.
+     * @param requestId       requestId provided by user.
+     */
     public AttestArgs(EvidenceAdapter adapter, List<UUID> policyIds, String requestId) {
         this.adapter = adapter;
         this.policyIds = policyIds;
         this.requestId = requestId;
     }
 
+    /**
+     * getter function for adapter
+     */
     public EvidenceAdapter getAdapter() {
         return adapter;
     }
 
+    /**
+     * getter function for policyIds
+     */
     public List<UUID> getPolicyIds() {
         return policyIds;
     }
 
+    /**
+     * getter function for requestId
+     */
     public String getRequestId() {
         return requestId;
     }
 
+    /**
+     * setter function for adapter
+     */
     public void setAdapter(EvidenceAdapter adapter) {
         this.adapter = adapter;
     }
 
+    /**
+     * setter function for policyIds
+     */
     public void setPolicyIds(List<UUID> policyIds) {
         this.policyIds = policyIds;
     }
 
+    /**
+     * setter function for requestId
+     */
     public void setRequestId(String requestId) {
         this.requestId = requestId;
     }
 }
 
+/**
+ * Evidence class for holding the SGX/TDX Quote fetched from SGX/TDX enabled platform
+ */
 class Evidence {
+
     private long type;
     private byte[] evidence;
     private byte[] userData;
     private byte[] eventLog;
     private String error;
 
+    /**
+     * Constructs a new Evidence object with the specified type, evidence, userData and eventLog.
+     *
+     * @param type           type provided by the user.
+     * @param evidence       evidence provided by user.
+     * @param userData       userData by the user.
+     * @param eventLog       eventLog provided by user.
+     */
     public Evidence(long type, byte[] evidence, byte[] userData, byte[] eventLog) {
         this.type = type;
         this.evidence = evidence;
@@ -344,59 +459,66 @@ class Evidence {
         this.eventLog = eventLog;
     }
 
+    /**
+     * getter function for type
+     */
     public long getType() {
         return type;
     }
 
+    /**
+     * getter function for evidence
+     */
     public byte[] getEvidence() {
         return evidence;
     }
 
+    /**
+     * getter function for userData
+     */
     public byte[] getUserData() {
         return userData;
     }
 
+    /**
+     * getter function for eventLog
+     */
     public byte[] getEventLog() {
         return eventLog;
     }
 
+    /**
+     * getter function for error
+     */
     public String getError() {
         return this.error;
     }
 
+    /**
+     * setter function for error
+     */
     public void setError(String error) {
         this.error = error;
     }
 }
 
-class RetryConfig {
-    private Long retryWaitMin;
-    private Long retryWaitMax;
-    private Integer retryMax;
-
-    public RetryConfig() {
-    }
-
-    public Long getRetryWaitMin() {
-        return retryWaitMin;
-    }
-
-    public Long getRetryWaitMax() {
-        return retryWaitMax;
-    }
-
-    public Integer getRetryMax() {
-        return retryMax;
-    }
-}
-
+/**
+ * Config class for holding config provided by user for TrustAuthorityConnector
+ */
 class Config {
+
     private String baseUrl;
     private String apiUrl;
     private String apiKey;
     private URL url;
-    private RetryConfig retryConfig;
 
+    /**
+     * Constructs a new Config object with the specified baseUrl, apiUrl and apiKey.
+     *
+     * @param baseUrl      baseUrl provided by the user.
+     * @param apiUrl       apiUrl provided by user.
+     * @param apiKey       apiKey provided by user.
+     */
     public Config(String baseUrl, String apiUrl, String apiKey) throws Exception {
         this.baseUrl = baseUrl;
         this.apiUrl = apiUrl;
@@ -404,118 +526,141 @@ class Config {
         this.url = new URL(baseUrl);
     }
 
+    /**
+     * getter function for baseUrl
+     */
     public String getBaseUrl() {
         return baseUrl;
     }
 
+    /**
+     * getter function for apiUrl
+     */
     public String getApiUrl() {
         return apiUrl;
     }
 
+    /**
+     * getter function for apiKey
+     */
     public String getApiKey() {
         return apiKey;
     }
 
+    /**
+     * getter function for url
+     */
     public URL getUrl() {
         return url;
     }
 
-    public RetryConfig getRetryConfig() {
-        return retryConfig;
-    }
-
+    /**
+     * setter function for baseUrl
+     */
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
+    /**
+     * setter function for apiUrl
+     */
     public void setApiUrl(String apiUrl) {
         this.apiUrl = apiUrl;
     }
 
+    /**
+     * setter function for apiKey
+     */
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
     }
 
+    /**
+     * setter function for url
+     */
     public void setUrl(URL url) {
         this.url = url;
     }
 }
 
-class RetryableStatusCode {
-    private static Set<Integer> retryableStatusCodes;
-
-    static {
-        retryableStatusCodes = new HashSet<>();
-        retryableStatusCodes.add(500);
-        retryableStatusCodes.add(503);
-        retryableStatusCodes.add(504);
-    }
-
-    public static boolean isRetryable(int statusCode) {
-        return retryableStatusCodes.contains(statusCode);
-    }
-}
-
-class DefaultRetryPolicy {
-    public static boolean shouldRetry(HttpURLConnection connection, IOException err) {
-        if (Thread.interrupted()) {
-            return false;
-        }
-
-        if (err instanceof java.net.SocketTimeoutException) {
-            // If connection was closed due to client timeout, retry again
-            return true;
-        }
-
-        if (err instanceof java.net.UnknownHostException) {
-            // If the request did not reach the API gateway and the error is Service Unavailable
-            return true;
-        }
-
-        return false;
-    }
-}
-
+/**
+ * VerifierNonce class for holding config provided by user for TrustAuthorityConnector
+ */
 class VerifierNonce {
+
     private byte[] val;
     private byte[] iat;
     private byte[] signature;
 
+    /**
+     * Default constructor (required for Jackson Object Mapping)
+     */
     public VerifierNonce() {
     }
 
+    /**
+     * Constructs a new VerifierNonce object with the specified val, iat and signature.
+     *
+     * @param val           val provided by the user.
+     * @param iat           iat provided by user.
+     * @param signature     signature provided by user.
+     */
     public VerifierNonce(byte[] val, byte[] iat, byte[] signature) {
         this.val = val;
         this.iat = iat;
         this.signature = signature;
     }
 
+    /**
+     * getter function for val
+     */
     public byte[] getVal() {
         return val;
     }
 
+    /**
+     * setter function for val
+     */
     public void setVal(byte[] val) {
         this.val = val;
     }
 
+    /**
+     * getter function for iat
+     */
     public byte[] getIat() {
         return iat;
     }
 
+    /**
+     * setter function for iat
+     */
     public void setIat(byte[] iat) {
         this.iat = iat;
     }
 
+    /**
+     * getter function for signature
+     */
     public byte[] getSignature() {
         return signature;
     }
 
+    /**
+     * setter function for signature
+     */
     public void setSignature(byte[] signature) {
         this.signature = signature;
     }
 }
 
+/**
+ * TokenRequest class for holding Token details to be sent to attest() API
+ */
 class TokenRequest {
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("quote")
     private byte[] quote;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -534,9 +679,15 @@ class TokenRequest {
     @JsonProperty("event_log")
     private byte[] eventLog;
 
-    public TokenRequest() {
-    }
-
+    /**
+     * Constructs a new TokenRequest object with the specified quote, verifierNonce, runtimeData, policyIds and eventLog.
+     *
+     * @param quote          quote provided by the user.
+     * @param verifierNonce  verifierNonce object provided by user.
+     * @param runtimeData    runtimeData provided by user.
+     * @param policyIds      policyIds provided by user.
+     * @param eventLog       eventLog provided by user.
+     */
     public TokenRequest(byte[] quote, VerifierNonce verifierNonce, byte[] runtimeData, List<UUID> policyIds, byte[] eventLog) {
         this.quote = quote;
         this.verifierNonce = verifierNonce;
@@ -545,219 +696,376 @@ class TokenRequest {
         this.eventLog = eventLog;
     }
 
+    /**
+     * getter function for quote
+     */
     public byte[] getQuote() {
         return quote;
     }
 
+    /**
+     * setter function for quote
+     */
     public void setQuote(byte[] quote) {
         this.quote = quote;
     }
 
+    /**
+     * getter function for verifierNonce
+     */
     public VerifierNonce getVerifierNonce() {
         return verifierNonce;
     }
 
+    /**
+     * setter function for verifierNonce
+     */
     public void setVerifierNonce(VerifierNonce verifierNonce) {
         this.verifierNonce = verifierNonce;
     }
 
+    /**
+     * getter function for runtimeData
+     */
     public byte[] getRuntimeData() {
         return runtimeData;
     }
 
+    /**
+     * setter function for runtimeData
+     */
     public void setRuntimeData(byte[] runtimeData) {
         this.runtimeData = runtimeData;
     }
 
+    /**
+     * getter function for policyIds
+     */
     public List<UUID> getPolicyIds() {
         return policyIds;
     }
 
+    /**
+     * setter function for policyIds
+     */
     public void setPolicyIds(List<UUID> policyIds) {
         this.policyIds = policyIds;
     }
 
+    /**
+     * getter function for eventLog
+     */
     public byte[] getEventLog() {
         return eventLog;
     }
 
+    /**
+     * setter function for eventLog
+     */
     public void setEventLog(byte[] eventLog) {
         this.eventLog = eventLog;
     }
 }
 
-interface ResponseProcessor {
-    void process(HttpURLConnection connection) throws Exception;
-}
-
+/**
+ * ConnectorException class for throwing exceptions
+ * This class implements the base Exception interface.
+ */
 class ConnectorException extends Exception {
     public ConnectorException(String message) {
         super(message);
     }
 }
 
+/**
+ * TdxAdapter class for TDX Quote collection from TDX enabled platform
+ * This class implements the base EvidenceAdapter interface.
+ */
 public class TrustAuthorityConnector {
 
-    // private static final Logger logger = LogManager.getLogger(TrustAuthorityConnector.class);
-
     private Config cfg;
-    private String tokenSigningCertificates; // Replace with your actual token signing certificates
-    private String caCertificates; // Replace with your actual CA certificates
-    private String atsCACertificates; // Replace with your actual ATS CA certificates
 
-    public TrustAuthorityConnector() {
-    }
-
-    public TrustAuthorityConnector(Config cfg, String tokenSigningCertificates, String caCertificates, String atsCACertificates) {
+    /**
+     * Constructs a new TrustAuthorityConnector object with the specified config.
+     *
+     * @param cfg                       Config object provided by the user.
+     */
+    public TrustAuthorityConnector(Config cfg) {
         this.cfg = cfg;
-        this.tokenSigningCertificates = tokenSigningCertificates;
-        this.caCertificates = caCertificates;
-        this.atsCACertificates = atsCACertificates;
     }
 
+    /**
+     * getter function for config
+     */
     public Config getConfig() {
         return cfg;
     }
 
-    public void setEventLog(Config cfg) {
+    /**
+     * setter function for config
+     */
+    public void setConfig(Config cfg) {
         this.cfg = cfg;
     }
 
-    public String gettokenSigningCertificates() {
-        return tokenSigningCertificates;
-    }
-
-    public void setTokenSigningCertificates(String tokenSigningCertificates) {
-        this.tokenSigningCertificates = tokenSigningCertificates;
-    }
-
-    public String getCaCertificates() {
-        return caCertificates;
-    }
-
-    public void setCaCertificates(String caCertificates) {
-        this.caCertificates = caCertificates;
-    }
-
-    public String getAtsCACertificates() {
-        return atsCACertificates;
-    }
-
-    public void setAtsCACertificates(String atsCACertificates) {
-        this.atsCACertificates = atsCACertificates;
-    }
-
+    /**
+     * Constructs a new GetNonceResponse object with the specified GetNonceArgs
+     * Fetches the nonce from the TrustAuthority server using the specified API URL
+     *
+     * @param args  GetNonceArgs object provided by the user.
+     * @return      GetNonceResponse object
+     */
     public GetNonceResponse GetNonce(GetNonceArgs args) throws Exception {
+        // Request for nonce from TrustAuthority server
         String url = String.format("%s/appraisal/v1/nonce", cfg.getApiUrl());
 
+        // Create the HttpURLConnection
         HttpURLConnection connection = createConnection(url, "GET");
+        // Set the requried Header parameters
         connection.setRequestProperty(Constants.HEADER_X_API_KEY, cfg.getApiKey());
         connection.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
         connection.setRequestProperty(Constants.HEADER_REQUEST_ID, args.getRequestId());
 
+        // Process the fetched response into the GetNonceResponse object
         GetNonceResponse response = new GetNonceResponse();
         processResponse(connection, response);
 
         return response;
     }
 
+    /**
+     * Constructs a new GetTokenResponse object with the specified GetTokenArgs
+     * Fetches the token from the TrustAuthority server using the specified API URL
+     *
+     * @param args  GetTokenArgs object provided by the user.
+     * @return      GetTokenResponse object
+     */
     public GetTokenResponse GetToken(GetTokenArgs args) throws IOException {
+        // Request for nonce from TrustAuthority server
         String url = String.format("%s/appraisal/v1/attest", cfg.getApiUrl());
 
+        // Create the TokenRequest object
         TokenRequest tr = new TokenRequest(args.getEvidence().getEvidence(), args.getNonce(),
                                            args.getEvidence().getUserData(), args.getPolicyIds(),
                                            args.getEvidence().getEventLog());
 
-        // TODO: Uncomment this line once sgx/tdx are in place
-        // String body = new Gson().toJson(tr);
-        // HttpURLConnection conn = createConnection(url, "POST", body, args.getRequestId());
+        // Convert the TokenRequest to a JSON -> String
+        // to send as request to server
+        String jsonString = "";
+        try {
+            // Serialize the TokenRequest object to a JSON string
+            ObjectMapper objectMapper = new ObjectMapper();
+            jsonString = objectMapper.writeValueAsString(tr);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        HttpURLConnection conn = createConnection(url, "POST", "{\"a\":\"b\"}", args.getRequestId());
+        // Create an HTTP Connection and send the request body as a POST request
+        HttpURLConnection conn = createConnection(url, "POST", jsonString, args.getRequestId());
 
+        // Fetch the response from the server and process it
         try {
             int responseCode = conn.getResponseCode();
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 throw new IOException("HTTP error code: " + responseCode);
-            } else {
-                
             }
+            // read the response if connection OK
             String responseBody = readResponseBody(conn);
 
+            // Convert received response string to JSON
             Gson gson = new Gson();
-
             JsonObject jsonObject = gson.fromJson(responseBody, JsonObject.class);
+
+            // Fetch the String value associated with the key "token"
             String token = jsonObject.get("token").getAsString();
 
+            // Convert the received token and header fields to a GetTokenResponse object
             return new GetTokenResponse(token, conn.getHeaderFields());
         } finally {
             conn.disconnect();
         }
     }
-    
-    // Attest is used to initiate remote attestation with Trust Authority
-    public AttestResponse attest(AttestArgs args) throws Exception {
-        AttestResponse response = new AttestResponse();
 
+    /**
+     * attest is used to initiate remote attestation with Trust Authority
+     *
+     * @param args  AttestArgs object provided by the user.
+     */
+    public AttestResponse attest(AttestArgs args) throws Exception {
+
+        // Creating an empty AttestResponse object
+        AttestResponse response = new AttestResponse(null, null);
+
+        // Calling the GetNonce() API
         GetNonceResponse nonceResponse = GetNonce(new GetNonceArgs(args.getRequestId()));
-        response.setHeaders(nonceResponse.getHeaders());
-        
         if (nonceResponse.getError() != null) {
             throw new Exception("Failed to collect nonce from Trust Authority: " + nonceResponse.getError());
         }
 
+        System.out.println("Collected nonce from Trust Authority successfully...");
+
+        // Set AttestResponse headers with nonceResponse headers
+        response.setHeaders(nonceResponse.getHeaders());
+
+        // Create a combinedNonce using nonceValue and iat from nonceResponse
         byte[] nonceValue = nonceResponse.getNonce().getVal();
         byte[] iat = nonceResponse.getNonce().getIat();
         byte[] combinedNonce = new byte[nonceValue.length + iat.length];
         System.arraycopy(nonceValue, 0, combinedNonce, 0, nonceValue.length);
         System.arraycopy(iat, 0, combinedNonce, nonceValue.length, iat.length);
 
+        // Fetch the SGX/TDX associated quote
         Evidence evidence = args.getAdapter().collectEvidence(combinedNonce);
-        
         if (evidence.getError() != null) {
             throw new Exception("Failed to collect evidence from adapter: " + evidence.getError());
         }
 
+        System.out.println("Collected evidence from adapter successfully...");
+
+        // Calling the GetToken() API
         GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId()));
-        response.setToken(tokenResponse.getToken());
-        response.setHeaders(tokenResponse.getHeaders());
-        
         if (tokenResponse.getError() != null) {
             throw new Exception("Failed to collect token from Trust Authority: " + tokenResponse.getError());
         }
 
+        System.out.println("Collected token from Trust Authority successfully...");
+
+        // Set AttestResponse headers with tokenResponse headers
+        response.setToken(tokenResponse.getToken());
+        response.setHeaders(tokenResponse.getHeaders());
+
         return response;
     }
 
-    // GetTokenSigningCertificates is used to get Trust Authority attestation token signing certificates
-    public byte[] getTokenSigningCertificates() throws Exception {
+    /**
+     * getTokenSigningCertificates is used to get Trust Authority attestation token signing certificates
+     *
+     * @return The received certs from trust Authority server in bytes format
+     */
+    public String getTokenSigningCertificates() throws Exception {
+        // Format the request endpoint using the URL
         String url = String.format("%s/certs", cfg.getBaseUrl());
 
-        URL endpointUrl = new URL(url);
-        HttpURLConnection connection = (HttpURLConnection) endpointUrl.openConnection();
+        // Create the URL object
+        URL urlObj = new URL(url);
+        // Initiate the connection
+        HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
+        
+        // Set request header properties
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Accept", "application/json");
 
-        ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
-        
-        try {
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = connection.getInputStream().read(buffer)) != -1) {
-                    responseStream.write(buffer, 0, bytesRead);
-                }
-            } else {
-                throw new Exception("Failed to read body from " + url);
-            }
-        } finally {
-            connection.disconnect();
+        // Check for connection status
+        int responseCode = connection.getResponseCode();
+        if (responseCode != 200) {
+            throw new Exception("Failed to fetch data from " + url + ". Response code: " + responseCode);
         }
 
-        return responseStream.toByteArray();
+        // Fetch the byte stream of jwks response
+        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        // Close the byte stream once the entire data is received
+        reader.close();
+        connection.disconnect();
+
+        // return the jwks in string format
+        return response.toString();
     }
 
+    // Required for token verification for PS algorithms
+    static {
+        // Register Bouncy Castle as a JCE provider
+        Security.addProvider(new BouncyCastleProvider());
+    }
+
+    /**
+     * verifyToken is used to do signature verification of attestation token recieved from Intel Trust Authority
+     *
+     * @param token     JWT token in string format
+     * 
+     * @return          Signed JWS claims object
+     */
+    public JWTClaimsSet verifyToken(String token) throws Exception {
+
+        try {
+            // Create the JWT object by parsing the token
+            SignedJWT signedJWT = SignedJWT.parse(token);
+
+            // Retrieve the JWS header
+            JWSHeader jwsHeader = signedJWT.getHeader();
+
+            // Fetch kid from parsed token
+            String kid = signedJWT.getHeader().getKeyID();
+            if (kid == null) {
+                throw new IllegalArgumentException("kid field missing in token header");
+            }
+
+            // Fetch certs from getTokenSigningCertificates() API
+            String jwks = getTokenSigningCertificates();
+
+            // Parse the JWKS
+            JWKSet jwkSet = JWKSet.parse(jwks);
+
+            // Check if key is matching with the parsed token
+            JWK jwkKey = jwkSet.getKeyByKeyId(kid);
+            if (jwkKey == null) {
+                throw new IllegalArgumentException("Could not find Key matching the key id");
+            }
+
+            // Get the JWK (JSON Web Key) from the set
+            RSAKey rsaKey = (RSAKey) jwkSet.getKeys().get(0);
+
+            // Build a RSA public key from the JWK
+            RSAPublicKey publicKey = rsaKey.toRSAPublicKey();
+
+            // Get the algorithm dynamically
+            JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(rsaKey.getAlgorithm().getName());
+
+            // Create a verifier
+            JWSVerifier verifier;
+            if (jwsAlgorithm.getName().startsWith("RS")) {
+                verifier = new RSASSAVerifier(publicKey);
+            } else if (jwsAlgorithm.getName().startsWith("PS")) {
+                verifier = new RSASSAVerifier(publicKey);
+            } else {
+                throw new JOSEException("Unsupported algorithm: " + jwsAlgorithm.getName());
+            }
+
+            // Verify the signature
+            if (signedJWT.verify(verifier)) {
+                // Signature is valid
+                System.out.println("JWT signature validated successfully");
+
+                // Extract and print JWT claims
+                JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+
+                return claims;
+            } else {
+                // Signature is not valid
+                System.out.println("JWT signature is not valid");
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Helper function to create HttpURLConnection based on specified URL and request method
+     *
+     * @param url       Server URL to create the connectiong with.
+     * @param method    Request method type(GET/POST).
+     * @return          HttpURLConnection object
+     */
     private HttpURLConnection createConnection(String url, String method) throws IOException {
+        // Create the URL object
         URL requestUrl = new URL(url);
+        // Initiate the connection
         HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
         connection.setRequestMethod(method);
         connection.setConnectTimeout(0);
@@ -766,28 +1074,70 @@ public class TrustAuthorityConnector {
         return connection;
     }
 
+    /**
+     * Helper function to create HttpURLConnection based on specified URL, request method, request to be sent and request ID
+     *
+     * @param url           Server URL to create the connectiong with.
+     * @param method        Request method type(GET/POST)
+     * @param requestBody   Request body to be sent
+     * @param requestId     Request ID type(GET/POST).
+     * @return              HttpURLConnection object
+     */
+    private HttpURLConnection createConnection(String url, String method, String requestBody, String requestId) throws IOException {
+        // Create the HttpURLConnection from the specified URL
+        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+        // Set the request method and other parameters
+        conn.setRequestMethod(method);
+        conn.setDoOutput(true);
+        conn.setRequestProperty(Constants.HEADER_X_API_KEY, cfg.getApiKey());
+        conn.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
+        conn.setRequestProperty(Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON);
+        conn.setRequestProperty(Constants.HEADER_REQUEST_ID, requestId);
+
+        // Sends request body to server specified by URL
+        if (requestBody != null) {
+            conn.getOutputStream().write(requestBody.getBytes("UTF-8"));
+        }
+        return conn;
+    }
+
+    /**
+     * Helper function to convert HttpURLConnection response to GetNonceResponse object
+     *
+     * @param connection  HttpURLConnection object provided by the user.
+     * @param response    GetNonceResponse object provided by the user.
+     */
     private void processResponse(HttpURLConnection connection, GetNonceResponse response) throws IOException {
+        // Set response Header fields from the fetched response
         response.setHeaders(connection.getHeaderFields());
 
+        // Check for response code
         int responseCode = connection.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
+            // Fetch the response from the server
             String responseBody = readResponseBody(connection);
-            // ObjectMapper mapper = new ObjectMapper();
-            // VerifierNonce nonce = mapper.readValue(responseBody, VerifierNonce.class);
 
-            // TODO: Process this better and fill in val, iat and signature
-            String charsetName = "UTF-8";
-            VerifierNonce nonce = new VerifierNonce(responseBody.getBytes(charsetName), responseBody.getBytes(charsetName),
-                                                    responseBody.getBytes(charsetName));
+            // Map the fetched response JSON to VerifierNonce object
+            ObjectMapper mapper = new ObjectMapper();
+            VerifierNonce nonce = mapper.readValue(responseBody, VerifierNonce.class);
+
+            // Set GetNonceResponse object nonce value with VerifierNonce
             response.setNonce(nonce);
         } else {
             // Handle error response
-            // You can throw an exception or handle it as needed
+            System.out.println("Processing response failed with response code: " + responseCode);
         }
     }
 
+    /**
+     * Helper function to fetch the response from server
+     *
+     * @param connection  HttpURLConnection object provided by the user.
+     * @return            The server response as a string
+     */
     private String readResponseBody(HttpURLConnection connection) throws IOException {
         StringBuilder content = new StringBuilder();
+        // This initiates the connection with the server and reads the response
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -795,212 +1145,5 @@ public class TrustAuthorityConnector {
             }
         }
         return content.toString();
-    }
-
-    private HttpURLConnection createConnection(String url, String method, String requestBody, String requestId) throws IOException {
-        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-        conn.setRequestMethod(method);
-        conn.setDoOutput(true);
-        conn.setRequestProperty(Constants.headerXApiKey, cfg.getApiKey());
-        conn.setRequestProperty(Constants.headerAccept, Constants.mimeApplicationJson);
-        conn.setRequestProperty(Constants.headerContentType, Constants.mimeApplicationJson);
-        conn.setRequestProperty(Constants.HeaderRequestId, requestId);
-
-        if (requestBody != null) {
-            conn.getOutputStream().write(requestBody.getBytes("UTF-8"));
-        }
-
-        return conn;
-    }
-
-    public X509CRL getCRL(List<String> crlArr) throws IOException {
-        if (crlArr.isEmpty()) {
-            throw new IOException("Invalid CDP count present in the certificate");
-        }
-
-        String crlUrl = crlArr.get(0);
-        try {
-            new URL(crlUrl).toURI();
-        } catch (Exception e) {
-            throw new IOException("Invalid CRL distribution point");
-        }
-
-        HttpURLConnection conn = createConnection(crlUrl, "GET", null, null);
-
-        try {
-            int responseCode = conn.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                throw new IOException("HTTP error code: " + responseCode);
-            }
-
-            String responseBody = readResponseBody(conn);
-            String charsetName = "UTF-8";
-
-            // Create an InputStream from the byte array
-            InputStream inputStream = new ByteArrayInputStream(responseBody.getBytes(charsetName));
-
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509CRL crl = (X509CRL) cf.generateCRL(inputStream);
-
-            return crl;
-        } catch (Exception e) {
-            throw new IOException(e);
-        } finally {
-            conn.disconnect();
-        }
-    }
-
-    public boolean isSignatureValid(X509CRL crl, X509Certificate caCert) {
-        try {
-            // Verify the CRL's signature against the CA's public key
-            crl.verify(caCert.getPublicKey());
-            System.out.println("CRL signature is valid.");
-            return true;
-        } catch (Exception e) {
-            System.err.println("CRL signature is not valid: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public boolean verifyCRL(X509CRL crl, X509Certificate leafCert, X509Certificate caCert) throws Exception {
-        if (leafCert == null || caCert == null || crl == null) {
-            throw new Exception("Leaf Cert or CA Cert or CRL is null");
-        }
-
-        if (!isSignatureValid(crl, caCert)) {
-            throw new Exception("CRL signature verification failed");
-        }
-
-        Date now = new Date();
-        if (crl.getNextUpdate().before(now)) {
-            throw new Exception("Outdated CRL");
-        }
-
-        for (X509CRLEntry entry : crl.getRevokedCertificates()) {
-            if (entry.getSerialNumber().equals(leafCert.getSerialNumber())) {
-                throw new Exception("Certificate was Revoked");
-            }
-        }
-        return true;
-    }
-
-    public List<X509Certificate> getX509CertChainFromJWK(JWK jwk) throws CertificateException {
-        if (jwk instanceof RSAKey) {
-            RSAKey rsaKey = (RSAKey) jwk;
-            List<Base64> base64CertList = rsaKey.getX509CertChain();
-            List<X509Certificate> x509CertChain = new ArrayList<>();
-
-            if (base64CertList != null && !base64CertList.isEmpty()) {
-                CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-                for (Base64 base64Cert : base64CertList) {
-                    byte[] certBytes = base64Cert.decode();
-                    X509Certificate x509Cert = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
-                    x509CertChain.add(x509Cert);
-                }
-                return x509CertChain;
-            } else {
-                throw new CertificateException("No X.509 certificate chain found in the RSA JWK.");
-            }
-        } else {
-            throw new CertificateException("Unsupported JWK type. Expecting an RSA JWK.");
-        }
-    }
-
-    public List<String> getCRLDistributionPoints(X509Certificate cert) {
-        try {
-            byte[] crlDistributionPointsExtensionValue = cert.getExtensionValue("2.5.29.31");
-            if (crlDistributionPointsExtensionValue != null) {
-                // Extract the extension value and decode it
-                byte[] crlDistributionPointsExtensionData = Arrays.copyOfRange(crlDistributionPointsExtensionValue, 2, crlDistributionPointsExtensionValue.length);
-                InputStream is = new ByteArrayInputStream(crlDistributionPointsExtensionData);
-                CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-                Collection<X509CRL> crls = (Collection<X509CRL>) certificateFactory.generateCRLs(is);
-                
-                List<String> crlDistributionPoints = new ArrayList<>();
-                
-                for (X509CRL crl : crls) {
-                    // Access the CRL distribution points from the CRL extension
-                    String crlDistributionPoint = crl.getIssuerX500Principal().getName();
-                    crlDistributionPoints.add(crlDistributionPoint);
-                }
-                return crlDistributionPoints;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public JWSObject verifyToken(String token) throws Exception {
-
-        try {
-            JWSObject jwsObject = JWSObject.parse(token);
-            Payload payload = jwsObject.getPayload();
-
-            // Fetch kid from parsed token
-            String kid = jwsObject.getHeader().getKeyID();
-            if (kid == null) {
-                throw new IllegalArgumentException("kid field missing in token header");
-            }
-
-            // Fetch certs from getTokenSigningCertificates() API
-            String jwks = getTokenSigningCertificates().toString();
-
-            // Parse the JWKSet string
-            JWKSet jwkSet = JWKSet.parse(jwks);
-
-            JWK jwkKey = jwkSet.getKeyByKeyId(kid);
-            if (jwkKey == null) {
-                throw new IllegalArgumentException("Could not find Key matching the key id");
-            }
-
-            int AtsCertChainMaxLen = 10;
-            List<X509Certificate> atsCerts = getX509CertChainFromJWK(jwkKey);
-            if (atsCerts.size() > AtsCertChainMaxLen) {
-                throw new IllegalArgumentException("Token Signing Cert chain has more than " + AtsCertChainMaxLen + " certificates");
-            }
-
-            List<X509Certificate> rootCerts = new LinkedList<>();
-            List<X509Certificate> intermediateCerts = new LinkedList<>();
-            X509Certificate leafCert = null;
-
-            for (X509Certificate atsCert : atsCerts) {
-                if (atsCert.getBasicConstraints() > -1 && atsCert.getSubjectDN().getName().contains("Root CA")) {
-                    rootCerts.add(atsCert);
-                } else if (atsCert.getSubjectDN().getName().contains("Signing CA")) {
-                    intermediateCerts.add(atsCert);
-                } else {
-                    leafCert = atsCert;
-                }
-            }
-            
-            X509CRL rootCrl = getCRL(getCRLDistributionPoints(intermediateCerts.get(0)));
-            if (!verifyCRL(rootCrl, intermediateCerts.get(0), rootCerts.get(0))) {
-                throw new IllegalArgumentException("Failed to check ATS CA Certificate against Root CA CRL");
-            }
-            
-            X509CRL atsCrl = getCRL(getCRLDistributionPoints(leafCert));
-            if (!verifyCRL(atsCrl, leafCert, intermediateCerts.get(0))) {
-                throw new IllegalArgumentException("Failed to check ATS Leaf certificate against ATS CRL");
-            }
-
-            return jwsObject;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private X509Certificate parseX509Certificate(String pemCertificate) {
-        // Parse the PEM-encoded X.509 certificate
-        try {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            byte[] bytes = pemCertificate.getBytes("UTF-8");
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-            return (X509Certificate) cf.generateCertificate(inputStream);
-        } catch (Exception e) {
-            System.out.println("Failed to parse X.509 certificate");
-            return null;
-        }
     }
 }
