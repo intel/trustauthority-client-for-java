@@ -33,14 +33,34 @@ RUN mvn -v
 WORKDIR /app
 
 # Set Maven proxy settings
-ARG PROXY_HOST
-ARG PROXY_PORT
-ARG MAVEN_PROXY_HOST=$PROXY_HOST
-ARG MAVEN_PROXY_PORT=$PROXY_PORT
+ARG MAVEN_PROXY_HOST
+ARG MAVEN_PROXY_PORT
+ARG MAVEN_PROXY_HOST=$MAVEN_PROXY_HOST
+ARG MAVEN_PROXY_PORT=$MAVEN_PROXY_PORT
 
 # Create /root/.m2/settings.xml file with proxy settings added
 RUN mkdir -p /root/.m2 && \
     echo "<settings><proxies><proxy><id>example-proxy</id><active>true</active><protocol>http</protocol><host>${MAVEN_PROXY_HOST}</host><port>${MAVEN_PROXY_PORT}</port></proxy></proxies></settings>" > /root/.m2/settings.xml
+
+# Installing TDX sdk essentials
+RUN apt-get update; \
+    apt-get upgrade -y; \
+    apt-get autoremove -y; \
+    apt-get install -y gnupg wget
+
+# Installing TDX sdk
+ARG DCAP_VERSION
+RUN echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main' > /etc/apt/sources.list.d/intel-sgx.list
+RUN curl https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key -o /tmp/intel-sgx-deb.key; \
+    apt-key add /tmp/intel-sgx-deb.key; \
+    rm /tmp/intel-sgx-deb.key
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libtdx-attest-dev=${DCAP_VERSION} \
+        libtdx-attest=${DCAP_VERSION} \
+        libcurl4-openssl-dev \
+        libcurl4 \
+	    libssl1.1
 
 # Copy the project files and directories to the container image
 COPY pom.xml .
@@ -49,11 +69,14 @@ COPY pom.xml .
 # whenever there is a change in src files
 RUN mvn -X -e clean compile install package
 
+# Copy .env code
+COPY .env .env
+
+# Copy tdx_sample_app scipt
+COPY tdx_sample_app.sh tdx_sample_app.sh
+
 # Copy src code
 COPY src src
 
 # Build the application
 RUN mvn -X -e clean compile install package
-
-# Expose the port the SampleAppServer application runs on
-EXPOSE 8080

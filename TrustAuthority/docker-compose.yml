@@ -1,19 +1,48 @@
 version: '3'
 services:
-  trust-authority-java-client:
-    image: trust-authority-java-client-image:${TRUST_AUTHORITY_CLIENT_VERSION}
+  trust-authority-java-client-sgx-sample-app:
+    image: trust-authority-java-client-sgx-sample-app:${TRUST_AUTHORITY_CLIENT_VERSION}
+    container_name: trust-authority-java-client-sgx-sample-app
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.SgxSampleApp
       args:
         - UBUNTU_VERSION=${UBUNTU_VERSION}
         - MAVEN_VERSION=${MAVEN_VERSION}
-        - PROXY_HOST=${PROXY_HOST}
-        - PROXY_PORT=${PROXY_PORT}
+        - MAVEN_PROXY_HOST=${MAVEN_PROXY_HOST}
+        - MAVEN_PROXY_PORT=${MAVEN_PROXY_PORT}
+        - DCAP_VERSION=${DCAP_VERSION}
+        - PSW_VERSION=${PSW_VERSION}
+    network_mode: "host"
+    devices:
+      - "/dev/sgx_enclave:/dev/sgx_enclave"
     env_file:
       - .env
-    ports:
-      - "8080:8080"
+    volumes:
+      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
+      - /dev:/dev
     environment:
       - SPRING_PROFILES_ACTIVE=production
-    entrypoint: ["java", "-cp", "~/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:~/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:target/trust-authority-client-java-1.0.0.jar:~/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:~/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:~/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:~/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.4/nimbus-jose-jwt-9.4.jar:~/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar", "trust_authority_client.SampleApp", "${TRUSTAUTHORITY_BASE_URL}", "${TRUSTAUTHORITY_API_URL}", "${TRUSTAUTHORITY_API_KEY}"]
+      - SGX_AESM_ADDR=1
+    entrypoint: ["/app/sgx_sample_app.sh", "${TRUSTAUTHORITY_BASE_URL}", "${TRUSTAUTHORITY_API_URL}", "${TRUSTAUTHORITY_API_KEY}"]
+
+  trust-authority-java-client-tdx-sample-app:
+    image: trust-authority-java-client-tdx-sample-app:${TRUST_AUTHORITY_CLIENT_VERSION}
+    container_name: trust-authority-java-client-tdx-sample-app
+    build:
+      context: .
+      dockerfile: Dockerfile.TdxSampleApp
+      args:
+        - UBUNTU_VERSION=${UBUNTU_VERSION}
+        - MAVEN_VERSION=${MAVEN_VERSION}
+        - MAVEN_PROXY_HOST=${MAVEN_PROXY_HOST}
+        - MAVEN_PROXY_PORT=${MAVEN_PROXY_PORT}
+        - DCAP_VERSION=${DCAP_VERSION}
+    network_mode: "host"
+    devices:
+      - "/dev/tdx_guest:/dev/tdx_guest"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+    entrypoint: ["/app/tdx_sample_app.sh", "${TRUSTAUTHORITY_BASE_URL}", "${TRUSTAUTHORITY_API_URL}", "${TRUSTAUTHORITY_API_KEY}"]
