@@ -1,15 +1,21 @@
 # .gitignore file
 
 # Ignore build artifacts
-TrustAuthority/target/
+connector/target
+sgx/target
+tdx/target
 
 # Ignore enclave generated files
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave.o
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_t.c
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_t.h
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_t.o
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_u.c
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/Enclave_u.h
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/enclave.signed.so
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/libutils.so
-TrustAuthority/src/main/java/trust_authority_client/sgx-example-enclave/enclave/utils.o
+examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave.o
+examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_t.c
+examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_t.h
+examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_t.o
+examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_u.c
+examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_u.h
+examples/sgx-sample-app/sgx-example-enclave/enclave/enclave.signed.so
+examples/sgx-sample-app/sgx-example-enclave/enclave/libutils.so
+examples/sgx-sample-app/sgx-example-enclave/enclave/utils.o
+
+# Ignore runtime generated class files
+examples/sgx-sample-app/*.class
+examples/tdx-sample-app/*.class

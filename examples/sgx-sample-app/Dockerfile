@@ -85,18 +85,26 @@ WORKDIR /app
 # Copy the project files and directories to the container image
 COPY pom.xml .
 
-# This first build is to avoid all packages getting freshly installed
-# whenever there is a change in src files
-RUN mvn -X -e clean compile install package
-
-# Copy .env code
-COPY .env .env
-
-# Copy sgx_sample_app scipt
-COPY sgx_sample_app.sh sgx_sample_app.sh
-
 # Copy src code
-COPY src src
+COPY connector connector
+COPY sgx sgx
+COPY tdx tdx
+COPY examples examples
 
 # Build the application
 RUN mvn -X -e clean compile install package
+
+# Create the enclave.signed.so
+RUN cd /app/examples/sgx-sample-app/sgx-example-enclave/enclave/ && \
+    make clean && \
+    make && \
+    cd -
+
+# Change WORKDIR to Sample App directory
+WORKDIR /app/examples/sgx-sample-app
+
+# Compile SGX Sample App
+RUN javac -cp /root/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:/root/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/root/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:/root/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar SgxSampleApp.java
+
+# Run SGX Sample App
+CMD ["java", "-cp", "/root/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:/root/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/root/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:/root/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:./", "SgxSampleApp"]

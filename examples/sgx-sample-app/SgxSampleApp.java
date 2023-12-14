@@ -1,8 +1,7 @@
-package trust_authority_client;
-
 // Java Collections Imports
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.security.SecureRandom;
 
 // JNA (Java Native Access) Library Imports
@@ -24,6 +23,14 @@ import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jwt.JWTClaimsSet;
 
+// trust_authority_client imports
+import trust_authority_client.TrustAuthorityConnector;
+import trust_authority_client.SgxAdapter;
+import trust_authority_client.Evidence;
+import trust_authority_client.Config;
+import trust_authority_client.AttestArgs;
+import trust_authority_client.AttestResponse;
+
 /**
  * EnclaveLibrary interface for creating enclave report
  * This interface extends the base Library class.
@@ -31,7 +38,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 interface EnclaveLibrary extends Library {
 
     // private variable to hold an instance of the native library interface
-    EnclaveLibrary INSTANCE = (EnclaveLibrary) Native.loadLibrary("./src/main/java/trust_authority_client/sgx-example-enclave/enclave/enclave_library.so", EnclaveLibrary.class);
+    EnclaveLibrary INSTANCE = (EnclaveLibrary) Native.loadLibrary("./sgx-example-enclave/enclave/enclave_library.so", EnclaveLibrary.class);
 
     // get_public_key() function to fetch the public key to be passed to SGXAdapter
     int get_public_key(long eid, PointerByReference pp_key, IntByReference p_key_size);
@@ -40,7 +47,7 @@ interface EnclaveLibrary extends Library {
     void free_public_key(Pointer key);
 
     // Initialize the function pointer for enclave_create_report() function from enclave .so file
-    Function myFunctionPointer = Function.getFunction("./src/main/java/trust_authority_client/sgx-example-enclave/enclave/enclave_library.so", "enclave_create_report");
+    Function myFunctionPointer = Function.getFunction("./sgx-example-enclave/enclave/enclave_library.so", "enclave_create_report");
 }
 
 /**
@@ -68,7 +75,7 @@ public class SgxSampleApp {
     public static void main(String[] args) {
         try {
             // Path of enclave .so file
-            String enclavePath = "./src/main/java/trust_authority_client/sgx-example-enclave/enclave/enclave.signed.so";
+            String enclavePath = "./sgx-example-enclave/enclave/enclave.signed.so";
 
             // Initialize SGX enclave related variables
             long[] enclaveId = new long[1];
@@ -122,33 +129,67 @@ public class SgxSampleApp {
             // Print the SGX fetched UserData in Base64 format
             System.out.println("SGX fetched user data Base64 Encoded: " + base64UserData);
 
-            // Setting default arguments in case BaseURL, apiURL and apiKey are not provided
-            String BaseURL = "http://localhost:8080";
-            String apiURL = "http://localhost:8080";
-            String apiKey = "apiKey";
-
-            if (args.length != 3) {
-                System.out.println("Incorrect arguments provided, using default arguments...");
-            } else {
-                BaseURL = args[0];
-                apiURL = args[1];
-                apiKey = args[2];
+            // Fetch proxy settings from environment
+            String httpsHost = System.getenv("HTTPS_PROXY_HOST");
+            if (httpsHost == null) {
+                System.out.println("HTTPS_PROXY_HOST is not set.");
             }
+            String httpsPort = System.getenv("HTTPS_PROXY_PORT");
+            if (httpsPort == null) {
+                System.out.println("HTTPS_PROXY_PORT is not set.");
+            }
+            System.out.println("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
 
-            System.out.println("BaseURL: " + BaseURL + ", apiURL: " + apiURL + ", apiKey: " + apiKey);
+            // Setting proxy settings
+            System.setProperty("https.proxyHost", httpsHost);
+            System.setProperty("https.proxyPort", httpsPort);
 
-            // Initialize config required for connector using BaseURL, apiURL and apiKey
-            Config cfg = new Config(BaseURL, apiURL, apiKey);
+            // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
+            String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");
+            if (trustauthority_base_url == null) {
+                System.out.println("TRUSTAUTHORITY_BASE_URL is not set.");
+            }
+            String trustauthority_api_url = System.getenv("TRUSTAUTHORITY_API_URL");
+            if (trustauthority_api_url == null) {
+                System.out.println("TRUSTAUTHORITY_API_URL is not set.");
+            }
+            String trustauthority_api_key = System.getenv("TRUSTAUTHORITY_API_KEY");
+            if (trustauthority_api_key == null) {
+                System.out.println("TRUSTAUTHORITY_API_KEY is not set.");
+            }
+            String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
+            if (trustauthority_request_id == null) {
+                System.out.println("TRUSTAUTHORITY_REQUEST_ID is not set.");
+            }
+            System.out.println("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
+
+            // Initialize config required for connector using TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY
+            Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
 
             // Initializing connector with the config
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
             // Testing attest API - internally tests GetNonce(), collectEvidence() and GetToken() API
-            AttestArgs attestArgs = new AttestArgs(sgx_adapter, null, "req1");
+            AttestArgs attestArgs = new AttestArgs(sgx_adapter, null, trustauthority_request_id);
             AttestResponse response = connector.attest(attestArgs);
 
             // Print the Token fetched from Trust Authority
             System.out.println("Token fetched from Trust Authority: " + response.getToken());
+
+            // Print the Request ID of token fetched from Trust Authority
+            if (response.getHeaders().containsKey("request-id")) {
+                // Print Request ID of fetched token
+                System.out.println("Request ID of fetched token" + response.getHeaders().get("request-id"));
+            } else {
+                System.out.println("request-id not found in response token.");
+            }
+            // Print the Trace ID of token fetched from Trust Authority
+            if (response.getHeaders().containsKey("trace-id")) {
+                // Print Trace ID of fetched token
+                System.out.println("Trace ID of fetched token" + response.getHeaders().get("trace-id"));
+            } else {
+                System.out.println("trace-id not found in response token.");
+            }
 
             // verify the received token
             JWTClaimsSet claims = connector.verifyToken(response.getToken());
