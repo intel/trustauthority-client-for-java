@@ -128,7 +128,7 @@ public class TdxAdapter implements EvidenceAdapter {
         // Free TDX Quote by calling the respective tdx sdk function to avoid memory leaks
         ret = TdxAttestLibrary.INSTANCE.tdx_att_free_quote(quoteBuf.getValue());
         if (ret != 0) {
-            throw new RuntimeException("tdx_att_free_quote returned error code " + ret);
+            System.out.println("tdx_att_free_quote returned error code " + ret);
         }
 
         // Convert List<RtmrEventLog> to Json object

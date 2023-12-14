@@ -520,9 +520,6 @@ class ConnectorException extends Exception {
  */
 public class TrustAuthorityConnector {
 
-    // Logger object
-    private static final Logger logger = LogManager.getLogger(TrustAuthorityConnector.class);
-
     private Config cfg;
 
     /**
@@ -642,7 +639,7 @@ public class TrustAuthorityConnector {
             throw new Exception("Failed to collect nonce from Trust Authority: " + nonceResponse.getError());
         }
 
-        logger.info("Collected nonce from Trust Authority successfully...");
+        System.out.println("Collected nonce from Trust Authority successfully...");
 
         // Set AttestResponse headers with nonceResponse headers
         response.setHeaders(nonceResponse.getHeaders());
@@ -660,7 +657,7 @@ public class TrustAuthorityConnector {
             throw new Exception("Failed to collect evidence from adapter: " + evidence.getError());
         }
 
-        logger.info("Collected evidence from adapter successfully...");
+        System.out.println("Collected evidence from adapter successfully...");
 
         // Calling the GetToken() API
         GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId()));
@@ -668,7 +665,7 @@ public class TrustAuthorityConnector {
             throw new Exception("Failed to collect token from Trust Authority: " + tokenResponse.getError());
         }
 
-        logger.info("Collected token from Trust Authority successfully...");
+        System.out.println("Collected token from Trust Authority successfully...");
 
         // Set AttestResponse headers with tokenResponse headers
         response.setToken(tokenResponse.getToken());
@@ -778,7 +775,7 @@ public class TrustAuthorityConnector {
             // Verify the signature
             if (signedJWT.verify(verifier)) {
                 // Signature is valid
-                logger.info("JWT signature validated successfully");
+                System.out.println("JWT signature validated successfully");
 
                 // Extract and print JWT claims
                 JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
@@ -786,7 +783,7 @@ public class TrustAuthorityConnector {
                 return claims;
             } else {
                 // Signature is not valid
-                logger.error("JWT signature is not valid");
+                System.out.println("JWT signature is not valid");
                 return null;
             }
         } catch (Exception e) {
@@ -865,7 +862,7 @@ public class TrustAuthorityConnector {
             response.setNonce(nonce);
         } else {
             // Handle error response
-            logger.error("Processing response failed with response code: " + responseCode);
+            System.out.println("Processing response failed with response code: " + responseCode);
         }
     }
 

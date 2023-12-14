@@ -7,10 +7,6 @@ import java.util.Map;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jose.util.Base64;
 
-// Third-party Library Imports
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 // trust_authority_client imports
 import trust_authority_client.TrustAuthorityConnector;
 import trust_authority_client.TdxAdapter;
@@ -24,9 +20,6 @@ import trust_authority_client.AttestResponse;
  * from TDX enabled platform
  */
 public class TdxSampleApp {
-
-    // Logger object
-    private static final Logger logger = LogManager.getLogger(TdxSampleApp.class);
 
     public static void main(String[] args) {
         try {
@@ -43,24 +36,24 @@ public class TdxSampleApp {
             String base64Quote = Base64.encode(tdx_evidence.getEvidence()).toString();
 
             // Print the TDX fetched quote in Base64 format
-            logger.info("TDX fetched quote Base64 Encoded: " + base64Quote);
+            System.out.println("TDX fetched quote Base64 Encoded: " + base64Quote);
 
             // Convert fetched TDX UserData from bytes to Base64
             String base64UserData = Base64.encode(tdx_evidence.getUserData()).toString();
 
             // Print the TDX fetched UserData in Base64 format
-            logger.info("TDX fetched user data Base64 Encoded: " + base64UserData);
+            System.out.println("TDX fetched user data Base64 Encoded: " + base64UserData);
 
             // Fetch proxy settings from environment
             String httpsHost = System.getenv("HTTPS_PROXY_HOST");
             if (httpsHost == null) {
-                logger.warn("HTTPS_PROXY_HOST is not set.");
+                System.out.println("HTTPS_PROXY_HOST is not set.");
             }
             String httpsPort = System.getenv("HTTPS_PROXY_PORT");
             if (httpsPort == null) {
-                logger.warn("HTTPS_PROXY_PORT is not set.");
+                System.out.println("HTTPS_PROXY_PORT is not set.");
             }
-            logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
+            System.out.println("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
 
             // Setting proxy settings
             System.setProperty("https.proxyHost", httpsHost);
@@ -69,22 +62,22 @@ public class TdxSampleApp {
             // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
             String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");
             if (trustauthority_base_url == null) {
-                logger.error("TRUSTAUTHORITY_BASE_URL is not set.");
+                System.out.println("TRUSTAUTHORITY_BASE_URL is not set.");
             }
             String trustauthority_api_url = System.getenv("TRUSTAUTHORITY_API_URL");
             if (trustauthority_api_url == null) {
-                logger.error("TRUSTAUTHORITY_API_URL is not set.");
+                System.out.println("TRUSTAUTHORITY_API_URL is not set.");
             }
             String trustauthority_api_key = System.getenv("TRUSTAUTHORITY_API_KEY");
             if (trustauthority_api_key == null) {
-                logger.error("TRUSTAUTHORITY_API_KEY is not set.");
+                System.out.println("TRUSTAUTHORITY_API_KEY is not set.");
             }
             String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
             if (trustauthority_request_id == null) {
-                logger.error("TRUSTAUTHORITY_REQUEST_ID is not set.");
+                System.out.println("TRUSTAUTHORITY_REQUEST_ID is not set.");
             }
 
-            logger.info("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
+            System.out.println("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
 
             // Initialize config required for connector using TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY
             Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
@@ -97,32 +90,32 @@ public class TdxSampleApp {
             AttestResponse response = connector.attest(attestArgs);
 
             // Print the Token fetched from Trust Authority
-            logger.info("Token fetched from Trust Authority: " + response.getToken());
+            System.out.println("Token fetched from Trust Authority: " + response.getToken());
 
             // Print the Request ID of token fetched from Trust Authority
             if (response.getHeaders().containsKey("request-id")) {
                 // Print Request ID of fetched token
-                logger.info("Request ID of fetched token: " + response.getHeaders().get("request-id"));
+                System.out.println("Request ID of fetched token" + response.getHeaders().get("request-id"));
             } else {
-                logger.warn("request-id not found in response token.");
+                System.out.println("request-id not found in response token.");
             }
             // Print the Trace ID of token fetched from Trust Authority
             if (response.getHeaders().containsKey("trace-id")) {
                 // Print Trace ID of fetched token
-                logger.info("Trace ID of fetched token: " + response.getHeaders().get("trace-id"));
+                System.out.println("Trace ID of fetched token" + response.getHeaders().get("trace-id"));
             } else {
-                logger.warn("trace-id not found in response token.");
+                System.out.println("trace-id not found in response token.");
             }
 
             // verify the received token
             JWTClaimsSet claims = connector.verifyToken(response.getToken());
 
             // Print the claims for the verified JWT
-            logger.info("Issuer: " + claims.getIssuer());
-            logger.info("Subject: " + claims.getSubject());
-            logger.info("Expiration Time: " + claims.getExpirationTime());
+            System.out.println("Issuer: " + claims.getIssuer());
+            System.out.println("Subject: " + claims.getSubject());
+            System.out.println("Expiration Time: " + claims.getExpirationTime());
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            e.printStackTrace();
         }
     }
 }
