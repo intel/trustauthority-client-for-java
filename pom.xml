@@ -6,6 +6,16 @@
   <version>1.0.0</version>
   <packaging>pom</packaging>
 
+  <build>
+    <resources>
+      <resource>
+        <directory>resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+
+
   <modules>
     <module>connector</module>
     <module>sgx</module>

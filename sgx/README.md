@@ -1,4 +1,4 @@
-# Intel® Trust Authority Java SGX Adapter
+# Intel® Trust Authority Java Client SGX Adapter
 Java library for collecting SGX Quote from SGX enabled platform.
 
 This library leverages Intel SGX DCAP for Quote generation: [https://github.com/intel/SGXDataCenterAttestationPrimitives](https://github.com/intel/SGXDataCenterAttestationPrimitives)
