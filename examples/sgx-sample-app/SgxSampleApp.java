@@ -23,6 +23,10 @@ import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jwt.JWTClaimsSet;
 
+// Third-party Library Imports
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 // trust_authority_client imports
 import trust_authority_client.TrustAuthorityConnector;
 import trust_authority_client.SgxAdapter;
@@ -72,6 +76,9 @@ interface SgxSdkLibrary extends Library {
  */
 public class SgxSampleApp {
 
+    // Logger object
+    private static final Logger logger = LogManager.getLogger(SgxSampleApp.class);
+
     public static void main(String[] args) {
         try {
             // Path of enclave .so file
@@ -86,9 +93,9 @@ public class SgxSampleApp {
             // Create SGX enclave
             int result = SgxSdkLibrary.INSTANCE.sgx_create_enclave(enclavePath, 0, launchToken, updated, enclaveId, miscAttr);
             if (result != 0) {
-                System.out.println("Failed to create enclave: " + Integer.toHexString(result));
+                logger.error("Failed to create enclave: " + Integer.toHexString(result));
             } else {
-                System.out.println("Enclave created successfully. Enclave ID: " + enclaveId[0]);
+                logger.info("Enclave created successfully. Enclave ID: " + enclaveId[0]);
             }
 
             // Initialize get_public_key() API variables
@@ -121,24 +128,24 @@ public class SgxSampleApp {
             String base64Quote = Base64.encode(sgx_evidence.getEvidence()).toString();
 
             // Print the SGX fetched quote in Base64 format
-            System.out.println("SGX fetched quote Base64 Encoded: " + base64Quote);
+            logger.info("SGX fetched quote Base64 Encoded: " + base64Quote);
 
             // Convert fetched SGX UserData from bytes to Base64
             String base64UserData = Base64.encode(sgx_evidence.getUserData()).toString();
 
             // Print the SGX fetched UserData in Base64 format
-            System.out.println("SGX fetched user data Base64 Encoded: " + base64UserData);
+            logger.info("SGX fetched user data Base64 Encoded: " + base64UserData);
 
             // Fetch proxy settings from environment
             String httpsHost = System.getenv("HTTPS_PROXY_HOST");
             if (httpsHost == null) {
-                System.out.println("HTTPS_PROXY_HOST is not set.");
+                logger.warn("HTTPS_PROXY_HOST is not set.");
             }
             String httpsPort = System.getenv("HTTPS_PROXY_PORT");
             if (httpsPort == null) {
-                System.out.println("HTTPS_PROXY_PORT is not set.");
+                logger.warn("HTTPS_PROXY_PORT is not set.");
             }
-            System.out.println("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
+            logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
 
             // Setting proxy settings
             System.setProperty("https.proxyHost", httpsHost);
@@ -147,21 +154,21 @@ public class SgxSampleApp {
             // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
             String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");
             if (trustauthority_base_url == null) {
-                System.out.println("TRUSTAUTHORITY_BASE_URL is not set.");
+                logger.error("TRUSTAUTHORITY_BASE_URL is not set.");
             }
             String trustauthority_api_url = System.getenv("TRUSTAUTHORITY_API_URL");
             if (trustauthority_api_url == null) {
-                System.out.println("TRUSTAUTHORITY_API_URL is not set.");
+                logger.error("TRUSTAUTHORITY_API_URL is not set.");
             }
             String trustauthority_api_key = System.getenv("TRUSTAUTHORITY_API_KEY");
             if (trustauthority_api_key == null) {
-                System.out.println("TRUSTAUTHORITY_API_KEY is not set.");
+                logger.error("TRUSTAUTHORITY_API_KEY is not set.");
             }
             String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
             if (trustauthority_request_id == null) {
-                System.out.println("TRUSTAUTHORITY_REQUEST_ID is not set.");
+                logger.error("TRUSTAUTHORITY_REQUEST_ID is not set.");
             }
-            System.out.println("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
+            logger.info("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
 
             // Initialize config required for connector using TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY
             Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
@@ -174,32 +181,32 @@ public class SgxSampleApp {
             AttestResponse response = connector.attest(attestArgs);
 
             // Print the Token fetched from Trust Authority
-            System.out.println("Token fetched from Trust Authority: " + response.getToken());
+            logger.info("Token fetched from Trust Authority: " + response.getToken());
 
             // Print the Request ID of token fetched from Trust Authority
             if (response.getHeaders().containsKey("request-id")) {
                 // Print Request ID of fetched token
-                System.out.println("Request ID of fetched token" + response.getHeaders().get("request-id"));
+                logger.info("Request ID of fetched token: " + response.getHeaders().get("request-id"));
             } else {
-                System.out.println("request-id not found in response token.");
+                logger.warn("request-id not found in response token.");
             }
             // Print the Trace ID of token fetched from Trust Authority
             if (response.getHeaders().containsKey("trace-id")) {
                 // Print Trace ID of fetched token
-                System.out.println("Trace ID of fetched token" + response.getHeaders().get("trace-id"));
+                logger.info("Trace ID of fetched token: " + response.getHeaders().get("trace-id"));
             } else {
-                System.out.println("trace-id not found in response token.");
+                logger.warn("trace-id not found in response token.");
             }
 
             // verify the received token
             JWTClaimsSet claims = connector.verifyToken(response.getToken());
 
             // Print the claims for the verified JWT
-            System.out.println("Issuer: " + claims.getIssuer());
-            System.out.println("Subject: " + claims.getSubject());
-            System.out.println("Expiration Time: " + claims.getExpirationTime());
+            logger.info("Issuer: " + claims.getIssuer());
+            logger.info("Subject: " + claims.getSubject());
+            logger.info("Expiration Time: " + claims.getExpirationTime());
         } catch (Exception e) {
-            System.out.println("Exception: " + e);
+            logger.error("Exception: " + e);
         }
     }
 }

@@ -1,4 +1,4 @@
-# Intel® Trust Authority Java TDX Adapter
+# Intel® Trust Authority Java Client TDX Adapter
 Java library for collecting TDX Quote from TDX enabled platform.
 
 This library leverages Intel SGX DCAP for Quote generation: [https://github.com/intel/SGXDataCenterAttestationPrimitives](https://github.com/intel/SGXDataCenterAttestationPrimitives)

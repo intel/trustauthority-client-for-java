@@ -90,6 +90,7 @@ COPY connector connector
 COPY sgx sgx
 COPY tdx tdx
 COPY examples examples
+COPY resources resources
 
 # Build the application
 RUN mvn -X -e clean compile install package
