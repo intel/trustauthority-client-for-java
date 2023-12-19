@@ -128,13 +128,13 @@ public class SgxSampleApp {
             String base64Quote = Base64.encode(sgx_evidence.getEvidence()).toString();
 
             // Print the SGX fetched quote in Base64 format
-            logger.info("SGX fetched quote Base64 Encoded: " + base64Quote);
+            logger.debug("SGX fetched quote Base64 Encoded: " + base64Quote);
 
             // Convert fetched SGX UserData from bytes to Base64
             String base64UserData = Base64.encode(sgx_evidence.getUserData()).toString();
 
             // Print the SGX fetched UserData in Base64 format
-            logger.info("SGX fetched user data Base64 Encoded: " + base64UserData);
+            logger.debug("SGX fetched user data Base64 Encoded: " + base64UserData);
 
             // Fetch proxy settings from environment
             String httpsHost = System.getenv("HTTPS_PROXY_HOST");
@@ -168,7 +168,7 @@ public class SgxSampleApp {
             if (trustauthority_request_id == null) {
                 logger.error("TRUSTAUTHORITY_REQUEST_ID is not set.");
             }
-            logger.info("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
+            logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
 
             // Initialize config required for connector using TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY
             Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);

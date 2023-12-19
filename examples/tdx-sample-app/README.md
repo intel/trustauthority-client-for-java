@@ -70,6 +70,7 @@ java -cp ~/.m2/repository/org/apache/logging/log4j/log4j-api/2.14.1/log4j-api-2.
 > - The proxy setting values for `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` have to be set by the user based on the system proxy settings.
 > - The example above uses one such proxy settings and this can vary from system to system.
 > - They can be set in [.env](../.env) by modifying the `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` variables accordingly.
+> - The default log level set is `INFO`, if required to use a different log level like `DEBUG`, it can be changed at `Root level="info"` in [log4j2.xml](../../resources/log4j2.xml).
 
 ### Output when example is run...
 - When successful, the token and other information will be dispayed...
@@ -123,11 +124,22 @@ In case one needs to use `docker` instead of `docker-compose` to run the contain
 the `TDX Attestation Sample App` can be run using the following command from the `tdx-sample-app` directory:
 
 ```sh
+# Creating tdx_token.env file
+cat <<EOF | tee tdx_token.env
+HTTPS_PROXY_HOST=<https-proxy-host>
+HTTPS_PROXY_PORT=<https-proxy-port>
+TRUSTAUTHORITY_REQUEST_ID=<trustauthority-request-id>
+TRUSTAUTHORITY_API_KEY=<trustauthority-api-key>
+TRUSTAUTHORITY_API_URL=<trustauthority-api-url>
+TRUSTAUTHORITY_BASE_URL=<trustauthority-base-url>
+EOF
+
+# Use docker to run the TDX Sample App...
 docker run \
        --rm \
        --network host \
        --device=/dev/tdx_guest \
-       --env-file ../.env \
+       --env-file tdx_token.env \
        trust-authority-java-client-tdx-sample-app:v1.0.0
 ```
 
@@ -136,6 +148,7 @@ docker run \
 > - The proxy setting values for `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` have to be set by the user based on the system proxy settings.
 > - The example above uses one such proxy settings and this can vary from system to system.
 > - They can be set in [.env](../.env) by modifying the `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` variables accordingly.
+> - The default log level set is `INFO`, if required to use a different log level like `DEBUG`, it can be changed at `Root level="info"` in [log4j2.xml](../../resources/log4j2.xml).
 
 ### Output when example is run...
 - When successful, the token and other information will be dispayed...

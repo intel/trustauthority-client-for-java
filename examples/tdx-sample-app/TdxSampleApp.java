@@ -43,13 +43,13 @@ public class TdxSampleApp {
             String base64Quote = Base64.encode(tdx_evidence.getEvidence()).toString();
 
             // Print the TDX fetched quote in Base64 format
-            logger.info("TDX fetched quote Base64 Encoded: " + base64Quote);
+            logger.debug("TDX fetched quote Base64 Encoded: " + base64Quote);
 
             // Convert fetched TDX UserData from bytes to Base64
             String base64UserData = Base64.encode(tdx_evidence.getUserData()).toString();
 
             // Print the TDX fetched UserData in Base64 format
-            logger.info("TDX fetched user data Base64 Encoded: " + base64UserData);
+            logger.debug("TDX fetched user data Base64 Encoded: " + base64UserData);
 
             // Fetch proxy settings from environment
             String httpsHost = System.getenv("HTTPS_PROXY_HOST");
@@ -83,8 +83,7 @@ public class TdxSampleApp {
             if (trustauthority_request_id == null) {
                 logger.error("TRUSTAUTHORITY_REQUEST_ID is not set.");
             }
-
-            logger.info("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
+            logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
 
             // Initialize config required for connector using TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY
             Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
