@@ -21,13 +21,13 @@ mvn -X -e clean compile install package
 
 ## Unit Tests
 
-To run the unit tests, run the following command:
+The unit tests can be found at [TrustAuthorityConnectorTest.java](./connector/src/test/java/com/intel/trustauthority/connector/TrustAuthorityConnectorTest.java), and they can be executed using Maven by running the command:
 
 ```sh
-mvn -X -e test
+mvn test
 ```
 
-### For E2E token collection and signature verification logic refer
+### For E2E token collection and signature verification samples, refer
 SGX: [SGX Sample App](./examples/sgx-sample-app/README.md)
 TDX: [TDX Sample App](./examples/tdx-sample-app/README.md)
 

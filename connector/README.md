@@ -17,8 +17,11 @@ Create a new Connector instance, then use the exposed interfaces to
 access different parts of the Intel Trust Authority API.
 
 ```java
-// Initialize config required for connector using BaseURL, apiURL and apiKey
-Config cfg = new Config(BaseURL, apiURL, apiKey);
+import com.intel.trustauthority.connector.Config;
+import com.intel.trustauthority.connector.TrustAuthorityConnector;
+
+// Initialize config required for connector using trustauthority_base_url, trustauthority_api_url and trustauthority_api_key
+Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
 
 // Initialize TrustAuthorityConnector with the config
 TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);

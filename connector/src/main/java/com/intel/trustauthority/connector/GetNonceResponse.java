@@ -12,7 +12,6 @@ public class GetNonceResponse {
 
     private VerifierNonce nonce;
     private Map<String, List<String>> headers;
-    private String error;
 
     /**
      * Intializes the GetNonceResponse object.
@@ -47,19 +46,5 @@ public class GetNonceResponse {
      */
     public void setHeaders(Map<String, List<String>> headers) {
         this.headers = headers;
-    }
-
-    /**
-     * getter function for error
-     */
-    public String getError() {
-        return this.error;
-    }
-
-    /**
-     * setter function for error
-     */
-    public void setError(String error) {
-        this.error = error;
     }
 }

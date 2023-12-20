@@ -15,8 +15,8 @@ public class AttestResponse {
     /**
      * Constructs a new AttestResponse object with the specified token and headers.
      *
-     * @param token         token provided by the user.
-     * @param headers       headers provided by user.
+     * @param token         token initialized by attest() API.
+     * @param headers       headers initialized by attest() API.
      */
     public AttestResponse(String token, Map<String, List<String>> headers) {
         this.token = token;

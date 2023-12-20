@@ -19,6 +19,9 @@ Create a new SGX adapter, then use the adapter to collect quote from SGX enabled
 SGX enclave needs to expose a method for creating enclave report and must use SHA256 hash value as reportdata.
 
 ```java
+import com.intel.trustauthority.sgx.SgxAdapter;
+import com.intel.trustauthority.connector.Evidence;
+
 // Create the SgxAdapter object
 SgxAdapter sgx_adapter = new SgxAdapter(enclaveId[0], nonce, EnclaveLibrary.EnclaveFunction);
 

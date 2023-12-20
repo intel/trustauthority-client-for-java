@@ -105,7 +105,7 @@ public class TrustAuthorityConnector {
     /**
      * Constructs a new TrustAuthorityConnector object with the specified config.
      *
-     * @param cfg                       Config object provided by the user.
+     * @param cfg Config object provided by the user.
      */
     public TrustAuthorityConnector(Config cfg) {
         this.cfg = cfg;
@@ -135,9 +135,18 @@ public class TrustAuthorityConnector {
         // Request for nonce from TrustAuthority server
         String url = String.format("%s/appraisal/v1/nonce", cfg.getApiUrl());
 
+        // Initiate requestUrl based on the url
+        URL requestUrl = new URL(url);
+
         // Create the HttpURLConnection
-        HttpURLConnection connection = createConnection(url, "GET");
-        // Set the requried Header parameters
+        HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
+
+        // Set the request parameters
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(0);
+        connection.setReadTimeout(0);
+
+        // Set the required Header parameters
         connection.setRequestProperty(Constants.HEADER_X_API_KEY, cfg.getApiKey());
         connection.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
         connection.setRequestProperty(Constants.HEADER_REQUEST_ID, args.getRequestId());
@@ -162,7 +171,7 @@ public class TrustAuthorityConnector {
             response.setNonce(nonce);
         } else {
             // Handle error response
-            throw new Exception("Processing response failed with response code: " + responseCode);
+            throw new Exception("Processing responsein GetNonce() failed with response code: " + responseCode);
         }
 
         return response;
@@ -191,11 +200,25 @@ public class TrustAuthorityConnector {
             ObjectMapper objectMapper = new ObjectMapper();
             jsonString = objectMapper.writeValueAsString(tr);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Exception: " + e);
+            return null;
         }
 
         // Create an HTTP Connection and send the request body as a POST request
-        HttpURLConnection conn = createConnection(url, "POST", jsonString, args.getRequestId());
+        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+
+        // Set the request method and other parameters
+        conn.setRequestMethod("POST");
+        conn.setDoOutput(true);
+        conn.setRequestProperty(Constants.HEADER_X_API_KEY, cfg.getApiKey());
+        conn.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
+        conn.setRequestProperty(Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON);
+        conn.setRequestProperty(Constants.HEADER_REQUEST_ID, args.getRequestId());
+
+        // Send request body to server specified by URL
+        if (jsonString != null) {
+            conn.getOutputStream().write(jsonString.getBytes("UTF-8"));
+        }
 
         // Fetch the response from the server and process it
         try {
@@ -232,8 +255,8 @@ public class TrustAuthorityConnector {
 
         // Calling the GetNonce() API
         GetNonceResponse nonceResponse = GetNonce(new GetNonceArgs(args.getRequestId()));
-        if (nonceResponse.getError() != null) {
-            throw new Exception("Failed to collect nonce from Trust Authority: " + nonceResponse.getError());
+        if (nonceResponse == null) {
+            throw new Exception("Failed to collect nonce from Trust Authority");
         }
 
         logger.info("Collected nonce from Trust Authority successfully...");
@@ -250,16 +273,16 @@ public class TrustAuthorityConnector {
 
         // Fetch the SGX/TDX associated quote
         Evidence evidence = args.getAdapter().collectEvidence(combinedNonce);
-        if (evidence.getError() != null) {
-            throw new Exception("Failed to collect evidence from adapter: " + evidence.getError());
+        if (evidence == null) {
+            throw new Exception("Failed to collect evidence from adapter");
         }
 
         logger.info("Collected evidence from adapter successfully...");
 
         // Calling the GetToken() API
         GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId()));
-        if (tokenResponse.getError() != null) {
-            throw new Exception("Failed to collect token from Trust Authority: " + tokenResponse.getError());
+        if (tokenResponse == null) {
+            throw new Exception("Failed to collect token from Trust Authority");
         }
 
         logger.info("Collected token from Trust Authority successfully...");
@@ -384,55 +407,9 @@ public class TrustAuthorityConnector {
                 return null;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Exception: " + e);
             return null;
         }
-    }
-
-    /**
-     * Helper function to create HttpURLConnection based on specified URL and request method
-     *
-     * @param url       Server URL to create the connectiong with.
-     * @param method    Request method type(GET/POST).
-     * @return          HttpURLConnection object
-     */
-    private HttpURLConnection createConnection(String url, String method) throws IOException {
-        // Create the URL object
-        URL requestUrl = new URL(url);
-        // Initiate the connection
-        HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
-        connection.setRequestMethod(method);
-        connection.setConnectTimeout(0);
-        connection.setReadTimeout(0);
-
-        return connection;
-    }
-
-    /**
-     * Helper function to create HttpURLConnection based on specified URL, request method, request to be sent and request ID
-     *
-     * @param url           Server URL to create the connectiong with.
-     * @param method        Request method type(GET/POST)
-     * @param requestBody   Request body to be sent
-     * @param requestId     Request ID type(GET/POST).
-     * @return              HttpURLConnection object
-     */
-    private HttpURLConnection createConnection(String url, String method, String requestBody, String requestId) throws IOException {
-        // Create the HttpURLConnection from the specified URL
-        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-        // Set the request method and other parameters
-        conn.setRequestMethod(method);
-        conn.setDoOutput(true);
-        conn.setRequestProperty(Constants.HEADER_X_API_KEY, cfg.getApiKey());
-        conn.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
-        conn.setRequestProperty(Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON);
-        conn.setRequestProperty(Constants.HEADER_REQUEST_ID, requestId);
-
-        // Sends request body to server specified by URL
-        if (requestBody != null) {
-            conn.getOutputStream().write(requestBody.getBytes("UTF-8"));
-        }
-        return conn;
     }
 
     /**

@@ -26,3 +26,6 @@ examples/tdx-sample-app/*.class
 # Ignore Sample App related files
 examples/sgx-sample-app/sgx_token.env
 examples/tdx-sample-app/tdx_token.env
+
+# IDE-specific files
+.vscode/

@@ -60,7 +60,7 @@ public class TdxSampleApp {
             String trustauthority_api_key = trust_authority_variables[2];
             String trustauthority_request_id = trust_authority_variables[3];
 
-            // Initialize config required for connector using TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY
+            // Initialize config required for connector using trustauthority_base_url, trustauthority_api_url and trustauthority_api_key
             Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
     
             // Initializing connector with the config

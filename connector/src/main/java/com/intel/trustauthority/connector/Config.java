@@ -49,13 +49,6 @@ public class Config {
     }
 
     /**
-     * getter function for url
-     */
-    public URL getUrl() {
-        return url;
-    }
-
-    /**
      * setter function for baseUrl
      */
     public void setBaseUrl(String baseUrl) {
@@ -74,12 +67,5 @@ public class Config {
      */
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
-    }
-
-    /**
-     * setter function for url
-     */
-    public void setUrl(URL url) {
-        this.url = url;
     }
 }

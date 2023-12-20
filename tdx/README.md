@@ -18,6 +18,9 @@ If you are running behind a proxy, follow https://www.baeldung.com/maven-behind-
 Create a new TDX adapter, then use the adapter to collect quote from TDX enabled platform.
 
 ```java
+import com.intel.trustauthority.tdx.TdxAdapter;
+import com.intel.trustauthority.connector.Evidence;
+
 // Create the TdxAdapter object
 TdxAdapter tdx_adapter = new TdxAdapter(nonce, null);
 

@@ -11,7 +11,6 @@ public class GetTokenResponse {
 
     private String token;
     private Map<String, List<String>> headers;
-    private String error;
 
     /**
      * Constructs a new GetTokenResponse object with the specified token and headers.
@@ -50,12 +49,5 @@ public class GetTokenResponse {
      */
     public void setHeaders(Map<String, List<String>> headers) {
         this.headers = headers;
-    }
-
-    /**
-     * getter function for error
-     */
-    public String getError() {
-        return this.error;
     }
 }

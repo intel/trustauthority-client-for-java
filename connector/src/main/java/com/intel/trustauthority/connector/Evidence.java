@@ -9,7 +9,6 @@ public class Evidence {
     private byte[] evidence;
     private byte[] userData;
     private byte[] eventLog;
-    private String error;
 
     /**
      * Constructs a new Evidence object with the specified type, evidence, userData and eventLog.
@@ -52,19 +51,5 @@ public class Evidence {
      */
     public byte[] getEventLog() {
         return eventLog;
-    }
-
-    /**
-     * getter function for error
-     */
-    public String getError() {
-        return this.error;
-    }
-
-    /**
-     * setter function for error
-     */
-    public void setError(String error) {
-        this.error = error;
     }
 }
