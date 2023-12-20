@@ -1,4 +1,4 @@
-package trust_authority_client;
+package com.intel.trustauthority.connector;
 
 /**
  * Evidence class for holding the SGX/TDX Quote fetched from SGX/TDX enabled platform

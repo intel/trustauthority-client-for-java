@@ -1,4 +1,4 @@
-package trust_authority_client;
+package com.intel.trustauthority.sgx;
 
 // Java Collections Imports
 import java.util.List;
@@ -15,13 +15,16 @@ import com.sun.jna.TypeMapper;
 import com.sun.jna.Structure.FieldOrder;
 import com.sun.jna.Function;
 
+// Trust Authority Connector import
+import com.intel.trustauthority.connector.*;
+
 /**
  * SgxAdapter class for SGX Quote collection from SGX enabled platform
  * This class implements the base EvidenceAdapter interface.
  */
 public class SgxAdapter implements EvidenceAdapter {
 
-    private long EID;
+    private long enclaveID;
     private byte[] uData;
     private Function reportFunction;
 
@@ -33,35 +36,23 @@ public class SgxAdapter implements EvidenceAdapter {
      * @param reportFunction    Function pointer to enclave function provided by user.
      */
     public SgxAdapter(long eid, byte[] udata, Function reportFunction) {
-        this.EID = eid;
+        this.enclaveID = eid;
         this.uData = udata;
         this.reportFunction = reportFunction;
     }
 
     /**
-     * Constructs a new SgxAdapter object with the specified eid, udata and reportFunction.
-     *
-     * @param eid               eid specified by user.
-     * @param udata             udata provided by the user.
-     * @param reportFunction    Function pointer to enclave function provided by user.
-     * @return SgxAdapter object
-     */
-    public SgxAdapter newEvidenceAdapter(long eid, byte[] udata, Function reportFunction) {
-        return new SgxAdapter(eid, udata, reportFunction);
-    }
-
-    /**
-     * SgxLibrary is an interface that extends JNA's Library interface.
+     * SgxDcapQuotingLibrary is an interface that extends JNA's Library interface.
      * It defines the methods that will be mapped to the native library functions.
      */
-    public interface SgxLibrary extends Library {
+    public interface SgxDcapQuotingLibrary extends Library {
         int sgx_qe_get_target_info(sgx_target_info_t targetInfo);
         int sgx_qe_get_quote_size(IntByReference quote_size);
         int sgx_qe_get_quote(sgx_report_t p_report, int quote_size, Pointer quote_buffer);
     }
 
     // private variable to hold an instance of the native library sgx_dcap_ql interface
-    private SgxLibrary sgxLibrary = (SgxLibrary) Native.load("sgx_dcap_ql", SgxLibrary.class);
+    private SgxDcapQuotingLibrary sgxLibrary = (SgxDcapQuotingLibrary) Native.load("sgx_dcap_ql", SgxDcapQuotingLibrary.class);
 
     /**
      * Java object representing a C struct sgx_config_svn_t.
@@ -352,11 +343,8 @@ public class SgxAdapter implements EvidenceAdapter {
         Pointer noncePtr = new Memory(nonce.length);
         noncePtr.write(0, nonce, 0, nonce.length);
 
-        // To fetch size of the nonce input
-        int nonce_size = nonce.length;
-
         // Call the passed function pointer with the required parameters
-        int status = reportFunction.invokeInt(new Object[]{this.EID, retVal, qe3_target, noncePtr, nonce_size, p_report});
+        int status = reportFunction.invokeInt(new Object[]{this.enclaveID, retVal, qe3_target, noncePtr, nonce.length, p_report});
         if (status != 0) {
             throw new RuntimeException("Report callback returned error code " + Integer.toHexString(status));
         }

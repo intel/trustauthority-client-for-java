@@ -1,4 +1,4 @@
-package trust_authority_client;
+package com.intel.trustauthority.tdx;
 
 // Java NIO Imports
 import java.nio.ByteBuffer;

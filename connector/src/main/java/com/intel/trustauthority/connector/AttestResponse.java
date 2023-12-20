@@ -1,4 +1,4 @@
-package trust_authority_client;
+package com.intel.trustauthority.connector;
 
 // Java Standard Library Imports
 import java.util.List;

@@ -1,4 +1,4 @@
-package trust_authority_client;
+package com.intel.trustauthority.tdx;
 
 // Java Standard Library Imports
 import java.nio.charset.StandardCharsets;
@@ -19,6 +19,9 @@ import com.sun.jna.ptr.PointerByReference;
 // Jackson JSON Library Import
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+// Trust Authority Connector import
+import com.intel.trustauthority.connector.*;
 
 /**
  * TdxAdapter class for TDX Quote collection from TDX enabled platform
@@ -41,17 +44,6 @@ public class TdxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Constructs a new TdxAdapter object with the specified uData and evLogParser.
-     *
-     * @param uData             uData provided by the user.
-     * @param evLogParser       EventLogParser object provided by user.
-     * @return TdxAdapter object
-     */
-    public static TdxAdapter newEvidenceAdapter(byte[] uData, EventLogParser evLogParser) {
-        return new TdxAdapter(uData, evLogParser);
-    }
-
-    /**
      * TdxAttestLibrary is an interface that extends JNA's Library interface.
      * It defines the methods that will be mapped to the native library functions.
      */
@@ -70,7 +62,17 @@ public class TdxAdapter implements EvidenceAdapter {
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class TdxUuid extends Structure {
-        // Define structure fields to match the C struct
+        public byte[] d = new byte[16];
+
+        /**
+         * Specifies the order of fields in the native structure.
+         *
+         * @return A list of field names in the order they appear in the native structure.
+         */
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("d");
+        }
     }
 
     /**
@@ -109,7 +111,7 @@ public class TdxAdapter implements EvidenceAdapter {
         cReportData.write(0, reportData, 0, reportData.length);
 
         // Passing this as null as it's not required
-        // TdxUuid selectedAttKeyId = new TdxUuid();
+        TdxUuid selectedAttKeyId = new TdxUuid();
 
         // Initialize TDX Quote objects
         IntByReference quoteSize = new IntByReference();
@@ -117,7 +119,8 @@ public class TdxAdapter implements EvidenceAdapter {
 
         // Fetch TDX Quote by calling the respective tdx sdk function
         int ret = TdxAttestLibrary.INSTANCE.tdx_att_get_quote(cReportData, null, 0,
-                null, quoteBuf, quoteSize, 0);
+                                                              selectedAttKeyId, quoteBuf,
+                                                              quoteSize, 0);
         if (ret != 0) {
             throw new RuntimeException("tdx_att_get_quote returned error code " + ret);
         }

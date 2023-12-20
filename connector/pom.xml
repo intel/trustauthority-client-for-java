@@ -2,15 +2,14 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>trust_authority_client</groupId>
-        <artifactId>trust-authority-client-java</artifactId>
+        <groupId>com.intel.trustauthority</groupId>
+        <artifactId>trust-authority-client</artifactId>
         <version>1.0.0</version>
     </parent>
 
     <artifactId>connector</artifactId>
 
     <build>
-        <sourceDirectory>.</sourceDirectory>
         <resources>
             <resource>
                 <directory>../resources</directory>

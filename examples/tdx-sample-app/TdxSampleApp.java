@@ -10,14 +10,13 @@ import com.nimbusds.jose.util.Base64;
 // Third-party Library Imports
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configurator;
 
 // trust_authority_client imports
-import trust_authority_client.TrustAuthorityConnector;
-import trust_authority_client.TdxAdapter;
-import trust_authority_client.Evidence;
-import trust_authority_client.Config;
-import trust_authority_client.AttestArgs;
-import trust_authority_client.AttestResponse;
+import com.intel.trustauthority.connector.*;
+import com.intel.trustauthority.tdx.TdxAdapter;
 
 /**
  * TdxSampleApp class, a sample application demonstrating TDX Quote collection/verification
@@ -30,6 +29,9 @@ public class TdxSampleApp {
 
     public static void main(String[] args) {
         try {
+            // Set log level
+            setLogLevel("TdxSampleApp");
+
             // For testing
             byte[] bytes = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
 
@@ -51,39 +53,12 @@ public class TdxSampleApp {
             // Print the TDX fetched UserData in Base64 format
             logger.debug("TDX fetched user data Base64 Encoded: " + base64UserData);
 
-            // Fetch proxy settings from environment
-            String httpsHost = System.getenv("HTTPS_PROXY_HOST");
-            if (httpsHost == null) {
-                logger.warn("HTTPS_PROXY_HOST is not set.");
-            }
-            String httpsPort = System.getenv("HTTPS_PROXY_PORT");
-            if (httpsPort == null) {
-                logger.warn("HTTPS_PROXY_PORT is not set.");
-            }
-            logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
-
-            // Setting proxy settings
-            System.setProperty("https.proxyHost", httpsHost);
-            System.setProperty("https.proxyPort", httpsPort);
-
-            // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
-            String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");
-            if (trustauthority_base_url == null) {
-                logger.error("TRUSTAUTHORITY_BASE_URL is not set.");
-            }
-            String trustauthority_api_url = System.getenv("TRUSTAUTHORITY_API_URL");
-            if (trustauthority_api_url == null) {
-                logger.error("TRUSTAUTHORITY_API_URL is not set.");
-            }
-            String trustauthority_api_key = System.getenv("TRUSTAUTHORITY_API_KEY");
-            if (trustauthority_api_key == null) {
-                logger.error("TRUSTAUTHORITY_API_KEY is not set.");
-            }
-            String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
-            if (trustauthority_request_id == null) {
-                logger.error("TRUSTAUTHORITY_REQUEST_ID is not set.");
-            }
-            logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
+            // Initialize Sample App variables
+            String[] trust_authority_variables = init();
+            String trustauthority_base_url = trust_authority_variables[0];
+            String trustauthority_api_url = trust_authority_variables[1];
+            String trustauthority_api_key = trust_authority_variables[2];
+            String trustauthority_request_id = trust_authority_variables[3];
 
             // Initialize config required for connector using TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY
             Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
@@ -123,5 +98,91 @@ public class TdxSampleApp {
         } catch (Exception e) {
             logger.error("Exception: " + e);
         }
+    }
+
+    /**
+     * Helper function to set log level
+     * 
+     * @param loggerName Class name of the log level to be set for
+     */
+    private static void setLogLevel(String loggerName) {
+        // Fetch the log level from an environment variable
+        String logLevel = System.getenv("LOG_LEVEL");
+        if (logLevel == null) {
+            logger.info("LOG_LEVEL environment variable not set. Using default log level: INFO");
+            logLevel = "info";
+        } else {
+            if (logLevel.equalsIgnoreCase("info")) {
+                logLevel = "info";
+            } else if (logLevel.equalsIgnoreCase("trace")) {
+                logLevel = "trace";
+            } else if (logLevel.equalsIgnoreCase("debug")) {
+                logLevel = "debug";
+            } else if (logLevel.equalsIgnoreCase("warn")) {
+                logLevel = "warn";
+            } else if (logLevel.equalsIgnoreCase("error")) {
+                logLevel = "error";
+            } else if (logLevel.equalsIgnoreCase("fatal")) {
+                logLevel = "fatal";
+            } else {
+                logger.info("LOG_LEVEL unknown. Using default log level: INFO");
+                logLevel = "info";
+            }
+        }
+
+        // Set log level based on environment variable
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configurator.setLevel(loggerName, org.apache.logging.log4j.Level.valueOf(logLevel));
+        ctx.updateLoggers();
+    }
+
+    /**
+     * Helper function to initialize the Sample App
+     * 
+     * @return String[] object containing the trust authority variables
+     */
+    private static String[] init() {
+        // Fetch proxy settings from environment
+        String httpsHost = System.getenv("HTTPS_PROXY_HOST");
+        if (httpsHost == null) {
+            logger.warn("HTTPS_PROXY_HOST is not set.");
+        }
+        String httpsPort = System.getenv("HTTPS_PROXY_PORT");
+        if (httpsPort == null) {
+            logger.warn("HTTPS_PROXY_PORT is not set.");
+        }
+        logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
+
+        // Setting proxy settings
+        System.setProperty("https.proxyHost", httpsHost);
+        System.setProperty("https.proxyPort", httpsPort);
+
+        // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
+        String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");
+        if (trustauthority_base_url == null) {
+            logger.error("TRUSTAUTHORITY_BASE_URL is not set.");
+        }
+        String trustauthority_api_url = System.getenv("TRUSTAUTHORITY_API_URL");
+        if (trustauthority_api_url == null) {
+            logger.error("TRUSTAUTHORITY_API_URL is not set.");
+        }
+        String trustauthority_api_key = System.getenv("TRUSTAUTHORITY_API_KEY");
+        if (trustauthority_api_key == null) {
+            logger.error("TRUSTAUTHORITY_API_KEY is not set.");
+        }
+        String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
+        if (trustauthority_request_id == null) {
+            logger.error("TRUSTAUTHORITY_REQUEST_ID is not set.");
+        }
+        logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
+        
+        // Initialize trust authority variables
+        String[] initializer = new String[4];
+        initializer[0] = trustauthority_base_url;
+        initializer[1] = trustauthority_api_url;
+        initializer[2] = trustauthority_api_key;
+        initializer[3] = trustauthority_request_id;
+
+        return initializer;
     }
 }

@@ -13,14 +13,5 @@ services:
         - MAVEN_PROXY_PORT=${MAVEN_PROXY_PORT}
         - DCAP_VERSION=${DCAP_VERSION}
         - PSW_VERSION=${PSW_VERSION}
-    network_mode: "host"
-    devices:
-      - "/dev/sgx_enclave:/dev/sgx_enclave"
     env_file:
       - ../.env
-    volumes:
-      - /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket
-      - /dev:/dev
-    environment:
-      - SPRING_PROFILES_ACTIVE=production
-      - SGX_AESM_ADDR=1

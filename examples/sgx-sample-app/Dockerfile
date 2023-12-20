@@ -35,8 +35,6 @@ WORKDIR /app
 # Set Maven proxy settings
 ARG MAVEN_PROXY_HOST
 ARG MAVEN_PROXY_PORT
-ARG MAVEN_PROXY_HOST=$MAVEN_PROXY_HOST
-ARG MAVEN_PROXY_PORT=$MAVEN_PROXY_PORT
 
 # Create /root/.m2/settings.xml file with proxy settings added
 RUN mkdir -p /root/.m2 && \
@@ -50,14 +48,12 @@ RUN apt-get update; \
 
 # Installing SGX sdk
 RUN echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main' > /etc/apt/sources.list.d/intel-sgx.list
-RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
 
 # Fetch intel-sgx-deb.key
 RUN curl https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key -o /tmp/intel-sgx-deb.key; \
     apt-key add /tmp/intel-sgx-deb.key; \
     rm /tmp/intel-sgx-deb.key
 
-# Install packages from intel-sgx.list
 RUN apt-get update 
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 
@@ -76,9 +72,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsgx-pce-logic=${DCAP_VERSION} \
     libsgx-dcap-ql=${DCAP_VERSION} \
     libsgx-dcap-ql-dev=${DCAP_VERSION} \
-    libsgx-dcap-default-qpl=${DCAP_VERSION} \
-	libsgx-quote-ex=${PSW_VERSION}-focal1 \
-    libcurl4-openssl-dev
+    libsgx-quote-ex=${PSW_VERSION}-focal1
 
 WORKDIR /app
 
@@ -105,7 +99,7 @@ RUN cd /app/examples/sgx-sample-app/sgx-example-enclave/enclave/ && \
 WORKDIR /app/examples/sgx-sample-app
 
 # Compile SGX Sample App
-RUN javac -cp /root/.m2/repository/org/apache/logging/log4j/log4j-api/2.14.1/log4j-api-2.14.1.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-core/2.14.1/log4j-core-2.14.1.jar:/root/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:/root/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/root/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:/root/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar SgxSampleApp.java
+RUN javac -cp /root/.m2/repository/org/apache/logging/log4j/log4j-api/2.17.1/log4j-api-2.17.1.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar:/root/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:/root/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/root/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:/root/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar SgxSampleApp.java
 
 # Run SGX Sample App
-CMD ["java", "-cp", "/root/.m2/repository/org/apache/logging/log4j/log4j-api/2.14.1/log4j-api-2.14.1.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-core/2.14.1/log4j-core-2.14.1.jar:/root/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:/root/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/root/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:/root/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:./", "SgxSampleApp"]
+CMD ["java", "-cp", "/root/.m2/repository/org/apache/logging/log4j/log4j-api/2.17.1/log4j-api-2.17.1.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar:/root/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:/root/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/root/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:/root/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:./", "SgxSampleApp"]

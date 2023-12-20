@@ -12,10 +12,5 @@ services:
         - MAVEN_PROXY_HOST=${MAVEN_PROXY_HOST}
         - MAVEN_PROXY_PORT=${MAVEN_PROXY_PORT}
         - DCAP_VERSION=${DCAP_VERSION}
-    network_mode: "host"
-    devices:
-      - "/dev/tdx_guest:/dev/tdx_guest"
     env_file:
       - ../.env
-    environment:
-      - SPRING_PROFILES_ACTIVE=production

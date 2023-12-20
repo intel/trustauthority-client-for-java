@@ -1,4 +1,4 @@
-package trust_authority_client;
+package com.intel.trustauthority.connector;
 
 // Java Standard Library Imports
 import java.io.ByteArrayInputStream;
@@ -92,431 +92,8 @@ import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 
-
 /**
- * Constants class for holding all Constants required by the TrustAuthorityConnector
- */
-class Constants {
-    public static final String HEADER_X_API_KEY = "x-api-key";
-    public static final String HEADER_ACCEPT = "Accept";
-    public static final String HEADER_CONTENT_TYPE = "Content-Type";
-    public static final String HEADER_REQUEST_ID = "request-id";
-    public static final String HEADER_TRACE_ID = "trace-id";
-
-    public static final String MIME_APPLICATION_JSON = "application/json";
-    public static final int ATS_CERT_CHAIN_MAX_LEN = 10;
-    public static final int MAX_RETRIES = 2;
-    public static final int DEFAULT_RETRY_WAIT_MIN_SECONDS = 2;
-    public static final int DEFAULT_RETRY_WAIT_MAX_SECONDS = 10;
-    public static final String SERVICE_UNAVAILABLE_ERROR = "service unavailable";
-
-    public static final int AtsCertChainMaxLen = 5; // Set the maximum length of the certificate chain
-}
-
-/**
- * GetNonceResponse class for holding the response obtained from GetNonce() API
- */
-class GetNonceResponse {
-
-    private VerifierNonce nonce;
-    private Map<String, List<String>> headers;
-    private String error;
-
-    /**
-     * Intializes the GetNonceResponse object.
-     */
-    public GetNonceResponse() {
-        headers = new HashMap<>();
-    }
-
-    /**
-     * getter function for nonce
-     */
-    public VerifierNonce getNonce() {
-        return nonce;
-    }
-
-    /**
-     * setter function for nonce
-     */
-    public void setNonce(VerifierNonce nonce) {
-        this.nonce = nonce;
-    }
-
-    /**
-     * getter function for headers
-     */
-    public Map<String, List<String>> getHeaders() {
-        return headers;
-    }
-
-    /**
-     * setter function for headers
-     */
-    public void setHeaders(Map<String, List<String>> headers) {
-        this.headers = headers;
-    }
-
-    /**
-     * getter function for error
-     */
-    public String getError() {
-        return this.error;
-    }
-
-    /**
-     * setter function for error
-     */
-    public void setError(String error) {
-        this.error = error;
-    }
-}
-
-/**
- * GetTokenResponse class for holding the response obtained from GetToken() API
- */
-class GetTokenResponse {
-
-    private String token;
-    private Map<String, List<String>> headers;
-    private String error;
-
-    /**
-     * Constructs a new GetTokenResponse object with the specified token and headers.
-     *
-     * @param token             token provided by the user.
-     * @param headers           headers provided by user.
-     */
-    public GetTokenResponse(String token, Map<String, List<String>> headers) {
-        this.token = token;
-        this.headers = headers;
-    }
-
-    /**
-     * getter function for token
-     */
-    public String getToken() {
-        return token;
-    }
-
-    /**
-     * getter function for headers
-     */
-    public Map<String, List<String>> getHeaders() {
-        return headers;
-    }
-
-    /**
-     * setter function for token
-     */
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    /**
-     * setter function for headers
-     */
-    public void setHeaders(Map<String, List<String>> headers) {
-        this.headers = headers;
-    }
-
-    /**
-     * getter function for error
-     */
-    public String getError() {
-        return this.error;
-    }
-}
-
-/**
- * GetNonceArgs class for holding the request object to be sent to GetNonce() API
- */
-class GetNonceArgs {
-
-    private String requestId;
-
-    /**
-     * Constructs a new GetNonceArgs object with the specified requestId.
-     *
-     * @param requestId       requestId provided by user.
-     */
-    public GetNonceArgs(String requestId) {
-        this.requestId = requestId;
-    }
-
-    /**
-     * getter function for requestId
-     */
-    public String getRequestId() {
-        return requestId;
-    }
-}
-
-/**
- * GetTokenArgs class for holding the request object to be sent to GetToken() API
- */
-class GetTokenArgs {
-
-    private VerifierNonce nonce;
-    private Evidence evidence;
-    private List<UUID> policyIds;
-    private String requestId;
-
-    /**
-     * Constructs a new GetTokenArgs object with the specified nonce, evidence, policyIds and requestId.
-     *
-     * @param nonce          VerifierNonce provided by the user.
-     * @param evidence       Evidence object provided by user.
-     * @param policyIds      policyIds provided by the user.
-     * @param requestId      requestId provided by user.
-     */
-    public GetTokenArgs(VerifierNonce nonce, Evidence evidence, List<UUID> policyIds, String requestId) {
-        this.nonce = nonce;
-        this.evidence = evidence;
-        this.policyIds = policyIds;
-        this.requestId = requestId;
-    }
-
-    /**
-     * getter function for nonce
-     */
-    public VerifierNonce getNonce() {
-        return nonce;
-    }
-
-    /**
-     * getter function for evidence
-     */
-    public Evidence getEvidence() {
-        return evidence;
-    }
-
-    /**
-     * getter function for policyIds
-     */
-    public List<UUID> getPolicyIds() {
-        return policyIds;
-    }
-
-    /**
-     * getter function for requestId
-     */
-    public String getRequestId() {
-        return requestId;
-    }
-}
-
-/**
- * EvidenceAdapter interface for user to implement SGX/TDX based adapters
- * The collectEvidence function is to be implemented by the user.
- */
-interface EvidenceAdapter {
-    /**
-     * collectEvidence is used to get SGX/TDX quote using DCAP Quote Generation service
-     *
-     * @param nonce nonce value passed by user
-     * @return Evidence object containing the fetched SGX/TDX quote
-     */
-    Evidence collectEvidence(byte[] nonce) throws Exception;
-}
-
-/**
- * VerifierNonce class for holding config provided by user for TrustAuthorityConnector
- */
-class VerifierNonce {
-
-    private byte[] val;
-    private byte[] iat;
-    private byte[] signature;
-
-    /**
-     * Default constructor (required for Jackson Object Mapping)
-     */
-    public VerifierNonce() {
-    }
-
-    /**
-     * Constructs a new VerifierNonce object with the specified val, iat and signature.
-     *
-     * @param val           val provided by the user.
-     * @param iat           iat provided by user.
-     * @param signature     signature provided by user.
-     */
-    public VerifierNonce(byte[] val, byte[] iat, byte[] signature) {
-        this.val = val;
-        this.iat = iat;
-        this.signature = signature;
-    }
-
-    /**
-     * getter function for val
-     */
-    public byte[] getVal() {
-        return val;
-    }
-
-    /**
-     * setter function for val
-     */
-    public void setVal(byte[] val) {
-        this.val = val;
-    }
-
-    /**
-     * getter function for iat
-     */
-    public byte[] getIat() {
-        return iat;
-    }
-
-    /**
-     * setter function for iat
-     */
-    public void setIat(byte[] iat) {
-        this.iat = iat;
-    }
-
-    /**
-     * getter function for signature
-     */
-    public byte[] getSignature() {
-        return signature;
-    }
-
-    /**
-     * setter function for signature
-     */
-    public void setSignature(byte[] signature) {
-        this.signature = signature;
-    }
-}
-
-/**
- * TokenRequest class for holding Token details to be sent to attest() API
- */
-class TokenRequest {
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("quote")
-    private byte[] quote;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("verifier_nonce")
-    private VerifierNonce verifierNonce;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("runtime_data")
-    private byte[] runtimeData;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("policy_ids")
-    private List<UUID> policyIds;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("event_log")
-    private byte[] eventLog;
-
-    /**
-     * Constructs a new TokenRequest object with the specified quote, verifierNonce, runtimeData, policyIds and eventLog.
-     *
-     * @param quote          quote provided by the user.
-     * @param verifierNonce  verifierNonce object provided by user.
-     * @param runtimeData    runtimeData provided by user.
-     * @param policyIds      policyIds provided by user.
-     * @param eventLog       eventLog provided by user.
-     */
-    public TokenRequest(byte[] quote, VerifierNonce verifierNonce, byte[] runtimeData, List<UUID> policyIds, byte[] eventLog) {
-        this.quote = quote;
-        this.verifierNonce = verifierNonce;
-        this.runtimeData = runtimeData;
-        this.policyIds = policyIds;
-        this.eventLog = eventLog;
-    }
-
-    /**
-     * getter function for quote
-     */
-    public byte[] getQuote() {
-        return quote;
-    }
-
-    /**
-     * setter function for quote
-     */
-    public void setQuote(byte[] quote) {
-        this.quote = quote;
-    }
-
-    /**
-     * getter function for verifierNonce
-     */
-    public VerifierNonce getVerifierNonce() {
-        return verifierNonce;
-    }
-
-    /**
-     * setter function for verifierNonce
-     */
-    public void setVerifierNonce(VerifierNonce verifierNonce) {
-        this.verifierNonce = verifierNonce;
-    }
-
-    /**
-     * getter function for runtimeData
-     */
-    public byte[] getRuntimeData() {
-        return runtimeData;
-    }
-
-    /**
-     * setter function for runtimeData
-     */
-    public void setRuntimeData(byte[] runtimeData) {
-        this.runtimeData = runtimeData;
-    }
-
-    /**
-     * getter function for policyIds
-     */
-    public List<UUID> getPolicyIds() {
-        return policyIds;
-    }
-
-    /**
-     * setter function for policyIds
-     */
-    public void setPolicyIds(List<UUID> policyIds) {
-        this.policyIds = policyIds;
-    }
-
-    /**
-     * getter function for eventLog
-     */
-    public byte[] getEventLog() {
-        return eventLog;
-    }
-
-    /**
-     * setter function for eventLog
-     */
-    public void setEventLog(byte[] eventLog) {
-        this.eventLog = eventLog;
-    }
-}
-
-/**
- * ConnectorException class for throwing exceptions
- * This class implements the base Exception interface.
- */
-class ConnectorException extends Exception {
-    public ConnectorException(String message) {
-        super(message);
-    }
-}
-
-/**
- * TdxAdapter class for TDX Quote collection from TDX enabled platform
- * This class implements the base EvidenceAdapter interface.
+ * TrustAuthorityConnector exposes functions for calling Intel Trust Authority REST APIs
  */
 public class TrustAuthorityConnector {
 
@@ -549,7 +126,6 @@ public class TrustAuthorityConnector {
     }
 
     /**
-     * Constructs a new GetNonceResponse object with the specified GetNonceArgs
      * Fetches the nonce from the TrustAuthority server using the specified API URL
      *
      * @param args  GetNonceArgs object provided by the user.
@@ -568,20 +144,38 @@ public class TrustAuthorityConnector {
 
         // Process the fetched response into the GetNonceResponse object
         GetNonceResponse response = new GetNonceResponse();
-        processResponse(connection, response);
+
+        // Set response Header fields from the fetched response
+        response.setHeaders(connection.getHeaderFields());
+
+        // Check for response code
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            // Fetch the response from the server
+            String responseBody = readResponseBody(connection);
+
+            // Map the fetched response JSON to VerifierNonce object
+            ObjectMapper mapper = new ObjectMapper();
+            VerifierNonce nonce = mapper.readValue(responseBody, VerifierNonce.class);
+
+            // Set GetNonceResponse object nonce value with VerifierNonce
+            response.setNonce(nonce);
+        } else {
+            // Handle error response
+            throw new Exception("Processing response failed with response code: " + responseCode);
+        }
 
         return response;
     }
 
     /**
-     * Constructs a new GetTokenResponse object with the specified GetTokenArgs
      * Fetches the token from the TrustAuthority server using the specified API URL
      *
      * @param args  GetTokenArgs object provided by the user.
      * @return      GetTokenResponse object
      */
     public GetTokenResponse GetToken(GetTokenArgs args) throws IOException {
-        // Request for nonce from TrustAuthority server
+        // Request for token from TrustAuthority server
         String url = String.format("%s/appraisal/v1/attest", cfg.getApiUrl());
 
         // Create the TokenRequest object
@@ -693,7 +287,7 @@ public class TrustAuthorityConnector {
         
         // Set request header properties
         connection.setRequestMethod("GET");
-        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
 
         // Check for connection status
         int responseCode = connection.getResponseCode();
@@ -839,34 +433,6 @@ public class TrustAuthorityConnector {
             conn.getOutputStream().write(requestBody.getBytes("UTF-8"));
         }
         return conn;
-    }
-
-    /**
-     * Helper function to convert HttpURLConnection response to GetNonceResponse object
-     *
-     * @param connection  HttpURLConnection object provided by the user.
-     * @param response    GetNonceResponse object provided by the user.
-     */
-    private void processResponse(HttpURLConnection connection, GetNonceResponse response) throws IOException {
-        // Set response Header fields from the fetched response
-        response.setHeaders(connection.getHeaderFields());
-
-        // Check for response code
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            // Fetch the response from the server
-            String responseBody = readResponseBody(connection);
-
-            // Map the fetched response JSON to VerifierNonce object
-            ObjectMapper mapper = new ObjectMapper();
-            VerifierNonce nonce = mapper.readValue(responseBody, VerifierNonce.class);
-
-            // Set GetNonceResponse object nonce value with VerifierNonce
-            response.setNonce(nonce);
-        } else {
-            // Handle error response
-            logger.error("Processing response failed with response code: " + responseCode);
-        }
     }
 
     /**

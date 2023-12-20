@@ -1,4 +1,4 @@
-package trust_authority_client;
+package com.intel.trustauthority.connector;
 
 // Java Standard Library Imports
 import java.net.URL;
@@ -24,7 +24,7 @@ public class Config {
         this.baseUrl = baseUrl;
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
-        this.url = new URL(baseUrl);
+        this.url = new URL(apiUrl);
     }
 
     /**
