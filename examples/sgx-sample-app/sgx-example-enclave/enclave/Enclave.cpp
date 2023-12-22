@@ -1,7 +1,32 @@
 /*
- *   Copyright (c) 2023 Intel Corporation
- *   All rights reserved.
- *   SPDX-License-Identifier: BSD-3-Clause
+ * Copyright (C) 2023 Intel Corporation. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in
+ *     the documentation and/or other materials provided with the
+ *     distribution.
+ *   * Neither the name of Intel Corporation nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
 #include "Enclave_t.h"
@@ -40,7 +65,6 @@ sgx_status_t enclave_create_pubkey(
                                            (unsigned char*)g_rsa_key.iqmp);
 
         if (SGX_SUCCESS != status) {
-            //printf("RSA key pair creation failed.");
             return status;
         }
         key_pair_created = true;
@@ -69,50 +93,43 @@ uint32_t enclave_create_report(const sgx_target_info_t* p_qe3_target,
 
     uint8_t* pdata = (uint8_t *)malloc(size);
     if (!pdata) {
-        //printf("ReportData memory allocation failed.");
         return status;
     }
 
     errno_t err = 0;
     err = memcpy_s(pdata, nonce_size, nonce, nonce_size);
     if (err != 0) {
-            //printf("memcpy of nonce failed.");
-            goto CLEANUP;
+            goto ERROR;
     }
 
     err = memcpy_s(pdata + nonce_size, E_SIZE_IN_BYTES, ((unsigned char *)g_rsa_key.e), E_SIZE_IN_BYTES);
     if (err != 0) {
-        //printf("memcpy of exponent failed.");
-        goto CLEANUP;
+        goto ERROR;
     }
 
     err = memcpy_s(pdata + nonce_size + E_SIZE_IN_BYTES, N_SIZE_IN_BYTES, ((unsigned char *)g_rsa_key.n), N_SIZE_IN_BYTES);
     if (err != 0) {
-        //printf("memcpy of modulus failed.");
-        goto CLEANUP;
+        goto ERROR;
     }
 
     status = sgx_sha256_msg(pdata, size, (sgx_sha256_hash_t *)msg_hash);
     if (SGX_SUCCESS != status) {
-        //printf("Hash of userdata failed!");
-        goto CLEANUP;
+        goto ERROR;
     }
 
     err = memcpy_s(report_data.d, sizeof(msg_hash), msg_hash, sizeof(msg_hash));
     if (err != 0) {
-            //printf("memcpy of reportdata failed.");
             status = SGX_ERROR_UNEXPECTED;
-        goto CLEANUP;
+        goto ERROR;
     }
 
     // Generate the report for the app_enclave
     status = sgx_create_report(p_qe3_target, &report_data, p_report);
     if (SGX_SUCCESS != status) {
-        //printf("Enclave report creation failed!");
-        goto CLEANUP;
+        goto ERROR;
     }
 
-CLEANUP:
+ERROR:
     free(pdata);
     return status;
 }

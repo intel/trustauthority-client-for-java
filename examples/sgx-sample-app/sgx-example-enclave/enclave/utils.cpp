@@ -1,7 +1,6 @@
 /*
- *   Copyright (c) 2023 Intel Corporation
- *   All rights reserved.
- *   SPDX-License-Identifier: BSD-3-Clause
+ * Copyright (C) 2023 Intel Corporation
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include "Enclave_u.h"
@@ -24,7 +23,7 @@ int get_public_key(sgx_enclave_id_t eid, uint8_t **pp_key, uint32_t *p_key_size)
     if (NULL == *pp_key) {
         return -1;
     }
-    memcpy(*pp_key,  ((const char *)rsa_key.e), E_SIZE_IN_BYTES);
+    memcpy(*pp_key, ((const char *)rsa_key.e), E_SIZE_IN_BYTES);
     memcpy(*pp_key + E_SIZE_IN_BYTES, ((const char *)rsa_key.n), N_SIZE_IN_BYTES);
 
     *p_key_size = E_SIZE_IN_BYTES + N_SIZE_IN_BYTES;
@@ -32,18 +31,8 @@ int get_public_key(sgx_enclave_id_t eid, uint8_t **pp_key, uint32_t *p_key_size)
     return 0;
 }
 
-int get_enclave_create_report(sgx_enclave_id_t eid, uint32_t* retval, const sgx_target_info_t* p_qe3_target, uint8_t* nonce, uint32_t nonce_size, sgx_report_t* p_report)
-{
-    // return value which stores the result of the sgx call
-    sgx_status_t result;
-
-    // Call enclave_create_report
-    result = enclave_create_report(eid, retval, p_qe3_target, nonce, nonce_size, p_report);
-
-    return result;
-}
-
 void free_public_key(uint8_t *p_key)
 {
     free(p_key);
 }
+

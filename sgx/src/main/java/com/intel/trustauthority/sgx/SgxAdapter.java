@@ -55,7 +55,7 @@ public class SgxAdapter implements EvidenceAdapter {
     private SgxDcapQuotingLibrary sgxLibrary = (SgxDcapQuotingLibrary) Native.load("sgx_dcap_ql", SgxDcapQuotingLibrary.class);
 
     /**
-     * Java object representing a C struct sgx_config_svn_t.
+     * Java object representing C struct sgx_config_svn_t : sgx_key.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_config_svn_t extends Structure {
@@ -73,7 +73,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_misc_select_t.
+     * Java object representing C struct sgx_misc_select_t : sgx_attributes.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_misc_select_t extends Structure {
@@ -91,7 +91,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_config_id_t.
+     * Java object representing C struct sgx_config_id_t : sgx_key.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_config_id_t extends Structure {
@@ -109,7 +109,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_target_info_t.
+     * Java object representing C struct sgx_target_info_t : sgx_report.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public class sgx_target_info_t extends Structure {
@@ -136,7 +136,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_cpu_svn_t.
+     * Java object representing C struct sgx_cpu_svn_t : sgx_key.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_cpu_svn_t extends Structure {
@@ -154,7 +154,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_attributes_t.
+     * Java object representing C struct sgx_attributes_t : sgx_attributes.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_attributes_t extends Structure {
@@ -173,7 +173,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_measurement_t.
+     * Java object representing C struct sgx_measurement_t : sgx_report.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_measurement_t extends Structure {
@@ -191,7 +191,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_report_data_t.
+     * Java object representing C struct sgx_report_data_t : sgx_report.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_report_data_t extends Structure {
@@ -209,7 +209,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_isvext_prod_id_t.
+     * Java object representing C struct sgx_isvext_prod_id_t : sgx_report.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_isvext_prod_id_t extends Structure {
@@ -227,7 +227,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_report_body_t.
+     * Java object representing C struct sgx_report_body_t : sgx_report.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_report_body_t extends Structure {
@@ -263,7 +263,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_key_id_t.
+     * Java object representing C struct sgx_key_id_t : sgx_key.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_key_id_t extends Structure {
@@ -281,7 +281,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_mac_t.
+     * Java object representing C struct sgx_mac_t : sgx_report.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_mac_t extends Structure {
@@ -299,7 +299,7 @@ public class SgxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct sgx_report_t.
+     * Java object representing C struct sgx_report_t : sgx_report.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class sgx_report_t extends Structure {

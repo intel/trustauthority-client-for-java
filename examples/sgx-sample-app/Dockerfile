@@ -18,27 +18,23 @@ ENV PATH=$PATH:$JAVA_HOME/bin
 
 # Install Maven
 ARG MAVEN_VERSION
-ENV MAVEN_VERSION=$MAVEN_VERSION
 ENV MAVEN_HOME=/opt/maven
 
 RUN curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | tar xzf - -C /opt/ \
     && ln -s /opt/apache-maven-${MAVEN_VERSION} /opt/maven \
     && ln -s /opt/maven/bin/mvn /usr/local/bin
 
-# Print Maven and Java versions to verify installation
-RUN java -version
-RUN mvn -v
-
-# Set the working directory in the container
-WORKDIR /app
-
 # Set Maven proxy settings
 ARG MAVEN_PROXY_HOST
 ARG MAVEN_PROXY_PORT
 
-# Create /root/.m2/settings.xml file with proxy settings added
-RUN mkdir -p /root/.m2 && \
-    echo "<settings><proxies><proxy><id>example-proxy</id><active>true</active><protocol>http</protocol><host>${MAVEN_PROXY_HOST}</host><port>${MAVEN_PROXY_PORT}</port></proxy></proxies></settings>" > /root/.m2/settings.xml
+# Create /root/.m2/settings.xml file with proxy settings added if MAVEN_PROXY_HOST/MAVEN_PROXY_PORT are set
+RUN if [ -n "${MAVEN_PROXY_HOST}" -a -n "${MAVEN_PROXY_PORT}" ]; then \
+        mkdir -p /root/.m2 && \
+        echo "<settings><proxies><proxy><id>example-proxy</id><active>true</active><protocol>http</protocol><host>${MAVEN_PROXY_HOST}</host><port>${MAVEN_PROXY_PORT}</port></proxy></proxies></settings>" > /root/.m2/settings.xml; \
+    else \
+        echo "Proxy not set, using default system env"; \
+    fi
 
 # Installing SGX sdk essentials
 RUN apt-get update; \
@@ -60,8 +56,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 # Installing Linux SGX sdk
 ARG DCAP_VERSION
 ARG PSW_VERSION
+ARG UBUNTU_VERSION
 WORKDIR /opt/intel
-RUN wget -q https://download.01.org/intel-sgx/sgx-linux/2.22/distro/ubuntu20.04-server/sgx_linux_x64_sdk_${PSW_VERSION}.bin; \
+RUN wget -q https://download.01.org/intel-sgx/sgx-linux/2.22/distro/ubuntu${UBUNTU_VERSION}-server/sgx_linux_x64_sdk_${PSW_VERSION}.bin; \
     chmod +x sgx_linux_x64_sdk_${PSW_VERSION}.bin; \
     echo 'yes' | ./sgx_linux_x64_sdk_${PSW_VERSION}.bin
 
@@ -77,29 +74,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy the project files and directories to the container image
-COPY pom.xml .
-
-# Copy src code
-COPY connector connector
-COPY sgx sgx
-COPY tdx tdx
-COPY examples examples
-COPY resources resources
+COPY . .
 
 # Build the application
 RUN mvn -X -e clean compile install package
 
+# Change WORKDIR to Sample App directory
+WORKDIR /app/examples/sgx-sample-app
+
 # Create the enclave.signed.so
-RUN cd /app/examples/sgx-sample-app/sgx-example-enclave/enclave/ && \
+RUN cd sgx-example-enclave/enclave/ && \
     make clean && \
     make && \
     cd -
 
-# Change WORKDIR to Sample App directory
-WORKDIR /app/examples/sgx-sample-app
-
 # Compile SGX Sample App
-RUN javac -cp /root/.m2/repository/org/apache/logging/log4j/log4j-api/2.17.1/log4j-api-2.17.1.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar:/root/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:/root/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/root/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:/root/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar SgxSampleApp.java
+RUN javac -cp ../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:../../sgx/target/libs/* SgxSampleApp.java
 
 # Run SGX Sample App
-CMD ["java", "-cp", "/root/.m2/repository/org/apache/logging/log4j/log4j-api/2.17.1/log4j-api-2.17.1.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar:/root/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.68/bcprov-jdk15on-1.68.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.0/jackson-annotations-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.0/jackson-databind-2.13.0.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:/root/.m2/repository/net/java/dev/jna/jna/5.9.0/jna-5.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar:/root/.m2/repository/io/jsonwebtoken/jjwt/0.12.3/jjwt-0.12.3.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-impl/0.11.2/jjwt-impl-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.2/jjwt-api-0.11.2.jar:/root/.m2/repository/io/jsonwebtoken/jjwt-jackson/0.11.2/jjwt-jackson-0.11.2.jar:/root/.m2/repository/com/nimbusds/nimbus-jose-jwt/9.10/nimbus-jose-jwt-9.10.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.0/jackson-core-2.13.0.jar:../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:./", "SgxSampleApp"]
+CMD ["java", "-cp", "../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:../../sgx/target/libs/*:./", "SgxSampleApp"]

@@ -30,7 +30,6 @@ import com.intel.trustauthority.connector.*;
 public class TdxAdapter implements EvidenceAdapter {
 
     private byte[] uData;
-    private EventLogParser evLogParser;
 
     /**
      * Constructs a new TdxAdapter object with the specified uData and evLogParser.
@@ -38,9 +37,8 @@ public class TdxAdapter implements EvidenceAdapter {
      * @param uData             uData provided by the user.
      * @param evLogParser       EventLogParser object provided by user.
      */
-    public TdxAdapter(byte[] uData, EventLogParser evLogParser) {
+    public TdxAdapter(byte[] uData) {
         this.uData = uData;
-        this.evLogParser = evLogParser;
     }
 
     /**
@@ -58,7 +56,7 @@ public class TdxAdapter implements EvidenceAdapter {
     }
 
     /**
-     * Java object representing a C struct TdxUuid.
+     * Java object representing C struct TdxUuid : tdx_attest.h
      * Extends JNA's Structure class for seamless mapping to native memory.
      */
     public static class TdxUuid extends Structure {
@@ -72,24 +70,6 @@ public class TdxAdapter implements EvidenceAdapter {
         @Override
         protected List<String> getFieldOrder() {
             return Arrays.asList("d");
-        }
-    }
-
-    /**
-     * Helper method to convert List<RtmrEventLog> to String
-     *
-     * @param myList List<RtmrEventLog> object
-     * @return The List<RtmrEventLog> converted to string
-     */
-    public static String convertListToJson(List<RtmrEventLog> myList) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            // Convert the list to a JSON string
-            return objectMapper.writeValueAsString(myList);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return null;
         }
     }
 
@@ -134,18 +114,7 @@ public class TdxAdapter implements EvidenceAdapter {
             throw new RuntimeException("tdx_att_free_quote returned error code " + ret);
         }
 
-        // Convert List<RtmrEventLog> to Json object
-        byte[] eventLog = null;
-        if (this.evLogParser != null) {
-            try {
-                List<RtmrEventLog> rtmrEventLogs = this.evLogParser.getEventLogs();
-                eventLog = convertListToJson(rtmrEventLogs).getBytes(StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                throw new RuntimeException("Error while collecting RTMR Event Log Data", e);
-            }
-        }
-
         // Construct and return Evidence object attached with the fetched TDX Quote
-        return new Evidence(1, quote, uData, eventLog);
+        return new Evidence(1, quote, uData, null);
     }
 }

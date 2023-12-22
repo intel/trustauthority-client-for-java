@@ -1,3 +1,35 @@
+
+#
+# Copyright (C) 2023 Intel Corporation. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#   * Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   * Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in
+#     the documentation and/or other materials provided with the
+#     distribution.
+#   * Neither the name of Intel Corporation nor the names of its
+#     contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#
+
 ######## SGX SDK Settings ########
 SGX_DEBUG ?= 0
 
@@ -38,9 +70,10 @@ App_Library := libutils.so
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) $(Enclave_Include_Paths) -fPIC -Wno-attributes $(App_Include_Paths)
 App_Cpp_Flags := $(App_C_Flags) -std=c++11
+App_Library_Link_Flags := $(SGX_COMMON_CFLAGS) -lsgx_dcap_ql -lsgx_urts -L${SGXSSL_LIB_PATH} -lsgx_usgxssl -shared
 
 App_Cpp_Objects := $(App_Cpp_Files:.cpp=.o)
-App_Library_Link_Flags := $(SGX_COMMON_CFLAGS) -L ${SGX_LIBRARY_PATH} -lsgx_urts -shared
+App_Library_Link_Flags := $(SGX_COMMON_CFLAGS) -lsgx_dcap_ql -lsgx_urts -L${SGXSSL_LIB_PATH} -lsgx_usgxssl -shared
 
 # To generate a proper enclave, it is recommended to follow below guideline to link the trusted libraries:
 #    1. Link sgx_trts with the `--whole-archive' and `--no-whole-archive' options,
@@ -55,7 +88,8 @@ Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefau
         -Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
         -Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
         -Wl,--defsym,__ImageBase=0 -Wl,--gc-sections   \
-        -Wl,-z,relro,-z,now,-z,noexecstack
+        -Wl,-z,relro,-z,now,-z,noexecstack             \
+        -Wl,--version-script=Enclave.lds
 
 Enclave_Cpp_Objects := $(Enclave_Cpp_Files:.cpp=.o)# utils.o
 ENCLAVE_LIBRARY_PATH := ./
@@ -94,11 +128,15 @@ endif
 
 ######## App Objects ########
 
+Enclave_u.o: Enclave_u.c
+	@$(CC) $(App_C_Flags) -c $< -o $@
+	@echo "CC   <=  $<"
+
 utils.o: utils.cpp Enclave_u.c
 	@$(CXX) $(App_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
-$(App_Library): utils.o
+$(App_Library): utils.o Enclave_u.o
 	@$(CXX) $(App_Cpp_Flags) $^ -o $@ $(App_Library_Link_Flags)
 	@echo "LINK =>  $@"
 

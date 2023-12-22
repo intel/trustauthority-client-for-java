@@ -41,7 +41,7 @@ import com.intel.trustauthority.sgx.SgxAdapter;
 interface EnclaveLibrary extends Library {
 
     // private variable to hold an instance of the native library interface
-    EnclaveLibrary INSTANCE = (EnclaveLibrary) Native.loadLibrary("./sgx-example-enclave/enclave/enclave_library.so", EnclaveLibrary.class);
+    EnclaveLibrary INSTANCE = (EnclaveLibrary) Native.loadLibrary("./sgx-example-enclave/enclave/libutils.so", EnclaveLibrary.class);
 
     // get_public_key() function to fetch the public key to be passed to SGXAdapter
     int get_public_key(long eid, PointerByReference pp_key, IntByReference p_key_size);
@@ -50,7 +50,7 @@ interface EnclaveLibrary extends Library {
     void free_public_key(Pointer key);
 
     // Initialize the function pointer for enclave_create_report() function from enclave .so file
-    Function myFunctionPointer = Function.getFunction("./sgx-example-enclave/enclave/enclave_library.so", "enclave_create_report");
+    Function myFunctionPointer = Function.getFunction("./sgx-example-enclave/enclave/libutils.so", "enclave_create_report");
 }
 
 /**
@@ -96,6 +96,7 @@ public class SgxSampleApp {
             int result = SgxUrtsLibrary.INSTANCE.sgx_create_enclave(enclavePath, 0, launchToken, updated, enclaveId, miscAttr);
             if (result != 0) {
                 logger.error("Failed to create enclave: " + Integer.toHexString(result));
+                System.exit(0);
             } else {
                 logger.info("Enclave created successfully. Enclave ID: " + enclaveId[0]);
             }
@@ -107,8 +108,8 @@ public class SgxSampleApp {
             // Call get_public_key() and fetch the public key to be passed to SgxAdapter
             int ret = EnclaveLibrary.INSTANCE.get_public_key(enclaveId[0], pp_key, p_key_size);
             if (ret != 0) {
-                System.err.println("Error: Failed to retrieve key from sgx enclave");
-                return;
+                logger.error("Error: Failed to retrieve key from sgx enclave");
+                System.exit(0);
             }
 
             // Fetch the output values of get_public_key() call to convert it to Java variables
@@ -126,17 +127,17 @@ public class SgxSampleApp {
             // Fetch the Sgx Quote
             Evidence sgx_evidence = sgx_adapter.collectEvidence(keyBytes);
 
-            // Convert fetched SGX quote from bytes to Base64
+            // Convert SGX quote from bytes to Base64
             String base64Quote = Base64.encode(sgx_evidence.getEvidence()).toString();
 
-            // Print the SGX fetched quote in Base64 format
-            logger.debug("SGX fetched quote Base64 Encoded: " + base64Quote);
+            // Print the SGX quote in Base64 format
+            logger.debug("SGX quote Base64 Encoded: " + base64Quote);
 
-            // Convert fetched SGX UserData from bytes to Base64
+            // Convert SGX UserData from bytes to Base64
             String base64UserData = Base64.encode(sgx_evidence.getUserData()).toString();
 
-            // Print the SGX fetched UserData in Base64 format
-            logger.debug("SGX fetched user data Base64 Encoded: " + base64UserData);
+            // Print the SGX UserData in Base64 format
+            logger.debug("SGX user data Base64 Encoded: " + base64UserData);
 
             // Initialize Sample App variables
             String[] trust_authority_variables = init();
@@ -151,35 +152,24 @@ public class SgxSampleApp {
             // Initializing connector with the config
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
-            // Testing attest API - internally tests GetNonce(), collectEvidence() and GetToken() API
+            // Verifying attestation for SGX platform
             AttestArgs attestArgs = new AttestArgs(sgx_adapter, null, trustauthority_request_id);
             AttestResponse response = connector.attest(attestArgs);
-
-            // Print the Token fetched from Trust Authority
-            logger.info("Token fetched from Trust Authority: " + response.getToken());
 
             // Print the Request ID of token fetched from Trust Authority
             if (response.getHeaders().containsKey("request-id")) {
                 // Print Request ID of fetched token
                 logger.info("Request ID of fetched token: " + response.getHeaders().get("request-id"));
-            } else {
-                logger.warn("request-id not found in response token.");
             }
+
             // Print the Trace ID of token fetched from Trust Authority
-            if (response.getHeaders().containsKey("trace-id")) {
-                // Print Trace ID of fetched token
-                logger.info("Trace ID of fetched token: " + response.getHeaders().get("trace-id"));
-            } else {
-                logger.warn("trace-id not found in response token.");
-            }
+            logger.info("Trace ID of fetched token: " + response.getHeaders().get("trace-id"));
 
-            // verify the received token
+            // Print the Token fetched from Trust Authority
+            logger.info("Token fetched from Trust Authority: " + response.getToken());
+
+            // Verify the received token
             JWTClaimsSet claims = connector.verifyToken(response.getToken());
-
-            // Print the claims for the verified JWT
-            logger.info("Issuer: " + claims.getIssuer());
-            logger.info("Subject: " + claims.getSubject());
-            logger.info("Expiration Time: " + claims.getExpirationTime());
         } catch (Exception e) {
             logger.error("Exception: " + e);
         }
@@ -196,23 +186,16 @@ public class SgxSampleApp {
         if (logLevel == null) {
             logger.info("LOG_LEVEL environment variable not set. Using default log level: INFO");
             logLevel = "info";
-        } else {
-            if (logLevel.equalsIgnoreCase("info")) {
-                logLevel = "info";
-            } else if (logLevel.equalsIgnoreCase("trace")) {
-                logLevel = "trace";
-            } else if (logLevel.equalsIgnoreCase("debug")) {
-                logLevel = "debug";
-            } else if (logLevel.equalsIgnoreCase("warn")) {
-                logLevel = "warn";
-            } else if (logLevel.equalsIgnoreCase("error")) {
-                logLevel = "error";
-            } else if (logLevel.equalsIgnoreCase("fatal")) {
-                logLevel = "fatal";
-            } else {
-                logger.info("LOG_LEVEL unknown. Using default log level: INFO");
-                logLevel = "info";
-            }
+        }
+
+        // Set of strings to compare against
+        String[] logLevels = {"info", "trace", "debug", "warn", "error", "fatal"};
+
+        // Check if the targetString is not equal to any of the logLevels
+        boolean notEqual = Arrays.stream(logLevels).noneMatch(logLevel.toLowerCase()::equals);
+        if (notEqual) {
+            logger.info("Invalid LOG_LEVEL set. Using default log level: INFO");
+            logLevel = "info";
         }
 
         // Set log level based on environment variable
@@ -230,17 +213,19 @@ public class SgxSampleApp {
         // Fetch proxy settings from environment
         String httpsHost = System.getenv("HTTPS_PROXY_HOST");
         if (httpsHost == null) {
-            logger.warn("HTTPS_PROXY_HOST is not set.");
+            logger.debug("HTTPS_PROXY_HOST is not set.");
+        } else {
+            // Setting proxy settings host
+            System.setProperty("https.proxyHost", httpsHost);
         }
         String httpsPort = System.getenv("HTTPS_PROXY_PORT");
         if (httpsPort == null) {
-            logger.warn("HTTPS_PROXY_PORT is not set.");
+            logger.debug("HTTPS_PROXY_PORT is not set.");
+        } else {
+            // Setting proxy settings host
+            System.setProperty("https.proxyPort", httpsPort);
         }
         logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
-
-        // Setting proxy settings
-        System.setProperty("https.proxyHost", httpsHost);
-        System.setProperty("https.proxyPort", httpsPort);
 
         // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
         String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");

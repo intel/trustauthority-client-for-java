@@ -36,22 +36,22 @@ public class TdxSampleApp {
             byte[] bytes = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
 
             // Create the TdxAdapter object
-            TdxAdapter tdx_adapter = new TdxAdapter(bytes, null);
+            TdxAdapter tdx_adapter = new TdxAdapter(bytes);
 
             // Fetch the Tdx Quote
             Evidence tdx_evidence = tdx_adapter.collectEvidence(bytes);
 
-            // Convert fetched TDX quote from bytes to Base64
+            // Convert TDX quote from bytes to Base64
             String base64Quote = Base64.encode(tdx_evidence.getEvidence()).toString();
 
-            // Print the TDX fetched quote in Base64 format
-            logger.debug("TDX fetched quote Base64 Encoded: " + base64Quote);
+            // Print the TDX quote in Base64 format
+            logger.debug("TDX quote Base64 Encoded: " + base64Quote);
 
-            // Convert fetched TDX UserData from bytes to Base64
+            // Convert TDX UserData from bytes to Base64
             String base64UserData = Base64.encode(tdx_evidence.getUserData()).toString();
 
-            // Print the TDX fetched UserData in Base64 format
-            logger.debug("TDX fetched user data Base64 Encoded: " + base64UserData);
+            // Print the TDX UserData in Base64 format
+            logger.debug("TDX user data Base64 Encoded: " + base64UserData);
 
             // Initialize Sample App variables
             String[] trust_authority_variables = init();
@@ -66,35 +66,24 @@ public class TdxSampleApp {
             // Initializing connector with the config
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
-            // Testing attest API - internally tests GetNonce(), collectEvidence() and GetToken() API
+            // Verifying attestation for TDX platform
             AttestArgs attestArgs = new AttestArgs(tdx_adapter, null, trustauthority_request_id);
             AttestResponse response = connector.attest(attestArgs);
-
-            // Print the Token fetched from Trust Authority
-            logger.info("Token fetched from Trust Authority: " + response.getToken());
 
             // Print the Request ID of token fetched from Trust Authority
             if (response.getHeaders().containsKey("request-id")) {
                 // Print Request ID of fetched token
                 logger.info("Request ID of fetched token: " + response.getHeaders().get("request-id"));
-            } else {
-                logger.warn("request-id not found in response token.");
             }
+
             // Print the Trace ID of token fetched from Trust Authority
-            if (response.getHeaders().containsKey("trace-id")) {
-                // Print Trace ID of fetched token
-                logger.info("Trace ID of fetched token: " + response.getHeaders().get("trace-id"));
-            } else {
-                logger.warn("trace-id not found in response token.");
-            }
+            logger.info("Trace ID of fetched token: " + response.getHeaders().get("trace-id"));
 
-            // verify the received token
+            // Print the Token fetched from Trust Authority
+            logger.info("Token fetched from Trust Authority: " + response.getToken());
+
+            // Verify the received token
             JWTClaimsSet claims = connector.verifyToken(response.getToken());
-
-            // Print the claims for the verified JWT
-            logger.info("Issuer: " + claims.getIssuer());
-            logger.info("Subject: " + claims.getSubject());
-            logger.info("Expiration Time: " + claims.getExpirationTime());
         } catch (Exception e) {
             logger.error("Exception: " + e);
         }
@@ -111,23 +100,16 @@ public class TdxSampleApp {
         if (logLevel == null) {
             logger.info("LOG_LEVEL environment variable not set. Using default log level: INFO");
             logLevel = "info";
-        } else {
-            if (logLevel.equalsIgnoreCase("info")) {
-                logLevel = "info";
-            } else if (logLevel.equalsIgnoreCase("trace")) {
-                logLevel = "trace";
-            } else if (logLevel.equalsIgnoreCase("debug")) {
-                logLevel = "debug";
-            } else if (logLevel.equalsIgnoreCase("warn")) {
-                logLevel = "warn";
-            } else if (logLevel.equalsIgnoreCase("error")) {
-                logLevel = "error";
-            } else if (logLevel.equalsIgnoreCase("fatal")) {
-                logLevel = "fatal";
-            } else {
-                logger.info("LOG_LEVEL unknown. Using default log level: INFO");
-                logLevel = "info";
-            }
+        }
+
+        // Set of strings to compare against
+        String[] logLevels = {"info", "trace", "debug", "warn", "error", "fatal"};
+
+        // Check if the targetString is not equal to any of the logLevels
+        boolean notEqual = Arrays.stream(logLevels).noneMatch(logLevel.toLowerCase()::equals);
+        if (notEqual) {
+            logger.info("Invalid LOG_LEVEL set. Using default log level: INFO");
+            logLevel = "info";
         }
 
         // Set log level based on environment variable
@@ -146,16 +128,18 @@ public class TdxSampleApp {
         String httpsHost = System.getenv("HTTPS_PROXY_HOST");
         if (httpsHost == null) {
             logger.warn("HTTPS_PROXY_HOST is not set.");
+        } else {
+            // Setting proxy settings host
+            System.setProperty("https.proxyHost", httpsHost);
         }
         String httpsPort = System.getenv("HTTPS_PROXY_PORT");
         if (httpsPort == null) {
             logger.warn("HTTPS_PROXY_PORT is not set.");
+        } else {
+            // Setting proxy settings host
+            System.setProperty("https.proxyPort", httpsPort);
         }
         logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
-
-        // Setting proxy settings
-        System.setProperty("https.proxyHost", httpsHost);
-        System.setProperty("https.proxyPort", httpsPort);
 
         // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
         String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");

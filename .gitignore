@@ -4,6 +4,7 @@
 connector/target
 sgx/target
 tdx/target
+target
 
 # Ignore enclave generated files
 examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave.o
@@ -12,9 +13,11 @@ examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_t.h
 examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_t.o
 examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_u.c
 examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_u.h
+examples/sgx-sample-app/sgx-example-enclave/enclave/Enclave_u.o
 examples/sgx-sample-app/sgx-example-enclave/enclave/enclave.signed.so
 examples/sgx-sample-app/sgx-example-enclave/enclave/libutils.so
 examples/sgx-sample-app/sgx-example-enclave/enclave/utils.o
+examples/sgx-sample-app/sgx-example-enclave/enclave/.config_HW_RELEASE_x64
 
 # Ignore runtime generated class files
 examples/sgx-sample-app/*.class
