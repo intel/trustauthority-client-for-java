@@ -41,6 +41,40 @@ AttestResponse response = connector.attest(attestArgs);
 JWTClaimsSet claims = connector.verifyToken(response.getToken());
 ```
 
+## Unit Tests
+
+The unit tests can be found at [TrustAuthorityConnectorTest.java](./src/test/java/com/intel/trustauthority/connector/TrustAuthorityConnectorTest.java), and they can be executed using Maven by running the command:
+
+```sh
+mvn test
+```
+
+### Running unit tests coverage tool
+
+JaCoCo (Java Code Coverage) is a widely used code coverage tool for Java applications.
+It helps us to measure how much of the code is exercised by the test suite.
+
+JaCoCo plugin is integrated to check the code coverage for the project at [pom.xml](./pom.xml#L41).
+The code test coverage percentage can be checked by running the following commands from the connector directory:
+
+```sh
+# Run unit tests to generate the test report
+mvn test
+
+# Command to print the percentage code coverage in console
+awk -F, '{
+    instructions += $4 + $5;
+    covered += $5
+} 
+END {
+    print covered, "/", instructions, " instructions covered";
+    print 100 * covered / instructions, "% covered"
+}' target/site/jacoco/jacoco.csv
+```
+
+An HTML based report is also generated and can be opened using a web browser to view the code coverage details.
+The [index.html](target/site/jacoco/index.html) for the same can be found at `target/site/jacoco/index.html` once the above commands are run.
+
 ## License
 
 This source is distributed under the BSD-style license found in the [LICENSE](../LICENSE)

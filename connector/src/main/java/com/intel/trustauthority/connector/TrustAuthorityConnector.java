@@ -137,34 +137,30 @@ public class TrustAuthorityConnector {
      * @return      GetNonceResponse object
      */
     public GetNonceResponse GetNonce(GetNonceArgs args) throws Exception {
-        // Request for nonce from TrustAuthority server
-        String url = String.format("%s/appraisal/v1/nonce", cfg.getApiUrl());
+        try{
+            // Request for nonce from TrustAuthority server
+            String url = String.format("%s/appraisal/v1/nonce", cfg.getApiUrl());
 
-        // Initiate requestUrl based on the url
-        URL requestUrl = new URL(url);
+            // Initiate requestUrl based on the url
+            URL requestUrl = new URL(url);
 
-        // Create the HttpURLConnection
-        HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
+            // Set request properties
+            Map<String, String> requestProperties = Map.of(
+                    Constants.HEADER_REQUEST_METHOD, "GET",
+                    Constants.HEADER_X_API_KEY, cfg.getApiKey(),
+                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON,
+                    Constants.HEADER_REQUEST_ID, args.getRequestId()
+            );
 
-        // Set the request parameters
-        connection.setRequestMethod("GET");
-        connection.setConnectTimeout(0);
-        connection.setReadTimeout(0);
+            // Create the HttpURLConnection
+            HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
 
-        // Set the required Header parameters
-        connection.setRequestProperty(Constants.HEADER_X_API_KEY, cfg.getApiKey());
-        connection.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
-        connection.setRequestProperty(Constants.HEADER_REQUEST_ID, args.getRequestId());
+            // Process the fetched response into the GetNonceResponse object
+            GetNonceResponse response = new GetNonceResponse();
 
-        // Process the fetched response into the GetNonceResponse object
-        GetNonceResponse response = new GetNonceResponse();
+            // Set response Header fields from the fetched response
+            response.setHeaders(connection.getHeaderFields());
 
-        // Set response Header fields from the fetched response
-        response.setHeaders(connection.getHeaderFields());
-
-        // Check for response code
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
             // Fetch the response from the server
             String responseBody = readResponseBody(connection);
 
@@ -174,12 +170,14 @@ public class TrustAuthorityConnector {
 
             // Set GetNonceResponse object nonce value with VerifierNonce
             response.setNonce(nonce);
-        } else {
-            // Handle error response
-            throw new Exception("GetNonce() failed with response code: " + responseCode);
-        }
 
-        return response;
+            // Close the connection once the entire data is received
+            connection.disconnect();
+
+            return response;
+        } catch (Exception e) {
+            throw new Exception("GetNonce() failed: " + e);
+        }
     }
 
     /**
@@ -188,51 +186,40 @@ public class TrustAuthorityConnector {
      * @param args  GetTokenArgs object provided by the user.
      * @return      GetTokenResponse object
      */
-    public GetTokenResponse GetToken(GetTokenArgs args) throws IOException {
-        // Request for token from TrustAuthority server
-        String url = String.format("%s/appraisal/v1/attest", cfg.getApiUrl());
+    public GetTokenResponse GetToken(GetTokenArgs args) throws Exception {
+        try{
+            // Request for token from TrustAuthority server
+            String url = String.format("%s/appraisal/v1/attest", cfg.getApiUrl());
 
-        // Create the TokenRequest object
-        TokenRequest tr = new TokenRequest(args.getEvidence().getEvidence(), args.getNonce(),
-                                           args.getEvidence().getUserData(), args.getPolicyIds(),
-                                           args.getEvidence().getEventLog());
+            // Create the TokenRequest object
+            TokenRequest tr = new TokenRequest(args.getEvidence().getEvidence(), args.getNonce(),
+                                            args.getEvidence().getUserData(), args.getPolicyIds(),
+                                            args.getEvidence().getEventLog());
 
-        // Convert the TokenRequest to a JSON -> String
-        // to send as request to server
-        String jsonString = "";
-        try {
-            // Serialize the TokenRequest object to a JSON string
+            // Convert the TokenRequest to a JSON -> String
+            // to send as request to server
             ObjectMapper objectMapper = new ObjectMapper();
-            jsonString = objectMapper.writeValueAsString(tr);
-        } catch (Exception e) {
-            logger.error("Exception while serializing TokenRequest: " + e);
-            return null;
-        }
+            // Serialize the TokenRequest object to a JSON string
+            String jsonString = objectMapper.writeValueAsString(tr);
 
-        // Create an HTTP Connection and send the request body as a POST request
-        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            // Initiate requestUrl based on the url
+            URL requestUrl = new URL(url);
 
-        // Set the request method and other parameters
-        conn.setRequestMethod("POST");
-        conn.setDoOutput(true);
-        conn.setRequestProperty(Constants.HEADER_X_API_KEY, cfg.getApiKey());
-        conn.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
-        conn.setRequestProperty(Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON);
-        conn.setRequestProperty(Constants.HEADER_REQUEST_ID, args.getRequestId());
+            // Set request properties
+            Map<String, String> requestProperties = Map.of(
+                    Constants.HEADER_REQUEST_METHOD, "POST",
+                    Constants.HEADER_X_API_KEY, cfg.getApiKey(),
+                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON,
+                    Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON,
+                    Constants.HEADER_REQUEST_ID, args.getRequestId(),
+                    Constants.WRITE_OUTPUT, jsonString
+            );
 
-        // Send request body to server specified by URL
-        if (jsonString != null) {
-            conn.getOutputStream().write(jsonString.getBytes("UTF-8"));
-        }
+            // Create the HttpURLConnection
+            HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
 
-        // Fetch the response from the server and process it
-        try {
-            int responseCode = conn.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                throw new IOException("HTTP error code: " + responseCode);
-            }
             // read the response if connection OK
-            String responseBody = readResponseBody(conn);
+            String responseBody = readResponseBody(connection);
 
             // Convert received response string to JSON
             Gson gson = new Gson();
@@ -242,9 +229,14 @@ public class TrustAuthorityConnector {
             String token = jsonObject.get("token").getAsString();
 
             // Convert the received token and header fields to a GetTokenResponse object
-            return new GetTokenResponse(token, conn.getHeaderFields());
-        } finally {
-            conn.disconnect();
+            GetTokenResponse tokenResponse =  new GetTokenResponse(token, connection.getHeaderFields());
+
+            // Close the connection once the entire data is received
+            connection.disconnect();
+
+            return tokenResponse;
+        } catch (Exception e) {
+            throw new Exception("GetToken() failed: " + e);
         }
     }
 
@@ -256,49 +248,52 @@ public class TrustAuthorityConnector {
      * @return AttestResponse object containing the reponse token and headers
      */
     public AttestResponse attest(AttestArgs args) throws Exception {
+        try {
+            // Creating an empty AttestResponse object
+            AttestResponse response = new AttestResponse(null, null);
 
-        // Creating an empty AttestResponse object
-        AttestResponse response = new AttestResponse(null, null);
+            // Calling the GetNonce() API
+            GetNonceResponse nonceResponse = GetNonce(new GetNonceArgs(args.getRequestId()));
+            if (nonceResponse == null) {
+                throw new Exception("Failed to collect nonce from Trust Authority");
+            }
 
-        // Calling the GetNonce() API
-        GetNonceResponse nonceResponse = GetNonce(new GetNonceArgs(args.getRequestId()));
-        if (nonceResponse == null) {
-            throw new Exception("Failed to collect nonce from Trust Authority");
+            logger.debug("Collected nonce from Trust Authority successfully...");
+
+            // Set AttestResponse headers with nonceResponse headers
+            response.setHeaders(nonceResponse.getHeaders());
+
+            // Create a combinedNonce using nonceValue and iat from nonceResponse
+            byte[] nonceValue = nonceResponse.getNonce().getVal();
+            byte[] iat = nonceResponse.getNonce().getIat();
+            byte[] combinedNonce = new byte[nonceValue.length + iat.length];
+            System.arraycopy(nonceValue, 0, combinedNonce, 0, nonceValue.length);
+            System.arraycopy(iat, 0, combinedNonce, nonceValue.length, iat.length);
+
+            // Fetch the SGX/TDX associated quote
+            Evidence evidence = args.getAdapter().collectEvidence(combinedNonce);
+            if (evidence == null) {
+                throw new Exception("Failed to collect evidence from adapter");
+            }
+
+            logger.info("Collected evidence from adapter successfully...");
+
+            // Calling the GetToken() API
+            GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId()));
+            if (tokenResponse == null) {
+                throw new Exception("Failed to collect token from Trust Authority");
+            }
+
+            logger.info("Collected token from Trust Authority successfully...");
+
+            // Set AttestResponse headers with tokenResponse headers
+            response.setToken(tokenResponse.getToken());
+            response.setHeaders(tokenResponse.getHeaders());
+
+            return response;
+        } catch (Exception e) {
+            throw new Exception("attest() failed: " + e);
         }
-
-        logger.debug("Collected nonce from Trust Authority successfully...");
-
-        // Set AttestResponse headers with nonceResponse headers
-        response.setHeaders(nonceResponse.getHeaders());
-
-        // Create a combinedNonce using nonceValue and iat from nonceResponse
-        byte[] nonceValue = nonceResponse.getNonce().getVal();
-        byte[] iat = nonceResponse.getNonce().getIat();
-        byte[] combinedNonce = new byte[nonceValue.length + iat.length];
-        System.arraycopy(nonceValue, 0, combinedNonce, 0, nonceValue.length);
-        System.arraycopy(iat, 0, combinedNonce, nonceValue.length, iat.length);
-
-        // Fetch the SGX/TDX associated quote
-        Evidence evidence = args.getAdapter().collectEvidence(combinedNonce);
-        if (evidence == null) {
-            throw new Exception("Failed to collect evidence from adapter");
-        }
-
-        logger.info("Collected evidence from adapter successfully...");
-
-        // Calling the GetToken() API
-        GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId()));
-        if (tokenResponse == null) {
-            throw new Exception("Failed to collect token from Trust Authority");
-        }
-
-        logger.info("Collected token from Trust Authority successfully...");
-
-        // Set AttestResponse headers with tokenResponse headers
-        response.setToken(tokenResponse.getToken());
-        response.setHeaders(tokenResponse.getHeaders());
-
-        return response;
     }
 
     /**
@@ -307,37 +302,33 @@ public class TrustAuthorityConnector {
      * @return The received certs from trust Authority server in bytes format
      */
     public String getTokenSigningCertificates() throws Exception {
-        // Format the request endpoint using the URL
-        String url = String.format("%s/certs", cfg.getBaseUrl());
+        try {
+            // Format the request endpoint using the URL
+            String url = String.format("%s/certs", cfg.getBaseUrl());
 
-        // Create the URL object
-        URL urlObj = new URL(url);
-        // Initiate the connection
-        HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
-        
-        // Set request header properties
-        connection.setRequestMethod("GET");
-        connection.setRequestProperty(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
+            // Create the URL object
+            URL requestUrl = new URL(url);
 
-        // Check for connection status
-        int responseCode = connection.getResponseCode();
-        if (responseCode != HttpURLConnection.HTTP_OK) {
-            throw new Exception("Failed to fetch data from " + url + ". Response code: " + responseCode);
+            // Set request properties
+            Map<String, String> requestProperties = Map.of(
+                    Constants.HEADER_REQUEST_METHOD, "GET",
+                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON
+            );
+
+            // Create the HttpURLConnection
+            HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
+
+            // read the response if connection OK
+            String responseBody = readResponseBody(connection);
+
+            // Close the connection once the entire data is received
+            connection.disconnect();
+
+            // return the jwks in string format
+            return responseBody;
+        } catch (Exception e) {
+            throw new Exception("getTokenSigningCertificates() failed: " + e);
         }
-
-        // Fetch the byte stream of jwks response
-        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        StringBuilder response = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
-        }
-        // Close the byte stream once the entire data is received
-        reader.close();
-        connection.disconnect();
-
-        // return the jwks in string format
-        return response.toString();
     }
 
     // Required for token verification for PS algorithms
@@ -354,7 +345,6 @@ public class TrustAuthorityConnector {
      * @return          Signed JWS claims object
      */
     public JWTClaimsSet verifyToken(String token) throws Exception {
-
         try {
             // Create the JWT object by parsing the token
             SignedJWT signedJWT = SignedJWT.parse(token);
@@ -365,7 +355,7 @@ public class TrustAuthorityConnector {
             // Fetch kid from parsed token
             String kid = signedJWT.getHeader().getKeyID();
             if (kid == null) {
-                throw new IllegalArgumentException("kid field missing in token header");
+                throw new Exception("kid field missing in token header");
             }
 
             // Fetch certs from getTokenSigningCertificates() API
@@ -377,12 +367,12 @@ public class TrustAuthorityConnector {
             // Check if key is matching with the parsed token
             JWK jwkKey = jwkSet.getKeyByKeyId(kid);
             if (jwkKey == null) {
-                throw new IllegalArgumentException("Could not find Key matching the key id");
+                throw new Exception("Could not find Key matching the key id");
             }
 
             // Check if keys exist
             if (jwkSet.getKeys().size() == 0) {
-                throw new IllegalArgumentException("No keys present in JWKSet");
+                throw new Exception("No keys present in JWKSet");
             }
 
             // Get the JWK (JSON Web Key) from the set
@@ -412,12 +402,10 @@ public class TrustAuthorityConnector {
                 return signedJWT.getJWTClaimsSet();
             } else {
                 // Signature is not valid
-                logger.error("JWT signature is not valid");
-                return null;
+                throw new Exception("JWT signature is not valid");
             }
         } catch (Exception e) {
-            logger.error("Exception: " + e);
-            return null;
+            throw new Exception("verifyToken() failed: " + e);
         }
     }
 
@@ -437,5 +425,85 @@ public class TrustAuthorityConnector {
             }
         }
         return content.toString();
+    }
+
+    /**
+     * Helper function to establish HttpURLConnection with retry options
+     *
+     * @param url                   URL of the server to establish the connection with.
+     * @param requestProperties     List of request properties to be set for the connection.
+     * @return                      HttpURLConnection object on a successful response.
+     */
+    private HttpURLConnection openConnectionWithRetries(URL url, Map<String, String> requestProperties) throws Exception {
+        // Set maxRetries and retryWaitTimeMillis based on Config
+        int maxRetries = 2; // Default 2
+        if (cfg.getRetryMax() != null) {
+            maxRetries = Integer.parseInt(cfg.getRetryMax());
+        }
+        long retryWaitTimeMillis = 2000; // Default 2 seconds
+        if (cfg.getRetryWaitTime() != null) {
+            retryWaitTimeMillis = Long.parseLong(cfg.getRetryWaitTime()) * 1000;
+        }
+
+        HttpURLConnection connection = null;
+
+        // Retry for establishing connection in a loop if it fails
+        for (int retry = 0; retry < maxRetries; retry++) {
+            // Close the connection if already opened
+            if (connection != null && connection.getDoOutput()) {
+                logger.debug("Closing existing connection");
+                connection.disconnect();
+            }
+
+            // Open a new connection
+            connection = (HttpURLConnection) url.openConnection();
+
+            // Set request properties
+            if (requestProperties != null) {
+                for (Map.Entry<String, String> entry : requestProperties.entrySet()) {
+                    if (entry.getKey() == Constants.HEADER_REQUEST_METHOD) {
+                        connection.setRequestMethod(entry.getValue());
+                    } else if (entry.getKey() == Constants.WRITE_OUTPUT) {
+                        // Ignore setting WRITE_OUTPUT in request
+                        // This will be written in OutputStream instead
+                    } else {
+                        connection.setRequestProperty(entry.getKey(), entry.getValue());
+                    }
+                }
+                // Write output value if provided
+                if (requestProperties.containsKey(Constants.WRITE_OUTPUT)) {
+                    connection.setDoOutput(true);
+                    connection.getOutputStream().write(requestProperties.get(Constants.WRITE_OUTPUT).getBytes("UTF-8"));
+                }
+            }
+
+            // Establish connection
+            int responseCode = connection.getResponseCode();
+            // Process the response
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // Successful connection
+                return connection;
+            } else if (responseCode == HttpURLConnection.HTTP_INTERNAL_ERROR ||
+                        responseCode == HttpURLConnection.HTTP_UNAVAILABLE ||
+                        responseCode == HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
+                // Retry for above response codes 500, 503 and 504
+                logger.warn("Retrying due to unexpected response code: " + responseCode);
+            } else {
+                // Return for connections where we should not retry for the response code
+                throw new Exception("Connection failed with response code: " + responseCode);
+            }
+
+            // If this is not the last retry, wait before the next retry
+            if (retry < maxRetries - 1) {
+                try {
+                    Thread.sleep(retryWaitTimeMillis);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        // If all retries fail, throw an Exception
+        throw new Exception("Maximum retries reached. Request failed.");
     }
 }

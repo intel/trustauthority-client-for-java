@@ -6,8 +6,10 @@
 
 // Java Collections Imports
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 // Nimbus JOSE + JWT Library Import
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -36,7 +38,7 @@ public class TdxSampleApp {
     public static void main(String[] args) {
         try {
             // Set log level
-            setLogLevel("TdxSampleApp");
+            setLogLevel();
 
             // For testing
             byte[] bytes = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
@@ -64,16 +66,43 @@ public class TdxSampleApp {
             String trustauthority_base_url = trust_authority_variables[0];
             String trustauthority_api_url = trust_authority_variables[1];
             String trustauthority_api_key = trust_authority_variables[2];
-            String trustauthority_request_id = trust_authority_variables[3];
+            String trustauthority_request_id = null;
+            if (trust_authority_variables[3] != null) {
+                trustauthority_request_id = trust_authority_variables[3];
+            }
+            String trustauthority_policy_id = null;
+            if (trust_authority_variables[4] != null) {
+                trustauthority_policy_id = trust_authority_variables[4];
+            }
+            String retry_max = null;
+            if (trust_authority_variables[5] != null) {
+                retry_max = trust_authority_variables[5];
+            }
+            String retry_wait_time = null;
+            if (trust_authority_variables[6] != null) {
+                retry_wait_time = trust_authority_variables[6];
+            }
+
+            // Create Policy IDs from trustauthority_policy_id string
+            List<UUID> policyIDs = parseUUIDString(trustauthority_policy_id);
 
             // Initialize config required for connector using trustauthority_base_url, trustauthority_api_url and trustauthority_api_key
             Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
+
+            // Set RETRY_MAX
+            if (retry_max != null) {
+                cfg.setRetryMax(retry_max);
+            }
+            // Set RETRY_WAIT_TIME
+            if (retry_wait_time != null) {
+                cfg.setRetryWaitTime(retry_wait_time);
+            }
     
             // Initializing connector with the config
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
             // Verifying attestation for TDX platform
-            AttestArgs attestArgs = new AttestArgs(tdx_adapter, null, trustauthority_request_id);
+            AttestArgs attestArgs = new AttestArgs(tdx_adapter, policyIDs, trustauthority_request_id);
             AttestResponse response = connector.attest(attestArgs);
 
             // Print the Request ID of token fetched from Trust Authority
@@ -96,11 +125,10 @@ public class TdxSampleApp {
     }
 
     /**
-     * Helper function to set log level
-     * 
-     * @param loggerName Class name of the log level to be set for
+     * Helper function to set log level for all loggers
+     *
      */
-    private static void setLogLevel(String loggerName) {
+    private static void setLogLevel() {
         // Fetch the log level from an environment variable
         String logLevel = System.getenv("LOG_LEVEL");
         if (logLevel == null) {
@@ -120,7 +148,7 @@ public class TdxSampleApp {
 
         // Set log level based on environment variable
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        Configurator.setLevel(loggerName, org.apache.logging.log4j.Level.valueOf(logLevel));
+        Configurator.setRootLevel(org.apache.logging.log4j.Level.valueOf(logLevel));
         ctx.updateLoggers();
     }
 
@@ -130,6 +158,8 @@ public class TdxSampleApp {
      * @return String[] object containing the trust authority variables
      */
     private static String[] init() {
+        String[] initializer = new String[7];
+
         // Fetch proxy settings from environment
         String httpsHost = System.getenv("HTTPS_PROXY_HOST");
         if (httpsHost == null) {
@@ -151,28 +181,92 @@ public class TdxSampleApp {
         String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");
         if (trustauthority_base_url == null) {
             logger.error("TRUSTAUTHORITY_BASE_URL is not set.");
+            // Exit if env variable not set
+            System.exit(0);
         }
         String trustauthority_api_url = System.getenv("TRUSTAUTHORITY_API_URL");
         if (trustauthority_api_url == null) {
             logger.error("TRUSTAUTHORITY_API_URL is not set.");
+            // Exit if env variable not set
+            System.exit(0);
         }
         String trustauthority_api_key = System.getenv("TRUSTAUTHORITY_API_KEY");
         if (trustauthority_api_key == null) {
             logger.error("TRUSTAUTHORITY_API_KEY is not set.");
+            // Exit if env variable not set
+            System.exit(0);
         }
         String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
         if (trustauthority_request_id == null) {
-            logger.error("TRUSTAUTHORITY_REQUEST_ID is not set.");
+            logger.debug("TRUSTAUTHORITY_REQUEST_ID is not set.");
+        }
+        String trustauthority_policy_id = System.getenv("TRUSTAUTHORITY_POLICY_ID");
+        if (trustauthority_policy_id == null) {
+            logger.debug("TRUSTAUTHORITY_POLICY_ID is not set.");
         }
         logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
         
+        String retry_max = System.getenv("RETRY_MAX");
+        if (retry_max == null) {
+            logger.debug("RETRY_MAX is not set. Using default value 2");
+        }
+        String retry_wait_time = System.getenv("RETRY_WAIT_TIME");
+        if (retry_wait_time == null) {
+            logger.debug("RETRY_WAIT_TIME is not set. Using default value 2 seconds");
+        }
+        
         // Initialize trust authority variables
-        String[] initializer = new String[4];
         initializer[0] = trustauthority_base_url;
         initializer[1] = trustauthority_api_url;
         initializer[2] = trustauthority_api_key;
-        initializer[3] = trustauthority_request_id;
+        // Set optional trustauthority_request_id
+        if (trustauthority_request_id != null) {
+            initializer[3] = trustauthority_request_id;
+        }
+        // Set optional trustauthority_policy_id
+        if (trustauthority_policy_id != null) {
+            initializer[4] = trustauthority_policy_id;
+        }
+        // Set optional retry_max
+        if (retry_max != null) {
+            initializer[5] = retry_max;
+        }
+        // Set optional retry_wait_time
+        if (retry_wait_time != null) {
+            initializer[6] = retry_wait_time;
+        }
 
         return initializer;
+    }
+
+    /**
+     * Helper function to parse the UUID String
+     *
+     * @param uuidString Comma separated list of UUIDs
+     *
+     * @return List<UUID> object containing Policy IDs
+     */
+    private static List<UUID> parseUUIDString(String uuidString) {
+        // Return null when policyID is not passed
+        if (uuidString == null) {
+            return null;
+        }
+        List<UUID> uuidList = new ArrayList<>();
+
+        // Split the comma-separated string into an array of strings
+        String[] uuidArray = uuidString.split(",");
+
+        // Iterate through the array and parse each string into a UUID
+        for (String uuidStr : uuidArray) {
+            try {
+                UUID uuid = UUID.fromString(uuidStr.trim());
+                uuidList.add(uuid);
+            } catch (IllegalArgumentException e) {
+                // Handle the case where the string is not a valid UUID
+                logger.error("Invalid UUID format: " + uuidStr);
+            }
+        }
+
+        return uuidList;
     }
 }
