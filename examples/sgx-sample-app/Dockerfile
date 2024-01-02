@@ -1,3 +1,9 @@
+###########################################
+# Copyright (c) 2023-2024 Intel Corporation
+# All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause
+###########################################
+
 # Use the official Ubuntu base image
 ARG UBUNTU_VERSION
 FROM ubuntu:$UBUNTU_VERSION

@@ -22,7 +22,7 @@ import com.intel.trustauthority.tdx.TdxAdapter;
 import com.intel.trustauthority.connector.Evidence;
 
 // Create the TdxAdapter object
-TdxAdapter tdx_adapter = new TdxAdapter(nonce, null);
+TdxAdapter tdx_adapter = new TdxAdapter(nonce);
 
 // Fetch the Tdx Quote
 Evidence tdx_evidence = tdx_adapter.collectEvidence(nonce);

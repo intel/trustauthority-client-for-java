@@ -1,3 +1,8 @@
+/*
+ *   Copyright (c) 2023-2024 Intel Corporation
+ *   All rights reserved.
+ *   SPDX-License-Identifier: BSD-3-Clause
+ */
 package com.intel.trustauthority.connector;
 
 // Java Standard Library Imports
@@ -171,7 +176,7 @@ public class TrustAuthorityConnector {
             response.setNonce(nonce);
         } else {
             // Handle error response
-            throw new Exception("Processing responsein GetNonce() failed with response code: " + responseCode);
+            throw new Exception("GetNonce() failed with response code: " + responseCode);
         }
 
         return response;
@@ -200,7 +205,7 @@ public class TrustAuthorityConnector {
             ObjectMapper objectMapper = new ObjectMapper();
             jsonString = objectMapper.writeValueAsString(tr);
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            logger.error("Exception while serializing TokenRequest: " + e);
             return null;
         }
 
@@ -247,6 +252,8 @@ public class TrustAuthorityConnector {
      * attest is used to initiate remote attestation with Trust Authority
      *
      * @param args  AttestArgs object provided by the user.
+     *
+     * @return AttestResponse object containing the reponse token and headers
      */
     public AttestResponse attest(AttestArgs args) throws Exception {
 
@@ -259,7 +266,7 @@ public class TrustAuthorityConnector {
             throw new Exception("Failed to collect nonce from Trust Authority");
         }
 
-        logger.info("Collected nonce from Trust Authority successfully...");
+        logger.debug("Collected nonce from Trust Authority successfully...");
 
         // Set AttestResponse headers with nonceResponse headers
         response.setHeaders(nonceResponse.getHeaders());
@@ -314,7 +321,7 @@ public class TrustAuthorityConnector {
 
         // Check for connection status
         int responseCode = connection.getResponseCode();
-        if (responseCode != 200) {
+        if (responseCode != HttpURLConnection.HTTP_OK) {
             throw new Exception("Failed to fetch data from " + url + ". Response code: " + responseCode);
         }
 
@@ -373,6 +380,11 @@ public class TrustAuthorityConnector {
                 throw new IllegalArgumentException("Could not find Key matching the key id");
             }
 
+            // Check if keys exist
+            if (jwkSet.getKeys().size() == 0) {
+                throw new IllegalArgumentException("No keys present in JWKSet");
+            }
+
             // Get the JWK (JSON Web Key) from the set
             RSAKey rsaKey = (RSAKey) jwkSet.getKeys().get(0);
 
@@ -397,10 +409,7 @@ public class TrustAuthorityConnector {
                 // Signature is valid
                 logger.info("JWT signature validated successfully");
 
-                // Extract and print JWT claims
-                JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
-
-                return claims;
+                return signedJWT.getJWTClaimsSet();
             } else {
                 // Signature is not valid
                 logger.error("JWT signature is not valid");

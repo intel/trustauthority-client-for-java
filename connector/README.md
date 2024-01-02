@@ -31,7 +31,7 @@ TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 To create adapter refer [sgx](../sgx/README.md) or [tdx](../tdx/README.md):
 
 ```java
-// Initialize AttestArgs required for attest
+// Initialize AttestArgs required for attestation
 AttestArgs attestArgs = new AttestArgs(adapter, policyIDs, requestID);
 
 // Invoke the attest API of the connector
