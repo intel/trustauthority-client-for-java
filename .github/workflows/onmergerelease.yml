@@ -1,0 +1,42 @@
+name: OnMergeRelease
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'release/*'
+    tags:
+      - '**'
+
+jobs:
+  build-test:
+    runs-on: [ ubuntu-20.04 ]
+    env:
+      http_proxy: ${{ secrets.HTTP_PROXY }}
+      https_proxy: ${{ secrets.HTTPS_PROXY }}
+      no_proxy: ${{ secrets.NO_PROXY }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Unit Test Coverage
+        run: |
+          test_output=$(mvn -X -e clean compile install package)
+          if [ $? -ne 0 ]; then
+            echo "Unit tests failed"
+            exit 1
+          fi
+
+          COVERAGE=$(cd connector && \
+                     awk -F, \
+                     '{ instructions += $4 + $5; covered += $5 } END \
+                     { print covered, "/", instructions, " instructions covered"; \
+                     print 100*covered/instructions, "% covered" }' \
+                     target/site/jacoco/jacoco.csv)
+          result=$(echo "$COVERAGE" | grep -oE "[0-9]+\.[0-9]+")
+          echo "Unit test coverage for Client is - $result%"
+          if (( $(echo "$result < 80" | bc -l) )); then
+              echo "Unit test coverage must be above 80%"
+              exit 1
+          fi
