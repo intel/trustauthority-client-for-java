@@ -89,7 +89,7 @@ RUN mvn -X -e clean compile install package
 WORKDIR /app/examples/sgx-sample-app
 
 # Create the enclave.signed.so
-RUN cd sgx-example-enclave/enclave/ && \
+RUN cd enclave/ && \
     make clean && \
     make && \
     cd -

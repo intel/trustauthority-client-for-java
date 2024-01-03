@@ -1,5 +1,5 @@
 # Intel® Trust Authority Java Client
-Intel Trust Authority Client provides a set of Java libraries for attesting different TEEs with Intel Trust Authority. Users can link the Java libraries within their application and make REST calls to Intel Trust Authority for fetching token containing information about the TEE attested that can be verified.
+Intel Trust Authority Client provides a set of Java packages for attesting different TEEs with Intel Trust Authority. Users can link the Java packages within their application and make REST calls to Intel Trust Authority for fetching token containing information about the TEE attested that can be verified.
 
 ## System Requirement
 

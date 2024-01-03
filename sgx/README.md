@@ -23,10 +23,10 @@ import com.intel.trustauthority.sgx.SgxAdapter;
 import com.intel.trustauthority.connector.Evidence;
 
 // Create the SgxAdapter object
-SgxAdapter sgx_adapter = new SgxAdapter(enclaveId[0], nonce, EnclaveLibrary.EnclaveFunction);
+SgxAdapter sgxAdapter = new SgxAdapter(enclaveId[0], nonce, EnclaveLibrary.EnclaveFunction);
 
 // Fetch the Sgx Quote
-Evidence sgx_evidence = sgx_adapter.collectEvidence(nonce);
+Evidence evidence = sgxAdapter.collectEvidence(nonce);
 ```
 
 ## License

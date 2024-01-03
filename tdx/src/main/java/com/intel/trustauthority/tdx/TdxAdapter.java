@@ -37,10 +37,9 @@ public class TdxAdapter implements EvidenceAdapter {
     private byte[] uData;
 
     /**
-     * Constructs a new TdxAdapter object with the specified uData and evLogParser.
+     * Constructs a new TdxAdapter object with the specified user data.
      *
-     * @param uData             uData provided by the user.
-     * @param evLogParser       EventLogParser object provided by user.
+     * @param uData user data provided by the user.
      */
     public TdxAdapter(byte[] uData) {
         this.uData = uData;

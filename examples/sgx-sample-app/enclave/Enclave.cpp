@@ -99,7 +99,7 @@ uint32_t enclave_create_report(const sgx_target_info_t* p_qe3_target,
     errno_t err = 0;
     err = memcpy_s(pdata, nonce_size, nonce, nonce_size);
     if (err != 0) {
-            goto ERROR;
+        goto ERROR;
     }
 
     err = memcpy_s(pdata + nonce_size, E_SIZE_IN_BYTES, ((unsigned char *)g_rsa_key.e), E_SIZE_IN_BYTES);
@@ -119,7 +119,7 @@ uint32_t enclave_create_report(const sgx_target_info_t* p_qe3_target,
 
     err = memcpy_s(report_data.d, sizeof(msg_hash), msg_hash, sizeof(msg_hash));
     if (err != 0) {
-            status = SGX_ERROR_UNEXPECTED;
+        status = SGX_ERROR_UNEXPECTED;
         goto ERROR;
     }
 

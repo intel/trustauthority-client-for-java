@@ -1,5 +1,5 @@
 # TDX Attestation Sample App
-The TDX Attestation Sample App is a Java application that uses the Intel Trust Authority Attestation Java Client libraries
+The TDX Attestation Sample App is a Java application that uses the Intel Trust Authority Attestation Java Client packages
 to fetch token from Intel Trust Authority. The application is supposed to be run inside a TD. When run,
 it collects a quote from the TD and sends it to Intel Trust Authority to retrieve a token.
 

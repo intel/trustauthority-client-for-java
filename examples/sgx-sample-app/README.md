@@ -1,5 +1,5 @@
 # SGX Attestation Sample App
-The SGX Attestation Sample App is a Java application that uses the Intel Trust Authority Attestation Java Client libraries
+The SGX Attestation Sample App is a Java application that uses the Intel Trust Authority Attestation Java Client packages
 to fetch token from Intel Trust Authority. The application contains an example SGX enclave. When run, 
 it collects quote from the enclave and sends it to Intel Trust Authority to retrieve a token.
 
@@ -15,11 +15,11 @@ it collects quote from the enclave and sends it to Intel Trust Authority to retr
 │    │    ┌──────────────────────────┐      │◄───┼───────────────►│   INTEL TRUST  |
 │    │    │     enclave.signed.so    │      │    │                │   AUTHORITY    |
 │    │    └──────────────────────────┘      │    │                │   CLIENT       |
-│    │                                      │    │                └────────────────┘   
-│    │    ┌──────────────────────────┐      |    |                                                  
+│    │                                      │    │                └────────────────┘
+│    │    ┌──────────────────────────┐      |    |                           
 │    │    |    connector-1.0.0.jar   |      |    |
 │    │    └──────────────────────────┘      │    │
-│    │                                      │    │              
+│    │                                      │    │
 │    │    ┌──────────────────────────┐      │    │
 │    │    │      sgx-1.0.0.jar       |      |    |
 │    │    └──────────────────────────┘      │    │
@@ -48,7 +48,7 @@ cd -
 
 Since the SGX Attestation Sample App requires an enclave to be initialized, run this step to generate a signed enclave:
 ```sh
-cd sgx-example-enclave/enclave/ && \
+cd enclave/ && \
 make && \
 cd -
 ```

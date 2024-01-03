@@ -49,7 +49,7 @@ import com.intel.trustauthority.sgx.SgxAdapter;
 interface EnclaveLibrary extends Library {
 
     // private variable to hold an instance of the native library interface
-    EnclaveLibrary INSTANCE = (EnclaveLibrary) Native.loadLibrary("./sgx-example-enclave/enclave/libutils.so", EnclaveLibrary.class);
+    EnclaveLibrary INSTANCE = (EnclaveLibrary) Native.loadLibrary("./enclave/libutils.so", EnclaveLibrary.class);
 
     // get_public_key() function to fetch the public key to be passed to SGXAdapter
     int get_public_key(long eid, PointerByReference pp_key, IntByReference p_key_size);
@@ -58,7 +58,7 @@ interface EnclaveLibrary extends Library {
     void free_public_key(Pointer key);
 
     // Initialize the function pointer for enclave_create_report() function from enclave .so file
-    Function myFunctionPointer = Function.getFunction("./sgx-example-enclave/enclave/libutils.so", "enclave_create_report");
+    Function myFunctionPointer = Function.getFunction("./enclave/libutils.so", "enclave_create_report");
 }
 
 /**
@@ -92,7 +92,7 @@ public class SgxSampleApp {
             setLogLevel();
 
             // Path of enclave .so file
-            String enclavePath = "./sgx-example-enclave/enclave/enclave.signed.so";
+            String enclavePath = "./enclave/enclave.signed.so";
 
             // Initialize SGX enclave related variables
             long[] enclaveId = new long[1];
@@ -104,10 +104,9 @@ public class SgxSampleApp {
             int result = SgxUrtsLibrary.INSTANCE.sgx_create_enclave(enclavePath, 0, launchToken, updated, enclaveId, miscAttr);
             if (result != 0) {
                 logger.error("Failed to create enclave: " + Integer.toHexString(result));
-                System.exit(0);
-            } else {
-                logger.info("Enclave created successfully. Enclave ID: " + enclaveId[0]);
+                System.exit(1);
             }
+            logger.info("Enclave created successfully. Enclave ID: " + enclaveId[0]);
 
             // Initialize get_public_key() API variables
             PointerByReference pp_key = new PointerByReference();
@@ -117,7 +116,7 @@ public class SgxSampleApp {
             int ret = EnclaveLibrary.INSTANCE.get_public_key(enclaveId[0], pp_key, p_key_size);
             if (ret != 0) {
                 logger.error("Error: Failed to retrieve key from sgx enclave");
-                System.exit(0);
+                System.exit(1);
             }
 
             // Fetch the output values of get_public_key() call to convert it to Java variables
@@ -130,19 +129,19 @@ public class SgxSampleApp {
             EnclaveLibrary.INSTANCE.free_public_key(keyPointer);
 
             // Create the SgxAdapter object
-            SgxAdapter sgx_adapter = new SgxAdapter(enclaveId[0], keyBytes, EnclaveLibrary.myFunctionPointer);
+            SgxAdapter sgxAdapter = new SgxAdapter(enclaveId[0], keyBytes, EnclaveLibrary.myFunctionPointer);
 
             // Fetch the Sgx Quote
-            Evidence sgx_evidence = sgx_adapter.collectEvidence(keyBytes);
+            Evidence sgxEvidence = sgxAdapter.collectEvidence(keyBytes);
 
             // Convert SGX quote from bytes to Base64
-            String base64Quote = Base64.encode(sgx_evidence.getEvidence()).toString();
+            String base64Quote = Base64.encode(sgxEvidence.getEvidence()).toString();
 
             // Print the SGX quote in Base64 format
             logger.debug("SGX quote Base64 Encoded: " + base64Quote);
 
             // Convert SGX UserData from bytes to Base64
-            String base64UserData = Base64.encode(sgx_evidence.getUserData()).toString();
+            String base64UserData = Base64.encode(sgxEvidence.getUserData()).toString();
 
             // Print the SGX UserData in Base64 format
             logger.debug("SGX user data Base64 Encoded: " + base64UserData);
@@ -188,17 +187,16 @@ public class SgxSampleApp {
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
             // Verifying attestation for SGX platform
-            AttestArgs attestArgs = new AttestArgs(sgx_adapter, policyIDs, trustauthority_request_id);
+            AttestArgs attestArgs = new AttestArgs(sgxAdapter, policyIDs, trustauthority_request_id);
             AttestResponse response = connector.attest(attestArgs);
 
             // Print the Request ID of token fetched from Trust Authority
             if (response.getHeaders().containsKey("request-id")) {
-                // Print Request ID of fetched token
-                logger.info("Request ID of fetched token: " + response.getHeaders().get("request-id"));
+                logger.info("Request ID: " + response.getHeaders().get("request-id"));
             }
 
             // Print the Trace ID of token fetched from Trust Authority
-            logger.info("Trace ID of fetched token: " + response.getHeaders().get("trace-id"));
+            logger.info("Trace ID: " + response.getHeaders().get("trace-id"));
 
             // Print the Token fetched from Trust Authority
             logger.info("Token fetched from Trust Authority: " + response.getToken());
@@ -268,19 +266,19 @@ public class SgxSampleApp {
         if (trustauthority_base_url == null) {
             logger.error("TRUSTAUTHORITY_BASE_URL is not set.");
             // Exit if env variable not set
-            System.exit(0);
+            System.exit(1);
         }
         String trustauthority_api_url = System.getenv("TRUSTAUTHORITY_API_URL");
         if (trustauthority_api_url == null) {
             logger.error("TRUSTAUTHORITY_API_URL is not set.");
             // Exit if env variable not set
-            System.exit(0);
+            System.exit(1);
         }
         String trustauthority_api_key = System.getenv("TRUSTAUTHORITY_API_KEY");
         if (trustauthority_api_key == null) {
             logger.error("TRUSTAUTHORITY_API_KEY is not set.");
             // Exit if env variable not set
-            System.exit(0);
+            System.exit(1);
         }
         String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
         if (trustauthority_request_id == null) {
