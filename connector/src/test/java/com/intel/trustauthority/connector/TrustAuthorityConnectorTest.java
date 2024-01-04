@@ -479,10 +479,10 @@ public class TrustAuthorityConnectorTest {
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
 
-            // Stubbing the response with an invalid token
+            // Stubbing the response with an invalid token and 503 response code to exercise retry mechanism
             new MockServerClient("localhost", mockServer.getPort())
                                 .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
-                                .respond(HttpResponse.response().withStatusCode(200)
+                                .respond(HttpResponse.response().withStatusCode(503)
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("invalid_token"));
 

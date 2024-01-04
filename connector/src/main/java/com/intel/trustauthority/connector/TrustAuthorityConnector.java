@@ -104,7 +104,7 @@ public class TrustAuthorityConnector {
             response.setHeaders(connection.getHeaderFields());
 
             // Fetch the response from the server
-            String responseBody = readResponseBody(connection);
+            String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
 
             // Map the fetched response JSON to VerifierNonce object
             ObjectMapper mapper = new ObjectMapper();
@@ -161,7 +161,7 @@ public class TrustAuthorityConnector {
             HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
 
             // read the response if connection OK
-            String responseBody = readResponseBody(connection);
+            String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
 
             // Convert received response string to JSON
             Gson gson = new Gson();
@@ -261,7 +261,7 @@ public class TrustAuthorityConnector {
             HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
 
             // read the response if connection OK
-            String responseBody = readResponseBody(connection);
+            String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
 
             // Close the connection once the entire data is received
             connection.disconnect();
@@ -354,19 +354,32 @@ public class TrustAuthorityConnector {
     /**
      * Helper function to fetch the response from server
      *
-     * @param connection  HttpURLConnection object provided by the user.
-     * @return            The server response as a string
+     * @param connection    HttpURLConnection object provided by the user.
+     * @param responseCode  Response code of the connection to read input/error message.
+     * @return              The server input/error message response as a string
      */
-    private String readResponseBody(HttpURLConnection connection) throws IOException {
+    private String readResponseBody(HttpURLConnection connection, int responseCode) throws IOException {
         StringBuilder content = new StringBuilder();
-        // This initiates the connection with the server and reads the response
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line);
-            }
+
+        // Read the response body
+        BufferedReader reader;
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            // Read InputStream if connection is successful
+            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        } else {
+            // Read ErrorStream if connection is unsuccessful
+            reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
         }
-        return content.toString();
+
+        // Read the response or error message
+        String line;
+        StringBuilder response = new StringBuilder();
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+
+        return response.toString();
     }
 
     /**
@@ -432,7 +445,8 @@ public class TrustAuthorityConnector {
                 logger.warn("Retrying due to unexpected response code: " + responseCode);
             } else {
                 // Return for connections where we should not retry for the response code
-                throw new Exception("Connection failed with response code: " + responseCode);
+                throw new Exception("Connection failed with response code: " + responseCode +
+                                    " and error: " + readResponseBody(connection, responseCode));
             }
 
             // If this is not the last retry, wait before the next retry

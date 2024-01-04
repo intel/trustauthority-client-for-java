@@ -205,6 +205,7 @@ public class SgxSampleApp {
             JWTClaimsSet claims = connector.verifyToken(response.getToken());
         } catch (Exception e) {
             logger.error("Exception: " + e);
+            System.exit(1);
         }
     }
 
@@ -330,7 +331,7 @@ public class SgxSampleApp {
      *
      * @return List<UUID> object containing Policy IDs
      */
-    private static List<UUID> parseUUIDString(String uuidString) {
+    private static List<UUID> parseUUIDString(String uuidString) throws Exception {
         // Return null when policyID is not passed
         if (uuidString == null) {
             return null;
@@ -347,7 +348,7 @@ public class SgxSampleApp {
                 uuidList.add(uuid);
             } catch (IllegalArgumentException e) {
                 // Handle the case where the string is not a valid UUID
-                logger.error("Invalid UUID format: " + uuidStr);
+                throw new Exception("Invalid UUID format: " + uuidStr);
             }
         }
 
