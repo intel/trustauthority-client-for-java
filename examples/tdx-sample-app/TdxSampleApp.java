@@ -50,7 +50,7 @@ public class TdxSampleApp {
             Evidence tdxEvidence = tdxAdapter.collectEvidence(bytes);
 
             // Convert TDX quote from bytes to Base64
-            String base64Quote = Base64.encode(tdxEvidence.getEvidence()).toString();
+            String base64Quote = Base64.encode(tdxEvidence.getQuote()).toString();
 
             // Print the TDX quote in Base64 format
             logger.debug("TDX quote Base64 Encoded: " + base64Quote);
@@ -66,23 +66,24 @@ public class TdxSampleApp {
             String trustauthority_base_url = trust_authority_variables[0];
             String trustauthority_api_url = trust_authority_variables[1];
             String trustauthority_api_key = trust_authority_variables[2];
-            String trustauthority_request_id = null;
-            if (trust_authority_variables[3] != null) {
-                trustauthority_request_id = trust_authority_variables[3];
-            }
-            String trustauthority_policy_id = null;
-            if (trust_authority_variables[4] != null) {
-                trustauthority_policy_id = trust_authority_variables[4];
-            }
+            String trustauthority_request_id = trust_authority_variables[3];
+            String trustauthority_policy_id = trust_authority_variables[4];
+
             // Initialize RetryConfig based on system env set
             RetryConfig retry_config = null;
-            if (trust_authority_variables[5] == null || trust_authority_variables[6] == null) {
+            if (trust_authority_variables[5] == null && trust_authority_variables[6] == null) {
                 // Default RetryConfig
                 retry_config = new RetryConfig();
             } else {
+                int retryMax = 2; // Default: 2 retries
+                long retryWaitTime = 2000L; // Default: 2 seconds
+                if (trust_authority_variables[5] != null) {
+                    retryMax = Integer.parseInt(trust_authority_variables[5]);
+                }
+                if (trust_authority_variables[6] != null) {
+                    retryWaitTime = Long.parseLong(trust_authority_variables[6]);
+                }
                 // RetryConfig with retryWaitMin and retryMax set
-                int retryMax = Integer.parseInt(trust_authority_variables[5]);
-                long retryWaitTime = Long.parseLong(trust_authority_variables[6]);
                 retry_config = new RetryConfig(retryWaitTime, 10, retryMax);
             }
 
@@ -156,17 +157,13 @@ public class TdxSampleApp {
 
         // Fetch proxy settings from environment
         String httpsHost = System.getenv("HTTPS_PROXY_HOST");
-        if (httpsHost == null) {
-            logger.warn("HTTPS_PROXY_HOST is not set.");
-        } else {
+        if (httpsHost != null) {
             // Setting proxy settings host
             System.setProperty("https.proxyHost", httpsHost);
         }
         String httpsPort = System.getenv("HTTPS_PROXY_PORT");
-        if (httpsPort == null) {
-            logger.warn("HTTPS_PROXY_PORT is not set.");
-        } else {
-            // Setting proxy settings host
+        if (httpsPort != null) {
+            // Setting proxy settings port
             System.setProperty("https.proxyPort", httpsPort);
         }
         logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
@@ -191,14 +188,14 @@ public class TdxSampleApp {
             System.exit(1);
         }
         String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
-        if (trustauthority_request_id == null) {
-            logger.debug("TRUSTAUTHORITY_REQUEST_ID is not set.");
+        if (trustauthority_request_id != null) {
+            initializer[3] = trustauthority_request_id;
         }
         String trustauthority_policy_id = System.getenv("TRUSTAUTHORITY_POLICY_ID");
         if (trustauthority_policy_id == null) {
             logger.debug("TRUSTAUTHORITY_POLICY_ID is not set.");
         }
-        logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url + ", TRUSTAUTHORITY_API_KEY: " + trustauthority_api_key);
+        logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url);
         
         String retry_max = System.getenv("RETRY_MAX");
         if (retry_max == null) {
@@ -213,10 +210,6 @@ public class TdxSampleApp {
         initializer[0] = trustauthority_base_url;
         initializer[1] = trustauthority_api_url;
         initializer[2] = trustauthority_api_key;
-        // Set optional trustauthority_request_id
-        if (trustauthority_request_id != null) {
-            initializer[3] = trustauthority_request_id;
-        }
         // Set optional trustauthority_policy_id
         if (trustauthority_policy_id != null) {
             initializer[4] = trustauthority_policy_id;

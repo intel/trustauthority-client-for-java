@@ -51,9 +51,6 @@ mvn test
 
 ### Running unit tests coverage tool
 
-JaCoCo (Java Code Coverage) is a widely used code coverage tool for Java applications.
-It helps us to measure how much of the code is exercised by the test suite.
-
 JaCoCo plugin is integrated to check the code coverage for the project at [pom.xml](./pom.xml#L41).
 The code test coverage percentage can be checked by running the following commands from the connector directory:
 

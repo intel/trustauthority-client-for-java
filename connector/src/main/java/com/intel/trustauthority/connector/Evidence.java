@@ -11,21 +11,21 @@ package com.intel.trustauthority.connector;
 public class Evidence {
 
     private long type;
-    private byte[] evidence;
+    private byte[] quote;
     private byte[] userData;
     private byte[] eventLog;
 
     /**
-     * Constructs a new Evidence object with the specified type, evidence, userData and eventLog.
+     * Constructs a new Evidence object with the specified type, quote, userData and eventLog.
      *
      * @param type           type provided by the user.
-     * @param evidence       evidence provided by user.
+     * @param quote          quote provided by user.
      * @param userData       userData by the user.
      * @param eventLog       eventLog provided by user.
      */
-    public Evidence(long type, byte[] evidence, byte[] userData, byte[] eventLog) {
+    public Evidence(long type, byte[] quote, byte[] userData, byte[] eventLog) {
         this.type = type;
-        this.evidence = evidence;
+        this.quote = quote;
         this.userData = userData;
         this.eventLog = eventLog;
     }
@@ -38,10 +38,10 @@ public class Evidence {
     }
 
     /**
-     * getter function for evidence
+     * getter function for quote
      */
-    public byte[] getEvidence() {
-        return evidence;
+    public byte[] getQuote() {
+        return quote;
     }
 
     /**

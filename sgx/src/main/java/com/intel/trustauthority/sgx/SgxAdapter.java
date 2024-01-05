@@ -30,19 +30,19 @@ import com.intel.trustauthority.connector.*;
 public class SgxAdapter implements EvidenceAdapter {
 
     private long enclaveID;
-    private byte[] uData;
+    private byte[] userData;
     private Function reportFunction;
 
     /**
-     * Constructs a new SgxAdapter object with the specified eid, udata and reportFunction.
+     * Constructs a new SgxAdapter object with the specified enclave ID, user data and reportFunction.
      *
-     * @param eid               eid specified by user.
-     * @param udata             udata provided by the user.
-     * @param reportFunction    Function pointer to enclave function provided by user.
+     * @param enclaveID         enclave ID specified by user.
+     * @param userData          user data provided by the user.
+     * @param reportFunction    Function pointer to enclave create report function provided by user.
      */
-    public SgxAdapter(long eid, byte[] udata, Function reportFunction) {
-        this.enclaveID = eid;
-        this.uData = udata;
+    public SgxAdapter(long enclaveID, byte[] userData, Function reportFunction) {
+        this.enclaveID = enclaveID;
+        this.userData = userData;
         this.reportFunction = reportFunction;
     }
 
@@ -379,6 +379,6 @@ public class SgxAdapter implements EvidenceAdapter {
         byte[] result = quoteBuffer.getByteArray(0, quoteSize.getValue());
 
         // Construct and return Evidence object attached with the fetched SGX Quote
-        return new Evidence(0, result, this.uData, null);
+        return new Evidence(0, result, this.userData, null);
     }
 }

@@ -14,7 +14,7 @@ it collects a quote from the TD and sends it to Intel Trust Authority to retriev
 │    │                                      │    │                │                │
 │    │    ┌──────────────────────────┐      │◄───┼───────────────►│   INTEL TRUST  │
 │    │    │   connector-1.0.0.jar    │      │    │                │   AUTHORITY    │
-│    │    └──────────────────────────┘      │    │                │   CLIENT       │
+│    │    └──────────────────────────┘      │    │                │   SERVER       │
 │    │                                      │    │                └────────────────┘
 │    │    ┌──────────────────────────┐      │    │
 │    │    │      tdx-1.0.0.jar       |      |    |
@@ -32,7 +32,7 @@ the appropriate dependencies like DCAP have been installed).
 
 ## Usage for running TDX Attestation Sample App
 
-### Compile the latest version of `connector` and `sgx` with the following command:
+### Compile the latest version of `connector` and `tdx` with the following command:
 
 ```sh
 cd ../../ && \

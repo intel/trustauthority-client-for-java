@@ -193,7 +193,7 @@ public class TrustAuthorityConnectorTest {
 
             // Testing getters for Evidence
             assertEquals(evidence.getType(), 0);
-            assertArrayEquals(evidence.getEvidence(), actual);
+            assertArrayEquals(evidence.getQuote(), actual);
             assertArrayEquals(evidence.getUserData(), actual);
             assertArrayEquals(evidence.getEventLog(), actual);
         } catch (Exception e) {

@@ -34,15 +34,15 @@ import com.intel.trustauthority.connector.*;
  */
 public class TdxAdapter implements EvidenceAdapter {
 
-    private byte[] uData;
+    private byte[] userData;
 
     /**
      * Constructs a new TdxAdapter object with the specified user data.
      *
-     * @param uData user data provided by the user.
+     * @param userData user data provided by the user.
      */
-    public TdxAdapter(byte[] uData) {
-        this.uData = uData;
+    public TdxAdapter(byte[] userData) {
+        this.userData = userData;
     }
 
     /**
@@ -87,14 +87,13 @@ public class TdxAdapter implements EvidenceAdapter {
 
         MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
         sha512Digest.update(nonce);
-        sha512Digest.update(this.uData);
+        sha512Digest.update(this.userData);
         byte[] reportData = sha512Digest.digest();
 
         // cReportData holds the reportdata provided as input from attested app
         Memory cReportData = new Memory(reportData.length);
         cReportData.write(0, reportData, 0, reportData.length);
 
-        // Passing this as null as it's not required
         TdxUuid selectedAttKeyId = new TdxUuid();
 
         // Initialize TDX Quote objects
@@ -119,6 +118,6 @@ public class TdxAdapter implements EvidenceAdapter {
         }
 
         // Construct and return Evidence object attached with the fetched TDX Quote
-        return new Evidence(1, quote, uData, null);
+        return new Evidence(1, quote, userData, null);
     }
 }

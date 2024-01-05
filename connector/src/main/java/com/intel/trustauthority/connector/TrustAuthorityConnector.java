@@ -134,9 +134,9 @@ public class TrustAuthorityConnector {
             String url = String.format("%s/appraisal/v1/attest", cfg.getApiUrl());
 
             // Create the TokenRequest object
-            TokenRequest tr = new TokenRequest(args.getEvidence().getEvidence(), args.getNonce(),
-                                            args.getEvidence().getUserData(), args.getPolicyIds(),
-                                            args.getEvidence().getEventLog());
+            TokenRequest tr = new TokenRequest(args.getEvidence().getQuote(), args.getNonce(),
+                                               args.getEvidence().getUserData(), args.getPolicyIds(),
+                                               args.getEvidence().getEventLog());
 
             // Convert the TokenRequest to a JSON -> String
             // to send as request to server
@@ -306,19 +306,19 @@ public class TrustAuthorityConnector {
             // Parse the JWKS
             JWKSet jwkSet = JWKSet.parse(jwks);
 
+            // Check if keys exist
+            if (jwkSet.getKeys().size() == 0) {
+                throw new Exception("No keys present in JWKSet");
+            }
+
             // Check if key is matching with the parsed token
             JWK jwkKey = jwkSet.getKeyByKeyId(kid);
             if (jwkKey == null) {
                 throw new Exception("Could not find Key matching the key id");
             }
 
-            // Check if keys exist
-            if (jwkSet.getKeys().size() == 0) {
-                throw new Exception("No keys present in JWKSet");
-            }
-
             // Get the JWK (JSON Web Key) from the set
-            RSAKey rsaKey = (RSAKey) jwkSet.getKeys().get(0);
+            RSAKey rsaKey = (RSAKey) jwkKey;
 
             // Build a RSA public key from the JWK
             RSAPublicKey publicKey = rsaKey.toRSAPublicKey();
@@ -398,7 +398,7 @@ public class TrustAuthorityConnector {
         HttpURLConnection connection = null;
 
         // Retry for establishing connection in a loop if it fails
-        for (int retry = 0; retry < maxRetries; retry++) {
+        for (int retry = 0; retry <= maxRetries; retry++) {
             // Close the connection if already opened
             if (connection != null && connection.getDoOutput()) {
                 logger.debug("Closing existing connection");
@@ -436,25 +436,24 @@ public class TrustAuthorityConnector {
             } else if (Constants.retryableStatusCodes.contains(responseCode)) {
                 // Retry for response codes which are in set retryableStatusCodes
                 logger.warn("Retrying due to unexpected response code: " + responseCode);
+                // If this is not the last retry, wait before the next retry
+                if (retry < maxRetries) {
+
+                    // Calculate the wait time with exponential backoff, capped at retryWaitMax
+                    long waitTime = Math.min(cfg.getRetryConfig().getRetryWaitMax(),
+                                            (1L << retry) * retryWaitTimeMillis);
+
+                    logger.debug("Retrying in " + waitTime + " milliseconds...");
+                    try {
+                        Thread.sleep(waitTime);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
             } else {
                 // Return for connections where we should not retry for the response code
                 throw new Exception("Connection failed with response code: " + responseCode +
                                     " and error: " + readResponseBody(connection, responseCode));
-            }
-
-            // If this is not the last retry, wait before the next retry
-            if (retry < maxRetries - 1) {
-
-                // Calculate the wait time with exponential backoff, capped at retryWaitMax
-                long waitTime = Math.min(cfg.getRetryConfig().getRetryWaitMax(),
-                                         (1L << retry) * retryWaitTimeMillis);
-
-                logger.debug("Retrying in " + waitTime + " milliseconds...");
-                try {
-                    Thread.sleep(waitTime);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                }
             }
         }
 

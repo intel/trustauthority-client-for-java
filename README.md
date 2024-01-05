@@ -1,9 +1,9 @@
 # Intel® Trust Authority Java Client
-Intel Trust Authority Client provides a set of Java packages for attesting different TEEs with Intel Trust Authority. Users can link the Java packages within their application and make REST calls to Intel Trust Authority for fetching token containing information about the TEE attested that can be verified.
+Intel Trust Authority Client provides a set of Java packages for attesting different TEEs with Intel Trust Authority. Users can import the Java packages within their application and make REST calls to Intel Trust Authority for fetching token containing information about the TEE attested that can be verified.
 
 ## System Requirement
 
-Use <b>Ubuntu 20.04</b>. 
+Use <b>Ubuntu 20.04</b>.
 
 Use <b>openjdk version "17.0.8.1" or newer</b>. Follow https://www.java.com/en/download/manual.jsp for installation of Java.
 
