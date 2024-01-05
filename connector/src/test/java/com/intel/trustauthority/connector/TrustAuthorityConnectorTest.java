@@ -65,10 +65,13 @@ public class TrustAuthorityConnectorTest {
             // Setup Mock Server
             mockServer = new ClientAndServer(); // No-args constructor will start on a free port
 
+            // Default RetryConfig
+            RetryConfig retry_config = new RetryConfig();
+
             // Initialize config required for connector
             cfg = new Config("http://localhost:" + mockServer.getPort(),
                              "http://localhost:" + mockServer.getPort(),
-                             "some_key");
+                             "some_key", retry_config);
             assertNotNull(cfg);
 
             // Initializing connector with the config
@@ -107,37 +110,43 @@ public class TrustAuthorityConnectorTest {
     @Test
     public void testConfig() {
         try {
+            // Default RetryConfig
+            RetryConfig retry_config = new RetryConfig();
+
             // Initialize config
-            cfg = new Config("http://localhost:" + mockServer.getPort(),
-                            "http://localhost:" + mockServer.getPort(),
-                            "some_key",
-                            "2",
-                            "2");
-            assertNotNull(cfg);
+            Config config = new Config("http://localhost:" + mockServer.getPort(),
+                                       "http://localhost:" + mockServer.getPort(),
+                                       "some_key",
+                                       retry_config);
+            assertNotNull(config);
 
             // Test connector config setter
-            TrustAuthorityConnector conn = new TrustAuthorityConnector(cfg);
-            conn.setConfig(cfg);
-            assertEquals(conn.getConfig(), cfg);
+            TrustAuthorityConnector conn = new TrustAuthorityConnector(config);
+            conn.setConfig(config);
+            assertEquals(conn.getConfig(), config);
 
             // Testing getters for Config
-            assertEquals(cfg.getBaseUrl(), "http://localhost:" + mockServer.getPort());
-            assertEquals(cfg.getApiUrl(), "http://localhost:" + mockServer.getPort());
-            assertEquals(cfg.getApiKey(), "some_key");
-            assertEquals(cfg.getRetryMax(), "2");
-            assertEquals(cfg.getRetryWaitTime(), "2");
+            assertEquals(config.getBaseUrl(), "http://localhost:" + mockServer.getPort());
+            assertEquals(config.getApiUrl(), "http://localhost:" + mockServer.getPort());
+            assertEquals(config.getApiKey(), "some_key");
 
             // Testing setters for Config
-            cfg.setBaseUrl("http://localhost:" + mockServer.getPort());
-            cfg.setApiUrl("http://localhost:" + mockServer.getPort());
-            cfg.setApiKey("some_key");
-            cfg.setRetryMax("2");
-            cfg.setRetryWaitTime("2");
-            assertEquals(cfg.getBaseUrl(), "http://localhost:" + mockServer.getPort());
-            assertEquals(cfg.getApiUrl(), "http://localhost:" + mockServer.getPort());
-            assertEquals(cfg.getApiKey(), "some_key");
-            assertEquals(cfg.getRetryMax(), "2");
-            assertEquals(cfg.getRetryWaitTime(), "2");
+            config.setBaseUrl("http://localhost:" + mockServer.getPort());
+            config.setApiUrl("http://localhost:" + mockServer.getPort());
+            config.setApiKey("some_key");
+            assertEquals(config.getBaseUrl(), "http://localhost:" + mockServer.getPort());
+            assertEquals(config.getApiUrl(), "http://localhost:" + mockServer.getPort());
+            assertEquals(config.getApiKey(), "some_key");
+
+            // Testing getters/setters for RetryConfig
+            RetryConfig customRetryConfig = new RetryConfig(2L, 10L, 3);
+            config.setRetryConfig(customRetryConfig);
+            config.getRetryConfig().setRetryWaitMin(2L);
+            config.getRetryConfig().setRetryWaitMax(10L);
+            config.getRetryConfig().setRetryMax(3);
+            assertEquals(config.getRetryConfig().getRetryWaitMin(), 2);
+            assertEquals(config.getRetryConfig().getRetryWaitMax(), 10);
+            assertEquals(config.getRetryConfig().getRetryMax(), 3);
         } catch (Exception e) {
             logger.error("Exception: " + e);
         }

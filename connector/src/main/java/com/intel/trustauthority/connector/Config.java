@@ -16,40 +16,23 @@ public class Config {
     private String baseUrl;
     private String apiUrl;
     private String apiKey;
-    private String retryMax;
-    private String retryWaitTime;
     private URL url;
+    private RetryConfig retryConfig;
 
     /**
-     * Constructs a new Config object with the specified baseUrl, apiUrl and apiKey.
+     * Constructs a new Config object with the specified baseUrl, apiUrl, apiKey and retryConfig
      *
      * @param baseUrl      baseUrl provided by the user.
      * @param apiUrl       apiUrl provided by user.
      * @param apiKey       apiKey provided by user.
+     * @param retryConfig  retryConfig provided by user.
      */
-    public Config(String baseUrl, String apiUrl, String apiKey) throws Exception {
+    public Config(String baseUrl, String apiUrl, String apiKey, RetryConfig retryConfig) throws Exception {
         this.baseUrl = baseUrl;
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
         this.url = new URL(apiUrl);
-    }
-
-    /**
-     * Constructs a new Config object with the specified baseUrl, apiUrl, apiKey, retryMax and retryWaitTime
-     *
-     * @param baseUrl           baseUrl provided by the user.
-     * @param apiUrl            apiUrl provided by user.
-     * @param apiKey            apiKey provided by user.
-     * @param retryMax          retryMax provided by user.
-     * @param retryWaitTime     retryWaitTime provided by user.
-     */
-    public Config(String baseUrl, String apiUrl, String apiKey, String retryMax, String retryWaitTime) throws Exception {
-        this.baseUrl = baseUrl;
-        this.apiUrl = apiUrl;
-        this.apiKey = apiKey;
-        this.retryMax = retryMax;
-        this.retryWaitTime = retryWaitTime;
-        this.url = new URL(apiUrl);
+        this.retryConfig = retryConfig;
     }
 
     /**
@@ -74,17 +57,10 @@ public class Config {
     }
 
     /**
-     * getter function for retryMax
+     * getter function for retryConfig
      */
-    public String getRetryMax() {
-        return retryMax;
-    }
-
-    /**
-     * getter function for retryWaitTime
-     */
-    public String getRetryWaitTime() {
-        return retryWaitTime;
+    public RetryConfig getRetryConfig() {
+        return retryConfig;
     }
 
     /**
@@ -109,16 +85,9 @@ public class Config {
     }
 
     /**
-     * setter function for retryMax
+     * setter function for retryConfig
      */
-    public void setRetryMax(String retryMax) {
-        this.retryMax = retryMax;
-    }
-
-    /**
-     * setter function for retryWaitTime
-     */
-    public void setRetryWaitTime(String retryWaitTime) {
-        this.retryWaitTime = retryWaitTime;
+    public void setRetryConfig(RetryConfig retryConfig) {
+        this.retryConfig = retryConfig;
     }
 }

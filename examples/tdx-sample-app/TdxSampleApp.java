@@ -74,29 +74,23 @@ public class TdxSampleApp {
             if (trust_authority_variables[4] != null) {
                 trustauthority_policy_id = trust_authority_variables[4];
             }
-            String retry_max = null;
-            if (trust_authority_variables[5] != null) {
-                retry_max = trust_authority_variables[5];
-            }
-            String retry_wait_time = null;
-            if (trust_authority_variables[6] != null) {
-                retry_wait_time = trust_authority_variables[6];
+            // Initialize RetryConfig based on system env set
+            RetryConfig retry_config = null;
+            if (trust_authority_variables[5] == null || trust_authority_variables[6] == null) {
+                // Default RetryConfig
+                retry_config = new RetryConfig();
+            } else {
+                // RetryConfig with retryWaitMin and retryMax set
+                int retryMax = Integer.parseInt(trust_authority_variables[5]);
+                long retryWaitTime = Long.parseLong(trust_authority_variables[6]);
+                retry_config = new RetryConfig(retryWaitTime, 10, retryMax);
             }
 
             // Create Policy IDs from trustauthority_policy_id string
             List<UUID> policyIDs = parseUUIDString(trustauthority_policy_id);
 
-            // Initialize config required for connector using trustauthority_base_url, trustauthority_api_url and trustauthority_api_key
-            Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key);
-
-            // Set RETRY_MAX
-            if (retry_max != null) {
-                cfg.setRetryMax(retry_max);
-            }
-            // Set RETRY_WAIT_TIME
-            if (retry_wait_time != null) {
-                cfg.setRetryWaitTime(retry_wait_time);
-            }
+            // Initialize config required for connector using trustauthority_base_url, trustauthority_api_url, trustauthority_api_key and retry_config
+            Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key, retry_config);
     
             // Initializing connector with the config
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);

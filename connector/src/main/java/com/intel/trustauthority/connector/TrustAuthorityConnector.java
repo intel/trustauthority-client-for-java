@@ -391,15 +391,10 @@ public class TrustAuthorityConnector {
      */
     private HttpURLConnection openConnectionWithRetries(URL url, Map<String, String> requestProperties) throws Exception {
         // Set maxRetries and retryWaitTimeMillis based on Config
-        int maxRetries = 2; // Default 2
-        if (cfg.getRetryMax() != null) {
-            maxRetries = Integer.parseInt(cfg.getRetryMax());
-        }
-        long retryWaitTimeMillis = 2000; // Default 2 seconds
-        if (cfg.getRetryWaitTime() != null) {
-            retryWaitTimeMillis = Long.parseLong(cfg.getRetryWaitTime()) * 1000;
-        }
+        int maxRetries = cfg.getRetryConfig().getRetryMax();
+        long retryWaitTimeMillis = cfg.getRetryConfig().getRetryWaitMin();
 
+        // Initialize connection
         HttpURLConnection connection = null;
 
         // Retry for establishing connection in a loop if it fails
@@ -438,10 +433,8 @@ public class TrustAuthorityConnector {
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 // Successful connection
                 return connection;
-            } else if (responseCode == HttpURLConnection.HTTP_INTERNAL_ERROR ||
-                        responseCode == HttpURLConnection.HTTP_UNAVAILABLE ||
-                        responseCode == HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
-                // Retry for above response codes 500, 503 and 504
+            } else if (Constants.retryableStatusCodes.contains(responseCode)) {
+                // Retry for response codes which are in set retryableStatusCodes
                 logger.warn("Retrying due to unexpected response code: " + responseCode);
             } else {
                 // Return for connections where we should not retry for the response code
@@ -451,8 +444,14 @@ public class TrustAuthorityConnector {
 
             // If this is not the last retry, wait before the next retry
             if (retry < maxRetries - 1) {
+
+                // Calculate the wait time with exponential backoff, capped at retryWaitMax
+                long waitTime = Math.min(cfg.getRetryConfig().getRetryWaitMax(),
+                                         (1L << retry) * retryWaitTimeMillis);
+
+                logger.debug("Retrying in " + waitTime + " milliseconds...");
                 try {
-                    Thread.sleep(retryWaitTimeMillis);
+                    Thread.sleep(waitTime);
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }
