@@ -70,22 +70,16 @@ public class TdxSampleApp {
             String trustauthority_policy_id = trust_authority_variables[4];
 
             // Initialize RetryConfig based on system env set
-            RetryConfig retry_config = null;
-            if (trust_authority_variables[5] == null && trust_authority_variables[6] == null) {
-                // Default RetryConfig
-                retry_config = new RetryConfig();
-            } else {
-                int retryMax = 2; // Default: 2 retries
-                long retryWaitTime = 2000L; // Default: 2 seconds
-                if (trust_authority_variables[5] != null) {
-                    retryMax = Integer.parseInt(trust_authority_variables[5]);
-                }
-                if (trust_authority_variables[6] != null) {
-                    retryWaitTime = Long.parseLong(trust_authority_variables[6]);
-                }
-                // RetryConfig with retryWaitMin and retryMax set
-                retry_config = new RetryConfig(retryWaitTime, 10, retryMax);
+            int retryMax = 2; // Default: 2 retries
+            long retryWaitTime = 2; // Default: 2 seconds
+            if (trust_authority_variables[5] != null) {
+                retryMax = Integer.parseInt(trust_authority_variables[5]);
             }
+            if (trust_authority_variables[6] != null) {
+                retryWaitTime = Long.parseLong(trust_authority_variables[6]);
+            }
+            // RetryConfig with retryWaitMin and retryMax set
+            RetryConfig retry_config  = new RetryConfig(retryWaitTime, 10, retryMax);
 
             // Create Policy IDs from trustauthority_policy_id string
             List<UUID> policyIDs = parseUUIDString(trustauthority_policy_id);
@@ -192,36 +186,24 @@ public class TdxSampleApp {
             initializer[3] = trustauthority_request_id;
         }
         String trustauthority_policy_id = System.getenv("TRUSTAUTHORITY_POLICY_ID");
-        if (trustauthority_policy_id == null) {
-            logger.debug("TRUSTAUTHORITY_POLICY_ID is not set.");
+        if (trustauthority_policy_id != null) {
+            initializer[4] = trustauthority_policy_id;
         }
         logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url);
         
         String retry_max = System.getenv("RETRY_MAX");
-        if (retry_max == null) {
-            logger.debug("RETRY_MAX is not set. Using default value 2");
+        if (retry_max != null) {
+            initializer[5] = retry_max;
         }
         String retry_wait_time = System.getenv("RETRY_WAIT_TIME");
-        if (retry_wait_time == null) {
-            logger.debug("RETRY_WAIT_TIME is not set. Using default value 2 seconds");
+        if (retry_wait_time != null) {
+            initializer[6] = retry_wait_time;
         }
-        
+
         // Initialize trust authority variables
         initializer[0] = trustauthority_base_url;
         initializer[1] = trustauthority_api_url;
         initializer[2] = trustauthority_api_key;
-        // Set optional trustauthority_policy_id
-        if (trustauthority_policy_id != null) {
-            initializer[4] = trustauthority_policy_id;
-        }
-        // Set optional retry_max
-        if (retry_max != null) {
-            initializer[5] = retry_max;
-        }
-        // Set optional retry_wait_time
-        if (retry_wait_time != null) {
-            initializer[6] = retry_wait_time;
-        }
 
         return initializer;
     }

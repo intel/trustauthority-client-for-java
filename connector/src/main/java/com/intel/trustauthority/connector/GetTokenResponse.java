@@ -29,6 +29,12 @@ public class GetTokenResponse {
     }
 
     /**
+     * Default constructor (required for Jackson Object Mapping)
+     */
+    public GetTokenResponse() {
+    }
+
+    /**
      * getter function for token
      */
     public String getToken() {

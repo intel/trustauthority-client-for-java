@@ -15,15 +15,6 @@ public class RetryConfig {
     private int retryMax;      // Maximum number of retries
 
     /**
-     * Constructs a new RetryConfig object with default values
-     */
-    public RetryConfig() {
-        this.retryWaitMin = 2000L; // Default: 2 seconds
-        this.retryWaitMax = 10000L; // Default: 10 seconds
-        this.retryMax = 2; // Default: 2 retries
-    }
-
-    /**
      * Constructs a new Config object with the specified retryWaitMin, retryWaitMax and retryMax.
      *
      * @param retryWaitMin   retryWaitMin in seconds provided by the user.
@@ -31,9 +22,20 @@ public class RetryConfig {
      * @param retryMax       retryMax provided by user.
      */
     public RetryConfig(long retryWaitMin, long retryWaitMax, int retryMax) {
-        this.retryWaitMin = retryWaitMin * 1000;
-        this.retryWaitMax = retryWaitMax * 1000;
-        this.retryMax = retryMax;
+        this.retryWaitMin = 2; // Default: 2 seconds
+        this.retryWaitMax = 10; // Default: 10 seconds
+        this.retryMax = 2; // Default: 2 retries
+
+        // Set custom values provided by user
+        if (retryWaitMin != 0) {
+            this.retryWaitMin = retryWaitMin;
+        }
+        if (retryWaitMax != 0) {
+            this.retryWaitMax = retryWaitMax;
+        }
+        if (retryMax != 0) {
+            this.retryMax = retryMax;
+        }
     }
 
     /**

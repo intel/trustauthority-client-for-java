@@ -87,12 +87,21 @@ public class TrustAuthorityConnector {
             URL requestUrl = new URL(url);
 
             // Set request properties
-            Map<String, String> requestProperties = Map.of(
+            Map<String, String> requestProperties = null;
+            if (args.getRequestId() != null) {
+                requestProperties = Map.of(
                     Constants.HEADER_REQUEST_METHOD, "GET",
                     Constants.HEADER_X_API_KEY, cfg.getApiKey(),
                     Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON,
                     Constants.HEADER_REQUEST_ID, args.getRequestId()
-            );
+                );
+            } else {
+                requestProperties = Map.of(
+                    Constants.HEADER_REQUEST_METHOD, "GET",
+                    Constants.HEADER_X_API_KEY, cfg.getApiKey(),
+                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON
+                );
+            }
 
             // Create the HttpURLConnection
             HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
@@ -148,14 +157,25 @@ public class TrustAuthorityConnector {
             URL requestUrl = new URL(url);
 
             // Set request properties
-            Map<String, String> requestProperties = Map.of(
+            Map<String, String> requestProperties = null;
+            if (args.getRequestId() != null) {
+                requestProperties = Map.of(
                     Constants.HEADER_REQUEST_METHOD, "POST",
                     Constants.HEADER_X_API_KEY, cfg.getApiKey(),
                     Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON,
                     Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON,
                     Constants.HEADER_REQUEST_ID, args.getRequestId(),
                     Constants.WRITE_OUTPUT, jsonString
-            );
+                );
+            } else {
+                requestProperties = Map.of(
+                    Constants.HEADER_REQUEST_METHOD, "POST",
+                    Constants.HEADER_X_API_KEY, cfg.getApiKey(),
+                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON,
+                    Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON,
+                    Constants.WRITE_OUTPUT, jsonString
+                );
+            }
 
             // Create the HttpURLConnection
             HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
@@ -163,15 +183,12 @@ public class TrustAuthorityConnector {
             // read the response if connection OK
             String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
 
-            // Convert received response string to JSON
-            Gson gson = new Gson();
-            JsonObject jsonObject = gson.fromJson(responseBody, JsonObject.class);
+            // Map the fetched response JSON to GetTokenResponse object
+            ObjectMapper mapper = new ObjectMapper();
+            GetTokenResponse tokenResponse = mapper.readValue(responseBody, GetTokenResponse.class);
 
-            // Fetch the String value associated with the key "token"
-            String token = jsonObject.get("token").getAsString();
-
-            // Convert the received token and header fields to a GetTokenResponse object
-            GetTokenResponse tokenResponse =  new GetTokenResponse(token, connection.getHeaderFields());
+            // Set response headers
+            tokenResponse.setHeaders(connection.getHeaderFields());
 
             // Close the connection once the entire data is received
             connection.disconnect();
@@ -218,7 +235,7 @@ public class TrustAuthorityConnector {
                 throw new Exception("Failed to collect evidence from adapter");
             }
 
-            logger.info("Collected evidence from adapter successfully...");
+            logger.debug("Collected evidence from adapter successfully...");
 
             // Calling the GetToken() API
             GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId()));
@@ -226,7 +243,7 @@ public class TrustAuthorityConnector {
                 throw new Exception("Failed to collect token from Trust Authority");
             }
 
-            logger.info("Collected token from Trust Authority successfully...");
+            logger.debug("Collected token from Trust Authority successfully...");
 
             // Set AttestResponse headers with tokenResponse headers
             response.setToken(tokenResponse.getToken());
@@ -392,7 +409,7 @@ public class TrustAuthorityConnector {
     private HttpURLConnection openConnectionWithRetries(URL url, Map<String, String> requestProperties) throws Exception {
         // Set maxRetries and retryWaitTimeMillis based on Config
         int maxRetries = cfg.getRetryConfig().getRetryMax();
-        long retryWaitTimeMillis = cfg.getRetryConfig().getRetryWaitMin();
+        long retryWaitTimeMillis = cfg.getRetryConfig().getRetryWaitMin() * 1000;
 
         // Initialize connection
         HttpURLConnection connection = null;
@@ -440,8 +457,8 @@ public class TrustAuthorityConnector {
                 if (retry < maxRetries) {
 
                     // Calculate the wait time with exponential backoff, capped at retryWaitMax
-                    long waitTime = Math.min(cfg.getRetryConfig().getRetryWaitMax(),
-                                            (1L << retry) * retryWaitTimeMillis);
+                    long waitTime = Math.min(cfg.getRetryConfig().getRetryWaitMax() * 1000,
+                                             (1L << retry) * retryWaitTimeMillis);
 
                     logger.debug("Retrying in " + waitTime + " milliseconds...");
                     try {
