@@ -342,10 +342,11 @@ public class TrustAuthorityConnectorTest {
             when(mockArgs.getPolicyIds()).thenReturn(Arrays.asList(UUID.randomUUID()));
             when(mockArgs.getRequestId()).thenReturn(null);
 
-            // Stubbing the response with an invalid token
+            // Stubbing the response with an invalid token and
+            // response code 503 to exercise doRequest() retry
             new MockServerClient("localhost", mockServer.getPort())
                                 .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
-                                .respond(HttpResponse.response().withStatusCode(200)
+                                .respond(HttpResponse.response().withStatusCode(503)
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("invalid_token"));
 
@@ -366,10 +367,6 @@ public class TrustAuthorityConnectorTest {
             // Check if connector is not null
             assertNotNull(connector);
 
-            // Initialize nonce_args for GetNonce() API
-            GetNonceArgs nonce_args = new GetNonceArgs("mock-request-id");
-            assertNotNull(nonce_args);
-
             // Initialize nonce values for serving from mock server
             String nonce_val = "MjAyMy0xMi0yMCAxNzo0MDowNiArMDAwMCBVVEM=";
             String nonce_iat = "MjAyMi0wOC0yNCAxMjozNjozMi45Mjk3MjIwNzUgKzAwMDAgVVRD";
@@ -382,32 +379,8 @@ public class TrustAuthorityConnectorTest {
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
 
-            // Calling the GetNonce() API
-            GetNonceResponse nonceResponse = connector.GetNonce(nonce_args);
-            assertNotNull(nonceResponse);
-
-            // Convert nonce values to Base64 decoded bytes
-            byte[] decodedBytesVal = Base64.from(nonce_val).decode();
-            byte[] decodedBytesIat = Base64.from(nonce_iat).decode();
-            byte[] decodedBytesSignature = Base64.from(nonce_signature).decode();
-
-            // Verify response is not empty
-            assertNotNull(nonceResponse);
-            assertNotNull(nonceResponse.getNonce());
-
-            // Verify the GetNonce() response
-            assertArrayEquals(decodedBytesVal, nonceResponse.getNonce().getVal());
-            assertArrayEquals(decodedBytesIat, nonceResponse.getNonce().getIat());
-            assertArrayEquals(decodedBytesSignature, nonceResponse.getNonce().getSignature());
-
-            // Create a mock GetTokenArgs object
-            GetTokenArgs mockArgs = mock(GetTokenArgs.class);
-            VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(), "mock-iat".getBytes(), "mock-signature".getBytes());
+            // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
-            when(mockArgs.getNonce()).thenReturn(mockNonce);
-            when(mockArgs.getEvidence()).thenReturn(mockEvidence);
-            when(mockArgs.getPolicyIds()).thenReturn(Arrays.asList(UUID.randomUUID()));
-            when(mockArgs.getRequestId()).thenReturn("mock-request-id");
 
             // Sample token to be sent from server
             String token = "mock-token";
@@ -419,34 +392,29 @@ public class TrustAuthorityConnectorTest {
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("{\"token\":\"" + token + "\"}"));
 
-            // Calling the GetToken() API
-            GetTokenResponse tokenResponse = connector.GetToken(mockArgs);
-            assertNotNull(tokenResponse);
-
-            // Verify the GetToken() response
-            assertEquals("mock-token", tokenResponse.getToken());
-
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
+            // Create a mock PolicyIDs object
+            List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
+
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, null, "mock-request-id");
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id");
             AttestResponse response = connector.attest(attestArgs);
 
             // Verify the response
             assertNotNull(response);
-            assertEquals(tokenResponse.getToken(), response.getToken());
-            assertEquals(tokenResponse.getHeaders(), response.getHeaders());
+            assertEquals(response.getToken(), "mock-token");
+            assertNotNull(response.getHeaders());
 
-            // Test setters
-            tokenResponse.setToken(response.getToken());
-            tokenResponse.setHeaders(response.getHeaders());
-            assertEquals(tokenResponse.getToken(), response.getToken());
-            assertEquals(tokenResponse.getHeaders(), response.getHeaders());
+            // Test setters/getters
             attestArgs.setRequestId("mock-request-id");
-            attestArgs.setPolicyIds(Arrays.asList(UUID.randomUUID()));
+            attestArgs.setPolicyIds(mockPolicyIDs);
             attestArgs.setAdapter(mockAdapter);
+            assertEquals(attestArgs.getRequestId(), "mock-request-id");
+            assertEquals(attestArgs.getPolicyIds(), mockPolicyIDs);
+            assertEquals(attestArgs.getAdapter(), mockAdapter);
         } catch (Exception e) {
             logger.error("Exception: " + e);
         }
@@ -468,14 +436,18 @@ public class TrustAuthorityConnectorTest {
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("invalid_nonce"));
 
+            // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
+
+            // Create a mock PolicyIDs object
+            List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
 
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, null, "mock-request-id");
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id");
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
@@ -504,21 +476,25 @@ public class TrustAuthorityConnectorTest {
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
 
-            // Stubbing the response with an invalid token and 503 response code to exercise retry mechanism
+            // Stubbing the response with an invalid token
             new MockServerClient("localhost", mockServer.getPort())
                                 .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
-                                .respond(HttpResponse.response().withStatusCode(503)
+                                .respond(HttpResponse.response().withStatusCode(200)
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("invalid_token"));
 
+            // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
+
+            // Create a mock PolicyIDs object
+            List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
 
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, null, "mock-request-id");
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id");
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
@@ -565,6 +541,30 @@ public class TrustAuthorityConnectorTest {
                                 .respond(HttpResponse.response().withStatusCode(404)
                                 .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
                                 .withBody("Not Found"));
+
+            // Calling the getTokenSigningCertificates() API
+            String response = connector.getTokenSigningCertificates();
+            assertNull(response);
+        } catch (Exception e) {
+            // Ignore exceptions as they are expected in failure conditions
+        }
+    }
+
+    @Test
+    public void testOpenConnectionWithRetries() {
+        try {
+            // Check if config is not null
+            assertNotNull(cfg);
+
+            // Check if connector is not null
+            assertNotNull(connector);
+
+            // Stubbing the response and induce a response code 503 to exercise retry mechanism
+            new MockServerClient("localhost", mockServer.getPort())
+                                .when(HttpRequest.request().withPath("/certs"))
+                                .respond(HttpResponse.response().withStatusCode(503)
+                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
+                                .withBody("hello-world"));
 
             // Calling the getTokenSigningCertificates() API
             String response = connector.getTokenSigningCertificates();

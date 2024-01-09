@@ -138,13 +138,13 @@ public class SgxSampleApp {
             String base64Quote = Base64.encode(sgxEvidence.getQuote()).toString();
 
             // Print the SGX quote in Base64 format
-            logger.debug("SGX quote Base64 Encoded: " + base64Quote);
+            logger.info("SGX quote Base64 Encoded: " + base64Quote);
 
             // Convert SGX UserData from bytes to Base64
             String base64UserData = Base64.encode(sgxEvidence.getUserData()).toString();
 
             // Print the SGX UserData in Base64 format
-            logger.debug("SGX user data Base64 Encoded: " + base64UserData);
+            logger.info("SGX user data Base64 Encoded: " + base64UserData);
 
             // Initialize Sample App variables
             String[] trust_authority_variables = init();

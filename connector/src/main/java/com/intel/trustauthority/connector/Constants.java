@@ -25,6 +25,10 @@ public class Constants {
 
     public static final String WRITE_OUTPUT = "write-output";
 
+    public static final long DEFAULT_RETRY_WAIT_TIME_MIN = 2;
+    public static final long DEFAULT_RETRY_WAIT_TIME_MAX = 10;
+    public static final int DEFAULT_RETRY_MAX = 2;
+
     // Define a constant retryableStatusCodes Set
     public static final Set<Integer> retryableStatusCodes;
 

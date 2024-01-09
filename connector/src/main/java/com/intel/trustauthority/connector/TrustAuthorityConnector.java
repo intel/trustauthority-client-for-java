@@ -356,7 +356,7 @@ public class TrustAuthorityConnector {
             // Verify the signature
             if (signedJWT.verify(verifier)) {
                 // Signature is valid
-                logger.info("JWT signature validated successfully");
+                logger.debug("JWT signature validated successfully");
 
                 return signedJWT.getJWTClaimsSet();
             } else {

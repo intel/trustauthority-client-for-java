@@ -22,9 +22,9 @@ public class RetryConfig {
      * @param retryMax       retryMax provided by user.
      */
     public RetryConfig(long retryWaitMin, long retryWaitMax, int retryMax) {
-        this.retryWaitMin = 2; // Default: 2 seconds
-        this.retryWaitMax = 10; // Default: 10 seconds
-        this.retryMax = 2; // Default: 2 retries
+        this.retryWaitMin = Constants.DEFAULT_RETRY_WAIT_TIME_MIN; // Default: 2 seconds
+        this.retryWaitMax = Constants.DEFAULT_RETRY_WAIT_TIME_MAX; // Default: 10 seconds
+        this.retryMax = Constants.DEFAULT_RETRY_MAX; // Default: 2 retries
 
         // Set custom values provided by user
         if (retryWaitMin != 0) {

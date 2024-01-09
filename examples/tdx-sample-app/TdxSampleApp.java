@@ -53,13 +53,13 @@ public class TdxSampleApp {
             String base64Quote = Base64.encode(tdxEvidence.getQuote()).toString();
 
             // Print the TDX quote in Base64 format
-            logger.debug("TDX quote Base64 Encoded: " + base64Quote);
+            logger.info("TDX quote Base64 Encoded: " + base64Quote);
 
             // Convert TDX UserData from bytes to Base64
             String base64UserData = Base64.encode(tdxEvidence.getUserData()).toString();
 
             // Print the TDX UserData in Base64 format
-            logger.debug("TDX user data Base64 Encoded: " + base64UserData);
+            logger.info("TDX user data Base64 Encoded: " + base64UserData);
 
             // Initialize Sample App variables
             String[] trust_authority_variables = init();
