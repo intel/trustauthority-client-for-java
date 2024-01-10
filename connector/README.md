@@ -20,8 +20,8 @@ access different parts of the Intel Trust Authority API.
 import com.intel.trustauthority.connector.Config;
 import com.intel.trustauthority.connector.TrustAuthorityConnector;
 
-// Initialize config required for connector using trustauthority_base_url, trustauthority_api_url, trustauthority_api_key and retry_config
-Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key, retry_config);
+// Initialize config required for connector using trustAuthorityBaseUrl, trustAuthorityApiUrl, trustAuthorityApiKey and retryConfig
+Config cfg = new Config(trustAuthorityBaseUrl, trustAuthorityApiUrl, trustAuthorityApiKey, retryConfig);
 
 // Initialize TrustAuthorityConnector with the config
 TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);

@@ -147,36 +147,40 @@ public class SgxSampleApp {
             logger.info("SGX user data Base64 Encoded: " + base64UserData);
 
             // Initialize Sample App variables
-            String[] trust_authority_variables = init();
-            String trustauthority_base_url = trust_authority_variables[0];
-            String trustauthority_api_url = trust_authority_variables[1];
-            String trustauthority_api_key = trust_authority_variables[2];
-            String trustauthority_request_id = trust_authority_variables[3];
-            String trustauthority_policy_id = trust_authority_variables[4];
+            String[] trustAuthorityVariables = init();
+            if (trustAuthorityVariables.length == 0) {
+                logger.error("Initialization failed, exiting...");
+                System.exit(1);
+            }
+            String trustAuthorityBaseUrl = trustAuthorityVariables[0];
+            String trustAuthorityApiUrl = trustAuthorityVariables[1];
+            String trustAuthorityApiKey = trustAuthorityVariables[2];
+            String trustAuthorityRequestID = trustAuthorityVariables[3];
+            String trustAuthorityPolicyID = trustAuthorityVariables[4];
 
             // Initialize RetryConfig based on system env set
             int retryMax = 2; // Default: 2 retries
             long retryWaitTime = 2; // Default: 2 seconds
-            if (trust_authority_variables[5] != null) {
-                retryMax = Integer.parseInt(trust_authority_variables[5]);
+            if (trustAuthorityVariables[5] != null) {
+                retryMax = Integer.parseInt(trustAuthorityVariables[5]);
             }
-            if (trust_authority_variables[6] != null) {
-                retryWaitTime = Long.parseLong(trust_authority_variables[6]);
+            if (trustAuthorityVariables[6] != null) {
+                retryWaitTime = Long.parseLong(trustAuthorityVariables[6]);
             }
             // RetryConfig with retryWaitMin and retryMax set
-            RetryConfig retry_config  = new RetryConfig(retryWaitTime, 10, retryMax);
+            RetryConfig retryConfig  = new RetryConfig(retryWaitTime, 10, retryMax);
 
-            // Create Policy IDs from trustauthority_policy_id string
-            List<UUID> policyIDs = parseUUIDString(trustauthority_policy_id);
+            // Create Policy IDs from trustAuthorityPolicyID string
+            List<UUID> policyIDs = parseUUIDString(trustAuthorityPolicyID);
 
-            // Initialize config required for connector using trustauthority_base_url, trustauthority_api_url, trustauthority_api_key and retry_config
-            Config cfg = new Config(trustauthority_base_url, trustauthority_api_url, trustauthority_api_key, retry_config);
+            // Initialize config required for connector using trustAuthorityBaseUrl, trustAuthorityApiUrl, trustAuthorityApiKey and retryConfig
+            Config cfg = new Config(trustAuthorityBaseUrl, trustAuthorityApiUrl, trustAuthorityApiKey, retryConfig);
 
             // Initializing connector with the config
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
             // Verifying attestation for SGX platform
-            AttestArgs attestArgs = new AttestArgs(sgxAdapter, policyIDs, trustauthority_request_id);
+            AttestArgs attestArgs = new AttestArgs(sgxAdapter, policyIDs, trustAuthorityRequestID);
             AttestResponse response = connector.attest(attestArgs);
 
             // Print the Request ID of token fetched from Trust Authority
@@ -192,6 +196,8 @@ public class SgxSampleApp {
 
             // Verify the received token
             JWTClaimsSet claims = connector.verifyToken(response.getToken());
+
+            logger.info("Successfully verified token.");
         } catch (Exception e) {
             logger.error("Exception: " + e);
             System.exit(1);
@@ -206,7 +212,7 @@ public class SgxSampleApp {
         // Fetch the log level from an environment variable
         String logLevel = System.getenv("LOG_LEVEL");
         if (logLevel == null) {
-            logger.info("LOG_LEVEL environment variable not set. Using default log level: INFO");
+            logger.debug("LOG_LEVEL environment variable not set. Using default log level: INFO");
             logLevel = "info";
         }
 
@@ -216,7 +222,7 @@ public class SgxSampleApp {
         // Check if the targetString is not equal to any of the logLevels
         boolean notEqual = Arrays.stream(logLevels).noneMatch(logLevel.toLowerCase()::equals);
         if (notEqual) {
-            logger.info("Invalid LOG_LEVEL set. Using default log level: INFO");
+            logger.debug("Invalid LOG_LEVEL set. Using default log level: INFO");
             logLevel = "info";
         }
 
@@ -235,12 +241,12 @@ public class SgxSampleApp {
         String[] initializer = new String[7];
 
         // Fetch proxy settings from environment
-        String httpsHost = System.getenv("HTTPS_PROXY_HOST");
+        String httpsHost = System.getenv(Constants.ENV_HTTPS_PROXY_HOST);
         if (httpsHost != null) {
             // Setting proxy settings host
             System.setProperty("https.proxyHost", httpsHost);
         }
-        String httpsPort = System.getenv("HTTPS_PROXY_PORT");
+        String httpsPort = System.getenv(Constants.ENV_HTTPS_PROXY_PORT);
         if (httpsPort != null) {
             // Setting proxy settings port
             System.setProperty("https.proxyPort", httpsPort);
@@ -248,47 +254,47 @@ public class SgxSampleApp {
         logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
 
         // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
-        String trustauthority_base_url = System.getenv("TRUSTAUTHORITY_BASE_URL");
-        if (trustauthority_base_url == null) {
+        String trustAuthorityBaseUrl = System.getenv(Constants.ENV_TRUSTAUTHORITY_BASE_URL);
+        if (trustAuthorityBaseUrl == null) {
             logger.error("TRUSTAUTHORITY_BASE_URL is not set.");
             // Exit if env variable not set
             System.exit(1);
         }
-        String trustauthority_api_url = System.getenv("TRUSTAUTHORITY_API_URL");
-        if (trustauthority_api_url == null) {
+        String trustAuthorityApiUrl = System.getenv(Constants.ENV_TRUSTAUTHORITY_API_URL);
+        if (trustAuthorityApiUrl == null) {
             logger.error("TRUSTAUTHORITY_API_URL is not set.");
             // Exit if env variable not set
             System.exit(1);
         }
-        String trustauthority_api_key = System.getenv("TRUSTAUTHORITY_API_KEY");
-        if (trustauthority_api_key == null) {
+        String trustAuthorityApiKey = System.getenv(Constants.ENV_TRUSTAUTHORITY_API_KEY);
+        if (trustAuthorityApiKey == null) {
             logger.error("TRUSTAUTHORITY_API_KEY is not set.");
             // Exit if env variable not set
             System.exit(1);
         }
-        String trustauthority_request_id = System.getenv("TRUSTAUTHORITY_REQUEST_ID");
-        if (trustauthority_request_id != null) {
-            initializer[3] = trustauthority_request_id;
+        String trustAuthorityRequestID = System.getenv(Constants.ENV_TRUSTAUTHORITY_REQUEST_ID);
+        if (trustAuthorityRequestID != null) {
+            initializer[3] = trustAuthorityRequestID;
         }
-        String trustauthority_policy_id = System.getenv("TRUSTAUTHORITY_POLICY_ID");
-        if (trustauthority_policy_id != null) {
-            initializer[4] = trustauthority_policy_id;
+        String trustAuthorityPolicyID = System.getenv(Constants.ENV_TRUSTAUTHORITY_POLICY_ID);
+        if (trustAuthorityPolicyID != null) {
+            initializer[4] = trustAuthorityPolicyID;
         }
-        logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustauthority_base_url + ", TRUSTAUTHORITY_API_URL: " + trustauthority_api_url);
+        logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustAuthorityBaseUrl + ", TRUSTAUTHORITY_API_URL: " + trustAuthorityApiUrl);
         
-        String retry_max = System.getenv("RETRY_MAX");
+        String retry_max = System.getenv(Constants.ENV_RETRY_MAX);
         if (retry_max != null) {
             initializer[5] = retry_max;
         }
-        String retry_wait_time = System.getenv("RETRY_WAIT_TIME");
+        String retry_wait_time = System.getenv(Constants.ENV_RETRY_WAIT_TIME);
         if (retry_wait_time != null) {
             initializer[6] = retry_wait_time;
         }
 
         // Initialize trust authority variables
-        initializer[0] = trustauthority_base_url;
-        initializer[1] = trustauthority_api_url;
-        initializer[2] = trustauthority_api_key;
+        initializer[0] = trustAuthorityBaseUrl;
+        initializer[1] = trustAuthorityApiUrl;
+        initializer[2] = trustAuthorityApiKey;
 
         return initializer;
     }

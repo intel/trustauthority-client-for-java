@@ -29,6 +29,16 @@ public class Constants {
     public static final long DEFAULT_RETRY_WAIT_TIME_MAX = 10;
     public static final int DEFAULT_RETRY_MAX = 2;
 
+    public static final String ENV_TRUSTAUTHORITY_BASE_URL = "TRUSTAUTHORITY_BASE_URL";
+    public static final String ENV_TRUSTAUTHORITY_API_URL = "TRUSTAUTHORITY_API_URL";
+    public static final String ENV_TRUSTAUTHORITY_API_KEY = "TRUSTAUTHORITY_API_KEY";
+    public static final String ENV_TRUSTAUTHORITY_REQUEST_ID = "TRUSTAUTHORITY_REQUEST_ID";
+    public static final String ENV_TRUSTAUTHORITY_POLICY_ID = "TRUSTAUTHORITY_POLICY_ID";
+    public static final String ENV_RETRY_MAX = "RETRY_MAX";
+    public static final String ENV_RETRY_WAIT_TIME = "RETRY_WAIT_TIME";
+    public static final String ENV_HTTPS_PROXY_HOST = "HTTPS_PROXY_HOST";
+    public static final String ENV_HTTPS_PROXY_PORT = "HTTPS_PROXY_PORT";
+
     // Define a constant retryableStatusCodes Set
     public static final Set<Integer> retryableStatusCodes;
 

@@ -11,6 +11,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,12 +69,12 @@ public class TrustAuthorityConnectorTest {
             mockServer = new ClientAndServer(); // No-args constructor will start on a free port
 
             // Default RetryConfig
-            RetryConfig retry_config = new RetryConfig(0, 0, 0);
+            RetryConfig retryConfig = new RetryConfig(0, 0, 0);
 
             // Initialize config required for connector
             cfg = new Config("http://localhost:" + mockServer.getPort(),
                              "http://localhost:" + mockServer.getPort(),
-                             "some_key", retry_config);
+                             "some_key", retryConfig);
             assertNotNull(cfg);
 
             // Initializing connector with the config
@@ -87,7 +88,8 @@ public class TrustAuthorityConnectorTest {
             valid_jwks = "{\"keys\":[{\"alg\":\"PS384\",\"e\":\"AQAB\",\"kid\":\"1a1a2fe5fcf89009e4b96c45e0dceb005ea635d8ba2f6ed9caeef44ae235970decc586154fd9f740fb3b72ca176abb59\",\"kty\":\"RSA\",\"n\":\"vKKV7v7czOHapQ22ZnW677i4BkQIuxVTLk933javfZyLzpM7ZP_Mhvu9QqHrr-iKEqCDBuX1slL_hoB0fTCGGnoFTZ1lTqBdmhFysIgg5uzAqMWL2SJdzYX9RJ_ZXMFnvzTznO-b2jJd864pUI6y72mrzfTqQvgw_60fa3tjc9zjJPiqT1yadKar3G5c0fJqg7AUooTuMkIq291tHqoNhfYzzshZCSFV_d5RruheVMjvgMunx1zISiZ5RNRjcy39G7-08UTCIlSKE_GdsLDNViHqACz60BW3p-kSY5YdoslwKvDUOJnkVZMpJNfdYDoBIiIGgKL2j5H8arHmhSw1A1kl66YdDl7H5Pa46qp4B2FrS5Qpt1D9C-SZXkWN3wzDIQLsHKs0e86R5guLMS9_WcfsPCcHCLjqMZe6S-18SdjwzCK4hbn5vLCZYUzIyVEIcYT8f3mS3s3I1UxJRW53WZOEKkyGVKKGTF8uRxaksFVGrIdW0Q41Wo3mB30N2tqL\",\"x5c\":[\"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\"]}]}";
             invalid_jwks = "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"example-key-1\",\"use\":\"sig\",\"alg\":\"RS512\",\"n\":\"p7-56CwfyqLldDQ7d0C0ZFQTL2e9mz_1iHbBTV6p4I8R2tlqsh4DVdS6ilxf_FWe_HlnXq1Nkx-_z1miSZhRg_kHPjtbcvxGRoKBKqBcXhUdVY7xFsD9m6W6z6h9dN6OXJ0NQY0DzGtmRTD_yuQFgYUn8KosdREH-Pp8w-fgfr3r5Q\",\"e\":\"AQAB\",\"d\":\"G3psHvef3HzarQUGryEP4kP8x8nOh9GfM2R8YOTsKpyY9aYtHxFuiPks8fvW8RyyPDTnzZ-_6RUvZYN3WEDF0Y-XbwrlM78KmmhYtEvQajOhLprW4W4hJpxITf1qOxgjA62RVa1Op2_A2LDRj7XqfZ9JoPB0IlnugBx9OuP7_kFmE\",\"p\":\"_qkjLJlRg_ZXr9ifM3URrTD00mVW8U35s5RZWdhEmy9eGU7mjQjsoiVif3nquV7BrzETXyH5UdH9xxV2yjprHw\",\"q\":\"xlqm_LueqqOQBWx-3VlbiqQs47ShJ7xwANU2cvh9eNifnJWOTlnqHLW-k9wZJnXCZSM3p1JQXgtN7lfcgGRI5Ww\",\"dp\":\"PnIInZSoMltzLy3YyNL0s4F8v33EhRO3KW9rsy5sfiC-3DpSszCwFvF3KH4RpN5y2efR4iaCk7NKId24qARh8w\",\"dq\":\"JF8-9bRfb9mYERQYdOi-ALQDn4pVN84Fv0FhJhBqE5myaY6smhxQGw-o0m6yxCz3rpX_2tQ2R-2vxcrvdbEuyQ\",\"qi\":\"RSBFDqKwnF16Ig56pUP02xUw6fKLhU13rGf9Lh3K0gGZ4M9Jufc4sZKyL9ZgNdtfNUvHrL4d6IbY99Y6mI9JpQ\"}]}";
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 
@@ -114,13 +116,13 @@ public class TrustAuthorityConnectorTest {
     public void testConfig() {
         try {
             // Default RetryConfig
-            RetryConfig retry_config = new RetryConfig(0, 0, 0);
+            RetryConfig retryConfig = new RetryConfig(0, 0, 0);
 
             // Initialize config
             Config config = new Config("http://localhost:" + mockServer.getPort(),
                                        "http://localhost:" + mockServer.getPort(),
                                        "some_key",
-                                       retry_config);
+                                       retryConfig);
             assertNotNull(config);
 
             // Test connector config setter
@@ -151,7 +153,8 @@ public class TrustAuthorityConnectorTest {
             assertEquals(config.getRetryConfig().getRetryWaitMax(), 10);
             assertEquals(config.getRetryConfig().getRetryMax(), 3);
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 
@@ -179,7 +182,8 @@ public class TrustAuthorityConnectorTest {
             assertEquals(token_request.getPolicyIds(), mockPolicyIDs);
             assertArrayEquals(token_request.getEventLog(), actual);
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 
@@ -200,7 +204,8 @@ public class TrustAuthorityConnectorTest {
             assertArrayEquals(evidence.getUserData(), actual);
             assertArrayEquals(evidence.getEventLog(), actual);
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 
@@ -246,7 +251,8 @@ public class TrustAuthorityConnectorTest {
             assertArrayEquals(decodedBytesIat, nonceResponse.getNonce().getIat());
             assertArrayEquals(decodedBytesSignature, nonceResponse.getNonce().getSignature());
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 
@@ -320,7 +326,8 @@ public class TrustAuthorityConnectorTest {
             assertEquals(testTokenResponse.getToken(), token);
             assertEquals(testTokenResponse.getHeaders(), mockHeaders);
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 
@@ -416,7 +423,8 @@ public class TrustAuthorityConnectorTest {
             assertEquals(attestArgs.getPolicyIds(), mockPolicyIDs);
             assertEquals(attestArgs.getAdapter(), mockAdapter);
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 
@@ -522,7 +530,8 @@ public class TrustAuthorityConnectorTest {
             String response = connector.getTokenSigningCertificates();
             assertNotNull(response);
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 
@@ -600,7 +609,8 @@ public class TrustAuthorityConnectorTest {
             // Verify the response
             assertEquals(claims.getIssuer(), "Intel Trust Authority");
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            // Fail the test explicitly in the catch block
+            Assert.fail("Exception: " + e.getMessage());
         }
     }
 

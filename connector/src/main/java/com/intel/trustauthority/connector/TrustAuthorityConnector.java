@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.Security;
 import java.security.interfaces.RSAPublicKey;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +57,10 @@ public class TrustAuthorityConnector {
      */
     public TrustAuthorityConnector(Config cfg) {
         this.cfg = cfg;
+
+        // Register Bouncy Castle as a JCE provider
+        // required for token verification for PS algorithms
+        Security.addProvider(new BouncyCastleProvider());
     }
 
     /**
@@ -79,7 +84,9 @@ public class TrustAuthorityConnector {
      * @return      GetNonceResponse object
      */
     public GetNonceResponse GetNonce(GetNonceArgs args) throws Exception {
-        try{
+        HttpURLConnection connection = null;
+
+        try {
             // Request for nonce from TrustAuthority server
             String url = String.format("%s/appraisal/v1/nonce", cfg.getApiUrl());
 
@@ -87,24 +94,21 @@ public class TrustAuthorityConnector {
             URL requestUrl = new URL(url);
 
             // Set request properties
-            Map<String, String> requestProperties = null;
+            Map<String, String> requestProperties = new HashMap<String, String>() {{
+                put(Constants.HEADER_REQUEST_METHOD, "GET");
+                put(Constants.HEADER_X_API_KEY, cfg.getApiKey());
+                put(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
+            }};
+
+            // Add optional requestID
             if (args.getRequestId() != null) {
-                requestProperties = Map.of(
-                    Constants.HEADER_REQUEST_METHOD, "GET",
-                    Constants.HEADER_X_API_KEY, cfg.getApiKey(),
-                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON,
-                    Constants.HEADER_REQUEST_ID, args.getRequestId()
-                );
-            } else {
-                requestProperties = Map.of(
-                    Constants.HEADER_REQUEST_METHOD, "GET",
-                    Constants.HEADER_X_API_KEY, cfg.getApiKey(),
-                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON
-                );
+                requestProperties.putAll(Map.of(
+                        Constants.HEADER_REQUEST_ID, args.getRequestId()
+                ));
             }
 
             // Create the HttpURLConnection
-            HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
+            connection = openConnectionWithRetries(requestUrl, requestProperties);
 
             // Process the fetched response into the GetNonceResponse object
             GetNonceResponse response = new GetNonceResponse();
@@ -122,12 +126,14 @@ public class TrustAuthorityConnector {
             // Set GetNonceResponse object nonce value with VerifierNonce
             response.setNonce(nonce);
 
-            // Close the connection once the entire data is received
-            connection.disconnect();
-
             return response;
         } catch (Exception e) {
             throw new Exception("GetNonce() failed: " + e);
+        } finally {
+            // Close the connection in the finally block to ensure it is always closed
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 
@@ -138,7 +144,9 @@ public class TrustAuthorityConnector {
      * @return      GetTokenResponse object
      */
     public GetTokenResponse GetToken(GetTokenArgs args) throws Exception {
-        try{
+        HttpURLConnection connection = null;
+
+        try {
             // Request for token from TrustAuthority server
             String url = String.format("%s/appraisal/v1/attest", cfg.getApiUrl());
 
@@ -157,28 +165,23 @@ public class TrustAuthorityConnector {
             URL requestUrl = new URL(url);
 
             // Set request properties
-            Map<String, String> requestProperties = null;
+            Map<String, String> requestProperties = new HashMap<String, String>() {{
+                put(Constants.HEADER_REQUEST_METHOD, "POST");
+                put(Constants.HEADER_X_API_KEY, cfg.getApiKey());
+                put(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
+                put(Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON);
+                put(Constants.WRITE_OUTPUT, jsonString);
+            }};
+
+            // Add optional requestID
             if (args.getRequestId() != null) {
-                requestProperties = Map.of(
-                    Constants.HEADER_REQUEST_METHOD, "POST",
-                    Constants.HEADER_X_API_KEY, cfg.getApiKey(),
-                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON,
-                    Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON,
-                    Constants.HEADER_REQUEST_ID, args.getRequestId(),
-                    Constants.WRITE_OUTPUT, jsonString
-                );
-            } else {
-                requestProperties = Map.of(
-                    Constants.HEADER_REQUEST_METHOD, "POST",
-                    Constants.HEADER_X_API_KEY, cfg.getApiKey(),
-                    Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON,
-                    Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON,
-                    Constants.WRITE_OUTPUT, jsonString
-                );
+                requestProperties.putAll(Map.of(
+                        Constants.HEADER_REQUEST_ID, args.getRequestId()
+                ));
             }
 
             // Create the HttpURLConnection
-            HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
+            connection = openConnectionWithRetries(requestUrl, requestProperties);
 
             // read the response if connection OK
             String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
@@ -190,12 +193,14 @@ public class TrustAuthorityConnector {
             // Set response headers
             tokenResponse.setHeaders(connection.getHeaderFields());
 
-            // Close the connection once the entire data is received
-            connection.disconnect();
-
             return tokenResponse;
         } catch (Exception e) {
             throw new Exception("GetToken() failed: " + e);
+        } finally {
+            // Close the connection in the finally block to ensure it is always closed
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 
@@ -261,6 +266,8 @@ public class TrustAuthorityConnector {
      * @return The received certs from trust Authority server in bytes format
      */
     public String getTokenSigningCertificates() throws Exception {
+        HttpURLConnection connection = null;
+
         try {
             // Format the request endpoint using the URL
             String url = String.format("%s/certs", cfg.getBaseUrl());
@@ -275,7 +282,7 @@ public class TrustAuthorityConnector {
             );
 
             // Create the HttpURLConnection
-            HttpURLConnection connection = openConnectionWithRetries(requestUrl, requestProperties);
+            connection = openConnectionWithRetries(requestUrl, requestProperties);
 
             // read the response if connection OK
             String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
@@ -287,13 +294,12 @@ public class TrustAuthorityConnector {
             return responseBody;
         } catch (Exception e) {
             throw new Exception("getTokenSigningCertificates() failed: " + e);
+        } finally {
+            // Close the connection in the finally block to ensure it is always closed
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
-    }
-
-    // Required for token verification for PS algorithms
-    static {
-        // Register Bouncy Castle as a JCE provider
-        Security.addProvider(new BouncyCastleProvider());
     }
 
     /**
@@ -357,7 +363,6 @@ public class TrustAuthorityConnector {
             if (signedJWT.verify(verifier)) {
                 // Signature is valid
                 logger.debug("JWT signature validated successfully");
-
                 return signedJWT.getJWTClaimsSet();
             } else {
                 // Signature is not valid
