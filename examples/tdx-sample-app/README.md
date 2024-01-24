@@ -30,7 +30,71 @@ a docker container. The TDX Attestation Sample App example can also be run direc
 the appropriate dependencies like DCAP have been installed).
 
 
-## Usage for running TDX Attestation Sample App
+## Usage for running TDX Attestation Sample App as a docker container
+
+The [TDX Attestation Sample App](TdxSampleApp.java) can be encapsulated as a container, enabling it to be executed in containerized environments.
+
+### Prerequisites
+
+Kindly adhere to the outlined steps below for installing both <b>Docker</b> and <b>docker-compose</b>—essential tools for running these applications within Docker containers.
+
+Use <b>Docker version 20.10.17 or a more recent release</b>. Refer to the guide at https://docs.docker.com/engine/install/ubuntu/ for detailed instructions on Docker installation.
+
+Use <b>docker-compose version 1.29.2 or a more recent release</b>. Follow the steps outlined at https://docs.docker.com/compose/install/linux/#install-the-plugin-manually for installing docker-compose.
+
+Please ensure to update `MAVEN_PROXY_HOST` and `MAVEN_PROXY_PORT` if running behind a proxy in [.env](../.env).
+
+### Build Instructions
+
+Once `Docker` and `docker-compose` are installed, build the docker image with the following command:
+
+```sh
+docker-compose --env-file ../.env build
+```
+
+### Deployment Instructions
+
+Once the image is built using the above `docker-compose build` command,
+the `TDX Attestation Sample App` can be run using the following commands:
+
+```sh
+# Creating tdx_token.env file
+cat <<EOF | tee tdx_token.env
+HTTPS_PROXY_HOST=<https-proxy-host>
+HTTPS_PROXY_PORT=<https-proxy-port>
+TRUSTAUTHORITY_BASE_URL=<trustauthority-base-url>
+TRUSTAUTHORITY_API_URL=<trustauthority-api-url>
+TRUSTAUTHORITY_API_KEY=<trustauthority-api-key>
+TRUSTAUTHORITY_REQUEST_ID=<trustauthority-request-id>
+TRUSTAUTHORITY_POLICY_ID=<trustauthority-policy-id>
+RETRY_MAX=<max-number-of-retries>
+RETRY_WAIT_TIME=<max-retry-wait-time>
+LOG_LEVEL=<log-level>
+EOF
+
+# Make sure the Intel(R) TDX driver device is set with the following permissions:
+# crw-rw---- root <user-group> /dev/tdx_guest
+
+# Use docker to run the TDX Sample App...
+docker run \
+       --rm \
+       --network host \
+       --device=/dev/tdx_guest \
+       --env-file tdx_token.env \
+       --group-add $(getent group <user-group> | cut -d: -f3) \
+       trust-authority-java-client-tdx-sample-app:v1.0.0
+```
+
+> **Note:**
+>
+> - The proxy setting values for `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` have to be set by the user based on the system proxy settings.
+> - The example above uses one such proxy settings and this can vary from system to system.
+
+### Output when example is run...
+- When successful, the token and other information will be displayed...
+
+
+## Usage for running TDX Attestation Sample App as a native application
 
 ### Compile the latest version of `connector` and `tdx` with the following command:
 
@@ -73,69 +137,6 @@ java -cp ../../connector/target/connector-1.0.0.jar:../../tdx/target/tdx-1.0.0.j
 >
 > - The proxy setting values for `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` have to be set by the user based on the system proxy settings.
 > - The example above uses one such proxy settings and this can vary from system to system.
-> - They can be set in [.env](../.env) by modifying the `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` variables accordingly.
 
 ### Output when example is run...
-- When successful, the token and other information will be dispayed...
-
-
-## Usage for running TDX Attestation Sample App as a docker container
-
-The [TDX Attestation Sample App](TdxSampleApp.java) can be encapsulated as a container, enabling it to be executed in containerized environments.
-
-### Prerequisites
-
-Kindly adhere to the outlined steps below for installing both <b>Docker</b> and <b>docker-compose</b>—essential tools for running these applications within Docker containers.
-
-Use <b>Docker version 20.10.17 or a more recent release</b>. Refer to the guide at https://docs.docker.com/engine/install/ubuntu/ for detailed instructions on Docker installation.
-
-Use <b>docker-compose version 1.29.2 or a more recent release</b>. Follow the steps outlined at https://docs.docker.com/compose/install/linux/#install-the-plugin-manually for installing docker-compose.
-
-Please ensure the necessary parameters required for the `TDX Attestation Sample App` being `TRUSTAUTHORITY_BASE_URL`, `TRUSTAUTHORITY_API_URL` and `TRUSTAUTHORITY_API_KEY` are present in [.env](../.env).
-The required proxy settings values can be set in [sgx_sample_app.sh](sgx_sample_app.sh) by modifying the `-Dhttps.proxyHost` and `-Dhttps.proxyPort` variables accordingly.
-
-### Build Instructions
-
-Once `Docker` and `docker-compose` are installed, build the docker image with the following command:
-
-```sh
-docker-compose --env-file ../.env build
-```
-
-### Deployment Instructions
-
-Once the image is built using the above `docker-compose build` command,
-the `TDX Attestation Sample App` can be run using the following commands:
-
-```sh
-# Creating tdx_token.env file
-cat <<EOF | tee tdx_token.env
-HTTPS_PROXY_HOST=<https-proxy-host>
-HTTPS_PROXY_PORT=<https-proxy-port>
-TRUSTAUTHORITY_BASE_URL=<trustauthority-base-url>
-TRUSTAUTHORITY_API_URL=<trustauthority-api-url>
-TRUSTAUTHORITY_API_KEY=<trustauthority-api-key>
-TRUSTAUTHORITY_REQUEST_ID=<trustauthority-request-id>
-TRUSTAUTHORITY_POLICY_ID=<trustauthority-policy-id>
-RETRY_MAX=<max-number-of-retries>
-RETRY_WAIT_TIME=<max-retry-wait-time>
-LOG_LEVEL=<log-level>
-EOF
-
-# Use docker to run the TDX Sample App...
-docker run \
-       --rm \
-       --network host \
-       --device=/dev/tdx_guest \
-       --env-file tdx_token.env \
-       trust-authority-java-client-tdx-sample-app:v1.0.0
-```
-
-> **Note:**
->
-> - The proxy setting values for `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` have to be set by the user based on the system proxy settings.
-> - The example above uses one such proxy settings and this can vary from system to system.
-> - They can be set in [.env](../.env) by modifying the `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` variables accordingly.
-
-### Output when example is run...
-- When successful, the token and other information will be dispayed...
+- When successful, the token and other information will be displayed...

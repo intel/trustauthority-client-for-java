@@ -11,9 +11,17 @@ FROM ubuntu:$UBUNTU_VERSION
 # Set DEBIAN_FRONTEND to non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Add intel USER
+ARG USERNAME=intel
+ARG USER_UID=2000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
 # Update the package index and install essential packages
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
     curl \
     git \
     openjdk-17-jdk
@@ -46,7 +54,7 @@ RUN if [ -n "${MAVEN_PROXY_HOST}" -a -n "${MAVEN_PROXY_PORT}" ]; then \
 RUN apt-get update; \
     apt-get upgrade -y; \
     apt-get autoremove -y; \
-    apt-get install -y gnupg wget make
+    apt-get install -y --no-install-recommends gnupg wget make
 
 # Installing SGX sdk
 RUN echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main' > /etc/apt/sources.list.d/intel-sgx.list
@@ -56,7 +64,6 @@ RUN curl https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key -o 
     apt-key add /tmp/intel-sgx-deb.key; \
     rm /tmp/intel-sgx-deb.key
 
-RUN apt-get update 
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 
 # Installing Linux SGX sdk
@@ -86,16 +93,20 @@ COPY . .
 RUN mvn -X -e clean compile install package
 
 # Change WORKDIR to Sample App directory
-WORKDIR /app/examples/sgx-sample-app
+WORKDIR /app/examples/sgx-sample-app/enclave
 
 # Create the enclave.signed.so
-RUN cd enclave/ && \
-    make clean && \
-    make && \
-    cd -
+RUN make clean && \
+    make
+
+# Change WORKDIR to Sample App directory
+WORKDIR /app/examples/sgx-sample-app
 
 # Compile SGX Sample App
 RUN javac -cp ../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:../../sgx/target/libs/* SgxSampleApp.java
+
+# Set USER to intel
+USER $USERNAME
 
 # Run SGX Sample App
 CMD ["java", "-cp", "../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:../../sgx/target/libs/*:./", "SgxSampleApp"]

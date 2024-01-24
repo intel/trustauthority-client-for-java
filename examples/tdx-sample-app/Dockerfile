@@ -11,9 +11,17 @@ FROM ubuntu:$UBUNTU_VERSION
 # Set DEBIAN_FRONTEND to non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Add intel USER
+ARG USERNAME=intel
+ARG USER_UID=2000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
 # Update the package index and install essential packages
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
     curl \
     git \
     openjdk-17-jdk
@@ -45,7 +53,7 @@ RUN if [ -n "${MAVEN_PROXY_HOST}" -a -n "${MAVEN_PROXY_PORT}" ]; then \
 RUN apt-get update; \
     apt-get upgrade -y; \
     apt-get autoremove -y; \
-    apt-get install -y gnupg wget
+    apt-get install -y --no-install-recommends gnupg wget
 
 # Installing TDX sdk
 ARG DCAP_VERSION
@@ -72,6 +80,9 @@ WORKDIR /app/examples/tdx-sample-app
 
 # Compile TDX Sample App
 RUN javac -cp ../../connector/target/connector-1.0.0.jar:../../tdx/target/tdx-1.0.0.jar:../../tdx/target/libs/* TdxSampleApp.java
+
+# Set USER to intel
+USER $USERNAME
 
 # Run TDX Sample App
 CMD ["java", "-cp", "../../connector/target/connector-1.0.0.jar:../../tdx/target/tdx-1.0.0.jar:../../tdx/target/libs/*:./", "TdxSampleApp"]
