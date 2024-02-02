@@ -1,34 +1,40 @@
-# Intel® Trust Authority Java Client TDX Adapter
-Java library for collecting TDX Quote from TDX enabled platform.
+# Intel® Trust Authority Java Client for Intel TDX
 
-This library leverages Intel SGX DCAP for Quote generation: [https://github.com/intel/SGXDataCenterAttestationPrimitives](https://github.com/intel/SGXDataCenterAttestationPrimitives)
+`com.intel.trustauthority.tdx`
 
-## System Requirement
+The Intel Trust Authority adapter for Intel TDX clients allows a confidential computing client (the attester) written in Java to collect a quote from an Intel TDX trust domain (TD), which is forwarded to Intel Trust Authority for verification/attestation. This adapter allows applications written in Java to leverage Intel SGX DCAP. The Intel TDX adapter imports the [Intel Trust Authority Java Connector](../connector/README.md) (`com.intel.trustauthority.connector`). 
 
-Use <b>Ubuntu 20.04</b>. 
+The Intel TDX adapter takes care of calling the Intel DCAP functions, generating a TDREPORT, and formatting a quote for attestation (verification) by Intel Trust Authority. Optionally, an attester can include userData with the evidence collected from Intel SGX DCAP, and then a SHA512 hash of the nonce + original user data (if any) is output in the attestation token. The original userData output to the attestation token is limited to 64 bytes, and it's commonly used to pass an encryption key or a hash to the relying party.
 
-Use <b>openjdk version "17.0.8.1" or newer</b>. Follow https://www.java.com/en/download/manual.jsp for installation of Java.
+For more information, see [Java Client Integration](https://docs.trustauthority.intel.com/main/articles/integrate-java-client.html) in the Intel Trust Authority documentation.
 
-Use <b>Apache Maven 3.6.3 or newer</b>. Follow https://www.baeldung.com/install-maven-on-windows-linux-mac for installation of Maven.
+## System Requirements
 
-If you are running behind a proxy, follow https://www.baeldung.com/maven-behind-proxy for setting up proxy for Maven.
+- Ubuntu 20.04
+- Intel® SGX DCAP for quote generation. For more information, see [https://github.com/intel/SGXDataCenterAttestationPrimitives](https://github.com/intel/SGXDataCenterAttestationPrimitives)
+- OpenJDK version "17.0.8.1" or newer — The latest open-source version of the Java JDK is avaiable at [https://jdk.java.net/21/](https://jdk.java.net/21/).
+- Apache Maven 3.6.3 or newer — To install Apache Maven, follow the instructions at https://www.baeldung.com/install-maven-on-windows-linux-mac. If the target system is behind a proxy server, you'll need to follow the steps for setting up a proxy for Maven at https://www.baeldung.com/maven-behind-proxy. 
 
 ## Usage
 
-Create a new TDX adapter, then use the adapter to collect quote from TDX enabled platform.
+The Intel TDX adapter has two main functions:
 
+- TdxAdapter() — Instantiates a new TDX adapter.
+- collectEvidence() — Invokes Intel SGX DCAP and event log parser to collect evidence for a quote from the TD.
+
+ The following code fragments are from the [Intel TDX example application](../examples/tdx-sample-app/). 
 ```java
 import com.intel.trustauthority.tdx.TdxAdapter;
 import com.intel.trustauthority.connector.Evidence;
 
 // Create the TdxAdapter object
-TdxAdapter tdxAdapter = new TdxAdapter(nonce);
+TdxAdapter tdxAdapter = new TdxAdapter(userData);
 
-// Fetch the Tdx Quote
+// Collect the Tdx quote
 Evidence evidence = tdxAdapter.collectEvidence(nonce);
 ```
-
 ## License
 
 This source is distributed under the BSD-style license found in the [LICENSE](../LICENSE)
 file.
+ 
