@@ -114,7 +114,6 @@ public class TrustAuthorityConnector {
 
             // Set request properties
             Map<String, String> requestProperties = new HashMap<String, String>() {{
-                put(Constants.HEADER_REQUEST_METHOD, "GET");
                 put(Constants.HEADER_X_API_KEY, cfg.getApiKey());
                 put(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
             }};
@@ -127,7 +126,7 @@ public class TrustAuthorityConnector {
             }
 
             // Create the HttpURLConnection
-            connection = openConnectionWithRetries(requestUrl, requestProperties);
+            connection = openConnectionWithRetries(requestUrl, "GET", requestProperties, null);
 
             // Process the fetched response into the GetNonceResponse object
             GetNonceResponse response = new GetNonceResponse();
@@ -185,11 +184,9 @@ public class TrustAuthorityConnector {
 
             // Set request properties
             Map<String, String> requestProperties = new HashMap<String, String>() {{
-                put(Constants.HEADER_REQUEST_METHOD, "POST");
                 put(Constants.HEADER_X_API_KEY, cfg.getApiKey());
                 put(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON);
                 put(Constants.HEADER_CONTENT_TYPE, Constants.MIME_APPLICATION_JSON);
-                put(Constants.WRITE_OUTPUT, jsonString);
             }};
 
             // Add optional requestID
@@ -200,7 +197,7 @@ public class TrustAuthorityConnector {
             }
 
             // Create the HttpURLConnection
-            connection = openConnectionWithRetries(requestUrl, requestProperties);
+            connection = openConnectionWithRetries(requestUrl, "POST", requestProperties, jsonString);
 
             // read the response if connection OK
             String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
@@ -296,12 +293,11 @@ public class TrustAuthorityConnector {
 
             // Set request properties
             Map<String, String> requestProperties = Map.of(
-                    Constants.HEADER_REQUEST_METHOD, "GET",
                     Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON
             );
 
             // Create the HttpURLConnection
-            connection = openConnectionWithRetries(requestUrl, requestProperties);
+            connection = openConnectionWithRetries(requestUrl, "GET", requestProperties, null);
 
             // read the response if connection OK
             String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
@@ -477,20 +473,15 @@ public class TrustAuthorityConnector {
      */
     public X509CRL getCRL(String crlUrl) throws Exception {
         HttpURLConnection connection = null;
-        URL url = null;
+        URL requestUrl = null;
         InputStream inputStream = null;
 
         try {
             // Create a URL object
-            url = new URL(crlUrl);
-
-            // Set request properties
-            Map<String, String> requestProperties = Map.of(
-                    Constants.HEADER_REQUEST_METHOD, "GET"
-            );
+            requestUrl = new URL(crlUrl);
 
             // Create the HttpURLConnection
-            connection = openConnectionWithRetries(url, requestProperties);
+            connection = openConnectionWithRetries(requestUrl, "GET", null, null);
 
             // Get the input stream from the connection
             inputStream = connection.getInputStream();
@@ -658,10 +649,12 @@ public class TrustAuthorityConnector {
      * Helper function to establish HttpURLConnection with retry options
      *
      * @param url                   URL of the server to establish the connection with.
+     * @param requestMethod         Request method type to be set for the connection.
      * @param requestProperties     List of request properties to be set for the connection.
+     * @param requestBody           If provided, writes requestBody to the output stream of connection.
      * @return                      HttpURLConnection object on a successful response.
      */
-    private HttpURLConnection openConnectionWithRetries(URL url, Map<String, String> requestProperties) throws Exception {
+    private HttpURLConnection openConnectionWithRetries(URL url, String requestMethod, Map<String, String> requestProperties, String requestBody) throws Exception {
         // Set maxRetries and retryWaitTimeMillis based on Config
         int maxRetries = cfg.getRetryConfig().getRetryMax();
         long retryWaitTimeMillis = cfg.getRetryConfig().getRetryWaitMin() * 1000;
@@ -680,23 +673,20 @@ public class TrustAuthorityConnector {
             // Open a new connection
             connection = (HttpURLConnection) url.openConnection();
 
+            // Set request method
+            connection.setRequestMethod(requestMethod);
+
             // Set request properties
             if (requestProperties != null) {
                 for (Map.Entry<String, String> entry : requestProperties.entrySet()) {
-                    if (entry.getKey() == Constants.HEADER_REQUEST_METHOD) {
-                        connection.setRequestMethod(entry.getValue());
-                    } else if (entry.getKey() == Constants.WRITE_OUTPUT) {
-                        // Ignore setting WRITE_OUTPUT in request
-                        // This will be written in OutputStream instead
-                    } else {
-                        connection.setRequestProperty(entry.getKey(), entry.getValue());
-                    }
+                    connection.setRequestProperty(entry.getKey(), entry.getValue());
                 }
-                // Write output value if provided
-                if (requestProperties.containsKey(Constants.WRITE_OUTPUT)) {
-                    connection.setDoOutput(true);
-                    connection.getOutputStream().write(requestProperties.get(Constants.WRITE_OUTPUT).getBytes("UTF-8"));
-                }
+            }
+
+            // Write output value if provided
+            if (requestBody != null) {
+                connection.setDoOutput(true);
+                connection.getOutputStream().write(requestBody.getBytes("UTF-8"));
             }
 
             // Establish connection
@@ -728,7 +718,6 @@ public class TrustAuthorityConnector {
                                     " and error: " + readResponseBody(connection, responseCode));
             }
         }
-
         // If all retries fail, throw an Exception
         throw new Exception("Maximum retries reached. Request failed.");
     }

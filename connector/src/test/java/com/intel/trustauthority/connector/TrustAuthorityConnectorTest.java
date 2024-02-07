@@ -148,14 +148,12 @@ public class TrustAuthorityConnectorTest {
     @Test
     public void testConstants() {
         Constants constants = new Constants();
-        assertEquals(Constants.HEADER_REQUEST_METHOD, "request-method");
         assertEquals(Constants.HEADER_X_API_KEY, "x-api-key");
         assertEquals(Constants.HEADER_ACCEPT, "Accept");
         assertEquals(Constants.HEADER_CONTENT_TYPE, "Content-Type");
         assertEquals(Constants.HEADER_REQUEST_ID, "request-id");
         assertEquals(Constants.HEADER_TRACE_ID, "trace-id");
         assertEquals(Constants.MIME_APPLICATION_JSON, "application/json");
-        assertEquals(Constants.WRITE_OUTPUT, "write-output");
     }
 
     @Test
