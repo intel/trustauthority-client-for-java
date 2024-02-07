@@ -29,6 +29,8 @@ public class Constants {
     public static final long DEFAULT_RETRY_WAIT_TIME_MAX = 10;
     public static final int DEFAULT_RETRY_MAX = 2;
 
+    public static final String DEFAULT_OID_CRL_DISTRIBUTION_POINTS = "2.5.29.31";
+
     public static final String ENV_TRUSTAUTHORITY_BASE_URL = "TRUSTAUTHORITY_BASE_URL";
     public static final String ENV_TRUSTAUTHORITY_API_URL = "TRUSTAUTHORITY_API_URL";
     public static final String ENV_TRUSTAUTHORITY_API_KEY = "TRUSTAUTHORITY_API_KEY";

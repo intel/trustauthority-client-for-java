@@ -12,16 +12,34 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.cert.X509CRL;
+import java.security.cert.X509CRLEntry;
+import java.security.KeyStore;
 import java.security.Security;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 // Third-party Library Imports
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.x509.CRLDistPoint;
+import org.bouncycastle.asn1.x509.DistributionPoint;
+import org.bouncycastle.asn1.x509.DistributionPointName;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -37,6 +55,7 @@ import com.nimbusds.jose.jwk.*;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 
@@ -287,9 +306,6 @@ public class TrustAuthorityConnector {
             // read the response if connection OK
             String responseBody = readResponseBody(connection, HttpURLConnection.HTTP_OK);
 
-            // Close the connection once the entire data is received
-            connection.disconnect();
-
             // return the jwks in string format
             return responseBody;
         } catch (Exception e) {
@@ -359,18 +375,252 @@ public class TrustAuthorityConnector {
                 throw new JOSEException("Unsupported algorithm: " + jwsAlgorithm.getName());
             }
 
+            // Parse the JWKS and retrieve the X.509 certificates
+            List<X509Certificate> certificates = extractCertificatesFromJWKS(jwkSet);
+
+            // Identify leaf, CA, and intermediate certificates
+            X509Certificate leafCertificate = certificates.get(0);
+            X509Certificate caCertificate = certificates.get(certificates.size() - 1);
+            List<X509Certificate> intermediateCerts = new ArrayList<>();
+            for (int i = 1; i < certificates.size() - 1; i++) {
+                intermediateCerts.add(certificates.get(i));
+            }
+            X509Certificate intermediateCertificate = intermediateCerts.get(0);
+
+            // Get the CRL Distribution Points URI for leafCertificate and intermediateCertificate
+            List<String> listcrlDistributionPointsUriLeafCert = getCRLDistributionPoints(leafCertificate);
+            List<String> listcrlDistributionPointsUriIntermediateCert = getCRLDistributionPoints(intermediateCertificate);
+
+            // Fetch the ATS CRL object from CRL distribution points of leafCertificate
+            X509CRL atsCrl = getCRL(listcrlDistributionPointsUriLeafCert.get(0));
+
+            // verify the ATS Leaf certificate against ATS CRL
+            boolean isVerified = verifyCRL(atsCrl, leafCertificate, intermediateCertificate);
+            if (!isVerified) {
+                throw new Exception("Failed to check ATS Leaf certificate against ATS CRL");
+            }
+
+            // Fetch the Root CA CRL object from CRL distribution points of intermediateCertificate
+            X509CRL rootCrl = getCRL(listcrlDistributionPointsUriIntermediateCert.get(0));
+
+            // verify the ATS CA Certificate against Root CA CRL
+            isVerified = verifyCRL(rootCrl, intermediateCertificate, caCertificate);
+            if (!isVerified) {
+                throw new Exception("Failed to check ATS CA Certificate against Root CA CRL");
+            }
+
+            // Verify the certificate chain
+            if (!verifyCertificateChain(certificates)) {
+                throw new Exception("Certificate chain verification failed");
+            }
+
             // Verify the signature
             if (signedJWT.verify(verifier)) {
                 // Signature is valid
                 logger.debug("JWT signature validated successfully");
-                return signedJWT.getJWTClaimsSet();
             } else {
                 // Signature is not valid
                 throw new Exception("JWT signature is not valid");
             }
+
+            return signedJWT.getJWTClaimsSet();
         } catch (Exception e) {
             throw new Exception("verifyToken() failed: " + e);
         }
+    }
+
+    /**
+     * Helper function to verify the Certificate against CRL
+     *
+     * @param crl       certificate revocation list object
+     * @param leafCert  leaf cert to be checked for revocation
+     * @param caCert    CA certificate for CRL to be verified with
+     * @return          True/False based on verification success/failure
+     */
+    public boolean verifyCRL(X509CRL crl, X509Certificate leafCert, X509Certificate caCert) throws Exception {
+        if (leafCert == null || caCert == null || crl == null) {
+            throw new Exception("null certificate provided");
+        }
+
+        try {
+            // Checking CRL signed by CA Certificate
+            crl.verify(caCert.getPublicKey());
+
+            // Checking if CRL is outdated
+            Date now = new Date();
+            if (crl.getNextUpdate().before(now)) {
+                throw new Exception("Outdated CRL");
+            }
+
+            // Checking if the certificate was revoked
+            Set<? extends X509CRLEntry> revokedCertificates = crl.getRevokedCertificates();
+            if (revokedCertificates != null) {
+                for (X509CRLEntry crlEntry : revokedCertificates) {
+                    if (crlEntry.getSerialNumber().equals(leafCert.getSerialNumber())) {
+                        throw new Exception("Certificate is revoked");
+                    }
+                }
+            }
+
+            // Return true if the verification passes all checks
+            return true;
+        } catch (Exception e) {
+            throw new Exception("verifyCRL() failed: " + e);
+        }
+    }
+
+    /**
+     * Helper function to retrieve the CRL object from CRLDistributionPoints URL
+     *
+     * @param crlUrl    URL associated with CRLDistributionPoints
+     * @return          X509CRL object retrieved from crlUrl
+     */
+    public X509CRL getCRL(String crlUrl) throws Exception {
+        HttpURLConnection connection = null;
+        URL url = null;
+        InputStream inputStream = null;
+
+        try {
+            // Create a URL object
+            url = new URL(crlUrl);
+
+            // Set request properties
+            Map<String, String> requestProperties = Map.of(
+                    Constants.HEADER_REQUEST_METHOD, "GET"
+            );
+
+            // Create the HttpURLConnection
+            connection = openConnectionWithRetries(url, requestProperties);
+
+            // Get the input stream from the connection
+            inputStream = connection.getInputStream();
+
+            // Create a CertificateFactory for X.509
+            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+
+            // Convert the InputStream to X509CRL
+            X509CRL crl = (X509CRL) certificateFactory.generateCRL(inputStream);
+
+            return crl;
+        } catch (Exception e) {
+            throw new Exception("getCRL() failed: " + e);
+        } finally {
+            // Close the input stream
+            if (inputStream != null) {
+                inputStream.close();
+            }
+
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    /**
+     * Helper function to get CRL Distribution Points for a X509Certificate
+     *
+     * @param certificate   X509Certificate object
+     * @return              List of CRL Distribution points of the X509Certificate
+     */
+    public List<String> getCRLDistributionPoints(X509Certificate certificate) throws Exception {
+        List<String> crlDistributionPoints = new ArrayList<>();
+
+        try {
+            // Get the extension value for CRL Distribution Points
+            byte[] crlDPExtensionValue = certificate.getExtensionValue(Constants.DEFAULT_OID_CRL_DISTRIBUTION_POINTS);
+
+            if (crlDPExtensionValue != null) {
+                // Parse the extension value and extract the URIs
+                // Create an ASN1InputStream from the extension value
+                ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(crlDPExtensionValue));
+                // Extract the octet string
+                ASN1OctetString octetString = ASN1OctetString.getInstance(asn1InputStream.readObject());
+                // Convert the octet string to an ASN1Primitive
+                ASN1Primitive primitive = ASN1Primitive.fromByteArray(octetString.getOctets());
+
+                if (primitive instanceof ASN1Sequence) {
+                    // If the primitive is a sequence, proceed with parsing
+                    ASN1Sequence seq = (ASN1Sequence) primitive;
+
+                    for (int i = 0; i < seq.size(); i++) {
+                        // Extract each DistributionPoint from the sequence
+                        DistributionPoint distributionPoint = DistributionPoint.getInstance(seq.getObjectAt(i));
+                        DistributionPointName distributionPointName = distributionPoint.getDistributionPoint();
+
+                        if (distributionPointName != null) {
+                            // Extract GeneralNames from DistributionPointName
+                            GeneralNames generalNames = GeneralNames.getInstance(distributionPointName.getName());
+                            for (GeneralName generalName : generalNames.getNames()) {
+                                if (generalName.getTagNo() == GeneralName.uniformResourceIdentifier) {
+                                    // Extract URI from GeneralName and add to the list
+                                    String uri = generalName.getName().toString();
+                                    crlDistributionPoints.add(uri);
+                                }
+                            }
+                        }
+                    }
+                }
+                return crlDistributionPoints;
+            } else {
+                throw new Exception("CRL Distribution Points extension not found in the certificate.");
+            }
+        } catch (Exception e) {
+            throw new Exception("getCRLDistributionPoints() failed: " + e);
+        }
+    }
+
+    /**
+     * Helper function to verify certificate chain
+     *
+     * @param certificates    List of certificates to be verified
+     * @return                True/False based on verification success/failure
+     */
+    public boolean verifyCertificateChain(List<X509Certificate> certificateList) throws Exception {
+        try {
+            for (int i = certificateList.size() - 1; i > 0; i--) {
+                X509Certificate issuerCertificate = certificateList.get(i);
+                X509Certificate currentCertificate = certificateList.get(i - 1);
+
+                // Check if the current certificate was issued by the previous certificate
+                if (!currentCertificate.getIssuerX500Principal().equals(issuerCertificate.getSubjectX500Principal())) {
+                    logger.debug("Certificate at index " + i + " was not issued by the previous certificate.");
+                    return false;
+                }
+
+                // Verify the signature of the current certificate using the public key of the issuer
+                currentCertificate.verify(issuerCertificate.getPublicKey());
+            }
+
+            // If the loop completes without exceptions, the certificate chain is valid
+            return true;
+        } catch (Exception e) {
+            throw new Exception("verifyCertificateChain() failed: " + e);
+        }
+    }
+
+    /**
+     * Helper function to extract certificates from parsed JWKS
+     *
+     * @param jwkSet    JWKSet object fetched from parsing a JWKS string
+     * @return          The list of root, leaf and intermediate certs
+     */
+    public List<X509Certificate> extractCertificatesFromJWKS(JWKSet jwkSet) throws Exception {
+        List<X509Certificate> certificates = new ArrayList<>();
+
+        // Parse the JWKS and extract X.509 certificates
+        for (RSAKey rsaKey : jwkSet.getKeys().stream()
+                .filter(key -> key instanceof RSAKey)
+                .map(key -> (RSAKey) key)
+                .toList()) {
+            List<Base64> base64CertChain = rsaKey.getX509CertChain();
+            for (Base64 base64Cert : base64CertChain) {
+                byte[] certBytes = base64Cert.decode();
+                CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+                X509Certificate certificate = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
+                certificates.add(certificate);
+            }
+        }
+        return certificates;
     }
 
     /**
