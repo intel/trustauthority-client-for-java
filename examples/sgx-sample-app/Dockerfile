@@ -89,6 +89,28 @@ WORKDIR /app
 # Copy the project files and directories to the container image
 COPY . .
 
+# Set USER permissions for /app required for maven
+RUN chown -R $USERNAME:$USERNAME /app
+
+# Set USER to intel
+USER $USERNAME
+
+# Set custom maven repository settings since /root is not accessible by USER
+# Proxy settings are to be reset in new maven repository
+ENV MAVEN_CONFIG /home/intel/.m2
+
+# Set Maven proxy settings
+ARG MAVEN_PROXY_HOST
+ARG MAVEN_PROXY_PORT
+
+# Create /home/intel/.m2/settings.xml file with proxy settings added if MAVEN_PROXY_HOST/MAVEN_PROXY_PORT are set
+RUN if [ -n "${MAVEN_PROXY_HOST}" -a -n "${MAVEN_PROXY_PORT}" ]; then \
+        mkdir -p /home/intel/.m2 && \
+        echo "<settings><proxies><proxy><id>example-proxy</id><active>true</active><protocol>http</protocol><host>${MAVEN_PROXY_HOST}</host><port>${MAVEN_PROXY_PORT}</port></proxy></proxies></settings>" > /home/intel/.m2/settings.xml; \
+    else \
+        echo "Proxy not set, using default system env"; \
+    fi
+
 # Build the application
 RUN mvn -X -e clean compile install package
 
@@ -103,10 +125,7 @@ RUN make clean && \
 WORKDIR /app/examples/sgx-sample-app
 
 # Compile SGX Sample App
-RUN javac -cp ../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:../../sgx/target/libs/* SgxSampleApp.java
-
-# Set USER to intel
-USER $USERNAME
+RUN mvn compile
 
 # Run SGX Sample App
-CMD ["java", "-cp", "../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:../../sgx/target/libs/*:./", "SgxSampleApp"]
+CMD ["mvn", "-s", "/home/intel/.m2/settings.xml", "exec:java", "-Dexec.mainClass=com.intel.trustauthority.sgxsampleapp.SampleApp"]

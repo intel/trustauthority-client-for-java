@@ -32,7 +32,7 @@ the appropriate dependencies like Intel SGX DCAP have been installed).
 
 ## Usage for running the Intel TDX sample app in a Docker container
 
-The [Intel TDX Attestation Sample App](TdxSampleApp.java) can be encapsulated as a container, enabling it to be executed in containerized environments.
+The [Intel TDX Attestation Sample App](src/main/java/com/intel/trustauthority/tdx/SampleApp.java) can be encapsulated as a container, enabling it to be executed in containerized environments.
 
 ### Prerequisites
 
@@ -99,30 +99,30 @@ If the sample app is successful, it will display the token and other information
 
 2.  Compile the Sample App with the following command.
 
-```sh
-javac -cp ../../connector/target/connector-1.0.0.jar:../../tdx/target/tdx-1.0.0.jar:../../tdx/target/libs/* TdxSampleApp.java
-```
+   ```sh
+   mvn compile
+   ```
 
 3. You must set these variables in the environment before running the sample app.
 
-```sh
-export HTTPS_PROXY_HOST=<HTTPS_PROXY_HOST>
-export HTTPS_PROXY_PORT=<HTTPS_PROXY_PORT>
-export TRUSTAUTHORITY_BASE_URL=<TRUSTAUTHORITY_BASE_URL>
-export TRUSTAUTHORITY_API_URL=<TRUSTAUTHORITY_API_URL>
-export TRUSTAUTHORITY_API_KEY=<TRUSTAUTHORITY_API_KEY>
-export TRUSTAUTHORITY_REQUEST_ID=<TRUSTAUTHORITY_REQUEST_ID>
-export TRUSTAUTHORITY_POLICY_ID=<TRUSTAUTHORITY_POLICY_ID>
-export RETRY_MAX=<MAX_NUMBER_OF_RETRIES>
-export RETRY_WAIT_TIME=<MAX_RETRY_WAIT_TIME>
-export LOG_LEVEL=<LOG_LEVEL>
-```
+   ```sh
+   export HTTPS_PROXY_HOST=<HTTPS_PROXY_HOST>
+   export HTTPS_PROXY_PORT=<HTTPS_PROXY_PORT>
+   export TRUSTAUTHORITY_BASE_URL=<TRUSTAUTHORITY_BASE_URL>
+   export TRUSTAUTHORITY_API_URL=<TRUSTAUTHORITY_API_URL>
+   export TRUSTAUTHORITY_API_KEY=<TRUSTAUTHORITY_API_KEY>
+   export TRUSTAUTHORITY_REQUEST_ID=<TRUSTAUTHORITY_REQUEST_ID>
+   export TRUSTAUTHORITY_POLICY_ID=<TRUSTAUTHORITY_POLICY_ID>
+   export RETRY_MAX=<MAX_NUMBER_OF_RETRIES>
+   export RETRY_WAIT_TIME=<MAX_RETRY_WAIT_TIME>
+   export LOG_LEVEL=<LOG_LEVEL>
+   ```
 
 4. After setting the environment variables, run the sample app with the following command.
 
-```sh
-java -cp ../../connector/target/connector-1.0.0.jar:../../tdx/target/tdx-1.0.0.jar:../../tdx/target/libs/*:./ TdxSampleApp
-```
+   ```sh
+   mvn exec:java -Dexec.mainClass="com.intel.trustauthority.tdxsampleapp.SampleApp"
+   ```
 
 > [!NOTE]
 > - The proxy setting values for `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` have to be set by the user based on the system proxy settings.

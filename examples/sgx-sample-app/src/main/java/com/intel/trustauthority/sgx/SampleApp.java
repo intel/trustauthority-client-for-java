@@ -3,6 +3,7 @@
  *   All rights reserved.
  *   SPDX-License-Identifier: BSD-3-Clause
  */
+package com.intel.trustauthority.sgxsampleapp;
 
 // Java Collections Imports
 import java.util.Arrays;
@@ -78,13 +79,13 @@ interface SgxUrtsLibrary extends Library {
 }
 
 /**
- * SgxSampleApp class, a sample application demonstrating SGX Quote collection/verification
+ * SampleApp class, a sample application demonstrating SGX Quote collection/verification
  * from SGX enabled platform
  */
-public class SgxSampleApp {
+public class SampleApp {
 
     // Logger object
-    private static final Logger logger = LogManager.getLogger(SgxSampleApp.class);
+    private static final Logger logger = LogManager.getLogger(SampleApp.class);
 
     public static void main(String[] args) {
         try {

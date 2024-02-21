@@ -35,7 +35,7 @@ a Docker container. The Intel SGX sample app can also be run directly on an Inte
 
 ## Usage for running the Intel SGX Attestation Sample App as a Docker container
 
-The [SGX Attestation Sample App](SgxSampleApp.java) can be encapsulated in a container, enabling it to be executed in containerized environments.
+The [SGX Attestation Sample App](src/main/java/com/intel/trustauthority/sgx/SampleApp.java) can be encapsulated in a container, enabling it to be executed in containerized environments.
 
 ### Prerequisites
 
@@ -113,7 +113,7 @@ When successful, the token and other information will be displayed.
 3. Once the above step is complete and the `enclave.signed.so` file is generated, run the following command to compile the `SGX Attestation Sample App`.
 
    ```sh
-   javac -cp ../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:../../sgx/target/libs/* SgxSampleApp.java
+   mvn compile
    ```
 
 4. These variables must be set in the environment.
@@ -135,7 +135,7 @@ When successful, the token and other information will be displayed.
 5. After setting the environment variables, run the sample app with the following command.
 
    ```sh
-   java -cp ../../connector/target/connector-1.0.0.jar:../../sgx/target/sgx-1.0.0.jar:../../sgx/target/libs/*:./ SgxSampleApp
+   mvn exec:java -Dexec.mainClass="com.intel.trustauthority.sgxsampleapp.SampleApp"
    ```
 
 > [!NOTE]

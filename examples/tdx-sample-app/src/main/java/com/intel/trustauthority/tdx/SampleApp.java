@@ -3,6 +3,7 @@
  *   All rights reserved.
  *   SPDX-License-Identifier: BSD-3-Clause
  */
+package com.intel.trustauthority.tdxsampleapp;
 
 // Java Collections Imports
 import java.util.Arrays;
@@ -27,13 +28,13 @@ import com.intel.trustauthority.connector.*;
 import com.intel.trustauthority.tdx.TdxAdapter;
 
 /**
- * TdxSampleApp class, a sample application demonstrating TDX Quote collection/verification
+ * SampleApp class, a sample application demonstrating TDX Quote collection/verification
  * from TDX enabled platform
  */
-public class TdxSampleApp {
+public class SampleApp {
 
     // Logger object
-    private static final Logger logger = LogManager.getLogger(TdxSampleApp.class);
+    private static final Logger logger = LogManager.getLogger(SampleApp.class);
 
     public static void main(String[] args) {
         try {
