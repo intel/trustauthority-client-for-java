@@ -78,6 +78,7 @@ public class TrustAuthorityConnectorTest {
     String tokenWrongKid;
     String tokenInvalidKid;
     String tokenMissingKid;
+    String tokenInvalidAlg;
 
     // Declare cert/crl samples
     String invalidCertHex;
@@ -116,6 +117,7 @@ public class TrustAuthorityConnectorTest {
             tokenInvalidKid = "eyJhbGciOiJQUzM4NCIsInR5cCI6IkpXVCIsImtpZCI6MTIzNH0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.lsBarFSfZNLtmTJyKfcnxqoU80QTx2PJHU0cl4esXIi64iD0C0h_B2TobIfkcUHIDNnkwcmZmik9dMxQaKU59qW6yUPgN9GcglD6RpgrJ4StHaOpfJvWY6TtsuSdcWlG33wc9RhcZ4PXV4pdYx5210e0PRgGAPelyq0MvdZa1IpZUnssQulMrk6OJNs3L-7ZfI5ZQFmJyWMzWcY7HQ9Nk2vfjaYtChfmKCSVdbyrDjtzsSDY9r5bYMI5pUCxXl30RSiEYv8fOBpYB_TJPxHyC0VaYtYVLIl4ZzUzG5VS4ragjJVXZZkX1tcDSpTakmgMbcvT1aqyJ9iVGJKSzfPovht-HxYlnmPysQPgeYY4LMywlRW8RJned9ZmKZ4F5Y8aTAUWdO4_ruBL0u8Z7J8-BTGkvNUgBUx9c7p_uy1dt7MTQkDW7d6sjP89xoNHnz4z4w7erAEuBEaPrknmYokpIdqf-esynBtW4NfIKyfl-_PGJnngPn7ziBNuTqxzq0sgTdovX8nxwal3LeWVtXx6HzN5CIRcR7BpDNC5jRhsyZ0U-p4D9Iic63KXMQLhkMx3D0vxzpzlT_zhkvw-kqXNsp6sIN3XqwlZjNTX6lptjV_OXnpVgJ8pb5svURGbwWcFIDJlgaYkHn7jLHnnaKz1aaHQezClod6_vbEPyjcfrsI";
             tokenMissingKid = "eyJhbGciOiJQUzM4NCIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.IO_z9EOfF9e2noXDva33D8D2y9CS8Tf9lmB-w7cK5DNawk0r66RrjmY-jk6p8MIha126nniMRI7UZaeSSrfzwwuYVZCD35X7xRqhsRz5mpVkoluooXENIVvE4F8UVpY4yewgB6JXvFFplqaXWCSoQ8GxmwHXnHwEzS_W0df5VqTTBilRtgEEbwqBnANWWVkzm89ZX9d2ebkgow5dG9O-ra0SNhO_-66a4b78wvhiE_dw-99pnYbU-XLUwqVEu1Nk4sMW9jp7Y7d0f_WR9uOcB4SvojVJBTGc9cuCBjDI8g2zYyFs04exifYF7SQiofn1KodR5FDwOUiNwQfC-isnwa9fpKPOuGXEOJm6FBCK7cYrpP0JQrOv3IVeIh1Qix3N6-sF_TfUWgzBZlolvaf98msky8Yv0udyL0rkKMUUStV48R4TTChuAtpxoSu1Fr-sdMhWf76xGHvXjTUL_W4TZA8a3GyxLHawbcXez-Sk357djVol5xDIVAZU3ORpT4RuwPBKaoodEBSSWnFlP0l577Y7J8St0_UdGCyg8TMt2MBjaah1EJRDLOiXw_C0_Efa0rid6HbKlzwhlk6BzXQbnxdRoFBnh2KcsewQMMKfVtv3_nFxvgyiMTgdXY1lbmmVJ9rmEJlVyzCdfLoZavSrBwl5xkGipr657fmZ2Tbe6j0";
             invalidToken = "eyJhbGciOiJQUzM4NCIsInR5cCI6IkpXVCIsImtpZCI6IjNmZDc1MWYyZTBkMGY1Mjg0NmMwZWNkNDk3MmM2ZTk5ZGZjNjQyMDUxY2QzMzlkZDliMDQzODFhZjhjMGRkYjgwNDUxNGE3YTFmZWU0NjczYWM4NDRmZDVkYjdmMTVmYiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.tJPT6hz2psdkB2yuf17UjqcH1t4ujt9iwRP8iFrG93vMZN2W8umIlYVCE9NVigYoX3EkNuOq_OGlYvfdrUjsYFU-hFLvmORLbaBZ2u0GCfxgrGpYX7ngjZRad_cE9KGcmv6R2fxWI4gF-73DMeaoGWXTVAPlquV_Tyc987zeXj1KXAVO0SDWG68LiWVcl42FUlOI_2mXV4rGsgWLPgbyaa5SuSu-ENreQenvyUMMzdntbJtytQycOxYVrppQJaFNKwn8OfwloGvt7jedylCZgU1MBIrTXUN_lgKAZnFfRxUMfbiV-i73kPqWcOAxbzK8JZPAKv4AyVDWFEBhKKuxiQ";
+            tokenInvalidAlg = "eyJhbGciOiJIUzM4NCIsImprdSI6Imh0dHBzOi8vYW1iZXItdGVzdDEtdXNlcjEucHJvamVjdC1hbWJlci1zbWFzLmNvbS9jZXJ0cyIsImtpZCI6IjFhMWEyZmU1ZmNmODkwMDllNGI5NmM0NWUwZGNlYjAwNWVhNjM1ZDhiYTJmNmVkOWNhZWVmNDRhZTIzNTk3MGRlY2M1ODYxNTRmZDlmNzQwZmIzYjcyY2ExNzZhYmI1OSIsInR5cCI6IkpXVCJ9.eyJzZ3hfbXJlbmNsYXZlIjoiMGE3NTZhNjUzYjlhOTJiMTNkYmQ2MjRhNWE1OTY4MTU4OTViMTMwODIwYzU1ZjNiMWI3Y2FmYjMwNDY5NjViYyIsInNneF9tcnNpZ25lciI6ImQ0MTJhNGYwN2VmODM4OTJhNTkxNWZiMmFiNTg0YmUzMWUxODZlNWE0Zjk1YWI1ZjY5NTBmZDRlYjg2OTRkN2IiLCJzZ3hfaXN2cHJvZGlkIjowLCJzZ3hfaXN2c3ZuIjowLCJzZ3hfcmVwb3J0X2RhdGEiOiI0MDE4OWU5YmRiZmRjMzA5OWEwZmE3MzVlYTEyNjkwZDI3MTEyZGUyOWRkYjgxNDFkMGNhYzMzMGNjM2FiYjE5MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInNneF9pc19kZWJ1Z2dhYmxlIjpmYWxzZSwic2d4X2NvbGxhdGVyYWwiOnsicWVpZGNlcnRoYXNoIjoiYjJjYTcxYjhlODQ5ZDVlNzk5NDUxYjRiZmU0MzE1OWEwZWU1NDgwMzJjZWNiMmMwZTQ3OWJmNmVlM2YzOWZkMSIsInFlaWRjcmxoYXNoIjoiZjQ1NGRjMWI5YmQ0Y2UzNmMwNDI0MWUyYzhjMzdhMmFlMjZiMDc3ZjJjNjZiOTE5ODQzMzY1MzE4YTU5MzMyYyIsInFlaWRoYXNoIjoiOTk1ZDljMmUyYmVhNzYyOWEzMmI2NWUxMmZmZjc1MzJkM2M2YTc2YWFmODEwYjgwZTg5Y2RjNjE4YTJmYTVjOSIsInF1b3RlaGFzaCI6IjViMzJhMWUyZmJjOTdlNTJjZWMxNDgxZTg5ZTNmMmFmYmFjM2QzMDZmMDE5ZTBiYTA3OTAwNGM0ZWM0MzRlNTMiLCJ0Y2JpbmZvY2VydGhhc2giOiJiMmNhNzFiOGU4NDlkNWU3OTk0NTFiNGJmZTQzMTU5YTBlZTU0ODAzMmNlY2IyYzBlNDc5YmY2ZWUzZjM5ZmQxIiwidGNiaW5mb2NybGhhc2giOiJmNDU0ZGMxYjliZDRjZTM2YzA0MjQxZTJjOGMzN2EyYWUyNmIwNzdmMmM2NmI5MTk4NDMzNjUzMThhNTkzMzJjIiwidGNiaW5mb2hhc2giOiI3M2UwYzhkNDU2ODdhMTU2YzUyNzQ1YmRlOWJkMDRkZGU2MTcxY2YzMjFmNDA3NDE5Zjg0MGU5YmJhYzY1ZTAxIn0sImF0dGVzdGVyX2hlbGRfZGF0YSI6IkFRQUJBQjBuQ1RNR3dXOXdtYy93M3dKSGwraDRnODJwMGQ4aWpGU3ZuT2JBdTBEb3pWdHR2d3NweEJRK1ZCdXMvNDhJQVBLQnhmV3owcjYybWNjeHJWMTRndFJaWU9RWHBXUnNPeUF3cHJoNndqWHlHdmtrbDNuVEQ0a0Y0L29WZ1NVaUlwZDZMcjFxUVd6a2N0bnhoWHpkWkxpVWp3TktPNHdIaFdoV1hVNEduSEl4SmQwVUtiQXIyM2lPNGRrSnkxY3dmNUZxd0pROVI2L3UrYW1vLzI0QkZDQUNLamZhbHNpaThXendtSE5UQ3hNeWtGOE0zWEwrTjJCSFdsVlNOa21VLzFSMlp2eFk2V3pQRUpsbGkwVHhySWJwaG1SdHpKM3E2cDdPSktPT2dXKzFCdkxtcUd4K05ZL2xqNjQvRXJOKzBZTVZLNGI3ZU05ZTFIVS9qQ0JRVlpvTnM1LzB1ZUgyOGpjZTJBSituWWUyUFc0R2hXallueklaYnZNTy9QKy9RR3NvRXJlZ2RsQ0c3ZWVvMUZxV1dtdUt0S3N3RStwRmFXbmQwMFJOZ29qMU81anJERmJMM0RpTVYwTGNVOTU5Q3BjV2lkN1VKYmlEUTM1OUgrVVhXZmpNdVJ3aE0yanJhaE9nczd2dFdtWUcrcnZEb0dTS29DQVBQNVhlNlRoU3lBPT0iLCJ2ZXJpZmllcl9ub25jZSI6eyJ2YWwiOiJWV2N3V1hCbmIwdGtiSEJ6YXpaVlZITTBPVGRGWVdoM01Wb3JkVmhHU0VaSlFXVXdTMXBpTXpOVlREa3dlVkl2WTJnemVsRkZkRGx5UVdZM1dYZHhia1ptWWtRMU9WZE5MMnB6VW5GeE1HVnBSRTlZVUVFOVBRPT0iLCJpYXQiOiJNakF5TXkweE1pMHlNU0F3TlRvek1Ub3dPQ0FyTURBd01DQlZWRU09Iiwic2lnbmF0dXJlIjoiVXAyZlluNUhwcTVpbXRmeXZmaWZEQisrbjV2bVVhcXZydU9kQVVtckg4OG5JRWorQU94NXk1ck5sV1BqWkNWcnk1emxpcjVOdUVNa0ZJc2FQV1pJM0t1L2ozQlZNM081dk0yOGJFR3lSYTA2V2phQWtLbktLZ3hrK3NaMG54RVluUGxuTGtweW81YjVKbXBEOFJOWm5iL2d2OXBYaWVxZU1OYThnTStkK2pwMk90M0VqUzR1VmhUYllSYmdxamJ6VlBhNEYrTVgrbnUzR01FSmdKdFlvZnFtZnRHa25mc1VHdW1BVE12Z21NdVV4Vk1lSFhQUUFGd1I4RWJrTE1odzlxOUVyVU1YdTB1Z045cTdsd2QrNUJKZ1pGR0lyeWNWZTRudzJGTVZITzI5SHdlMzM0czdQZ002SEpQR3NpaDN2S3dNVXM4SSt0MWVnUDRzcjJERWJPblZlS254VFdwV1IraUNqZks0NmJicE80VS9GYmN4c0k2SXAxK3ZvOVd5WDBCQVpFSmpuWHpMZGYydHZVRnJjcmJ1dFVYWW1xaWd5dks5SmtpcWltR29JQ3ptYjZuc25wSmJOeFlDK3RNY1FtUFk0ekgva2x2K3p3N0FVZnZvUXFpRG13UmtDYUgvcTRNdmNsKzBwUkwrUFUrbkdidkpHZHJHNk9LVSt2T2UifSwicG9saWN5X2lkc19tYXRjaGVkIjpbeyJpZCI6IjkxNDg4ZTEyLWYzOWUtNGYzZS04NDM1LWQ0OWM4MTNkZWNiNSIsInZlcnNpb24iOiJ2MSJ9XSwicG9saWN5X2lkc191bm1hdGNoZWQiOlt7ImlkIjoiN2YzODE0MzAtNTFmOC00N2IwLWE2ZTAtMzkzZWYxODM3YWYzIiwidmVyc2lvbiI6InYxIn1dLCJwb2xpY3lfZGVmaW5lZF9jbGFpbXMiOnt9LCJhdHRlc3Rlcl90Y2Jfc3RhdHVzIjoiT3V0T2ZEYXRlIiwiYXR0ZXN0ZXJfdGNiX2RhdGUiOiIyMDIxLTExLTEwVDAwOjAwOjAwWiIsImF0dGVzdGVyX2Fkdmlzb3J5X2lkcyI6WyJJTlRFTC1TQS0wMDU4NiIsIklOVEVMLVNBLTAwNjE0IiwiSU5URUwtU0EtMDA2MTUiLCJJTlRFTC1TQS0wMDY1NyIsIklOVEVMLVNBLTAwNzMwIiwiSU5URUwtU0EtMDA3MzgiLCJJTlRFTC1TQS0wMDc2NyIsIklOVEVMLVNBLTAwODI4IiwiSU5URUwtU0EtMDA4MzciXSwiYXR0ZXN0ZXJfdHlwZSI6IlNHWCIsInZlcmlmaWVyX2luc3RhbmNlX2lkcyI6WyI5YTRlMjQ2OS03NGIwLTQ4OWQtOTczYi1jMTU0NzllODNhZDEiLCIxNDc2ZGE3NC0yOTdkLTRiYzEtYjdkMi0xMGUyNTk1MGJhN2MiLCJjMTQyMTcyNi1lYjViLTRmYWEtYmEzOC0zNWZiMGM3ZDk1NDYiLCI4NGNmZGUzYi0wM2Q1LTQ4ZWYtYTIxMC0xZWY5ZTU2MTE2YTMiXSwiZGJnc3RhdCI6ImRpc2FibGVkIiwiZWF0X3Byb2ZpbGUiOiJodHRwczovL2FtYmVyLXRlc3QxLXVzZXIxLnByb2plY3QtYW1iZXItc21hcy5jb20vZWF0X3Byb2ZpbGUuaHRtbCIsImludHVzZSI6ImdlbmVyaWMiLCJ2ZXIiOiIxLjAuMCIsImV4cCI6MTcwMzEzNjk2OCwianRpIjoiOGViNDg2NmMtNTc0Ni00YzdkLWJlNzktM2UwNDlkYzBhNzQ5IiwiaWF0IjoxNzAzMTM2NjY4LCJpc3MiOiJJbnRlbCBUcnVzdCBBdXRob3JpdHkiLCJuYmYiOjE3MDMxMzY2Njh9.uDFxPnguPV1RGkF_486k9n0MDSti7rduYMbQKwH88SAdhBiiOp13NYx1qiOGa0-1";
 
             // crl/cert samples for testing
             invalidCertHex = "30820557308203bfa003020102020102300d06092a864886f70d01010d0500305b310b3009060355040613025553310b300906035504080c024341311a3018060355040a0c11496e74656c20436f72706f726174696f6e3123302106035504030c1a496e74656c20416d62657220415453205369676e696e67204341301e170d3233303431303137343732355a170d3233313030373137343732355a3060310b3009060355040613025553310b300906035504080c024341311a3018060355040a0c11496e74656c20436f72706f726174696f6e3128302606035504030c1f416d626572204174746573746174696f6e20546f6b656e205369676e696e6730820222300d06092a864886f70d01010105000382020f003082020a0282020100b833bb7f44d9a1521bf304c78b4080e3688d82c9fb5a8e9c513f314e7eeb4b87e92dfd04f029e96206a4a249e777c266fd69868dbc62d824261fa1c5656f811ea67b035155e806a75b858de937b65d0b9f2312d1bab91eb84697e064bee5fe63f5717c8aca3d50e075f1a8e8284f7cfee324a18060c9189bc1f92daf72cc8475151c1244e39513d8339aeb2cdcb39665065138356bdfc1c008e8ed382894fc662300b2caffcd52c06e739d7f5533414a7578b664156953d6b260dea206c8b59a02f60968d813bf75a8a0d8fb73f16d08bfcc88ec708da44ac7b6a227c81ff5e053439345f4a4e99fb0f2846630aab22123143486a705855113e81ba1aef52c31875a492f4dc1114be9254b2c86f2827c938add6ff35b5e112e7149132964abb2e4aabbf438cac65947ff38c171338be9323ecb1b101d0c2d6f38d6cb774de752c20f19569deb6f040943eb855225ca143de4265c8d199dec1f7f6d06b4dd6382ce22101f139533175972254bd782ad1f83e2ed3294611c6a9307cbe4d79e0db1b71e3bcee64f8af3ee5d0da52eb3ff9de4e0bc76e79c2cd5e58c5699bd8d755dad9ebe6f40a1c64e806c52ed7ee9bfe1e87f993d7d37cc7ef37d56aed50ba41dcecd52f35e83fa6b34d0ed6bc438c9a2e520f674977577856552b5f53ed9ba3083a92f81533d61d7321a3b355b8869c93a777661b635abf72395fb8f736ab7130203010001a381a030819d300c0603551d130101ff04023000301d0603551d0e04160414e4ddc5bd96e128a82465cb26e1bce1990d587898301f0603551d230418301680143bd92d080eb2c16881832d0d7436dc926e59c743300b0603551d0f0404030204f030400603551d1f043930373035a033a031862f5552493a68747470733a2f2f616d6265722e696e74656c662e636f6d2f6174732d7369676e696e672d63612e70656d300d06092a864886f70d01010d050003820181004279fb07bc3f336be663c838761dddb8ce5f7d28ae38800a707c4eb11c39434cb96fd741070ed1cb7becca26ab075deeb23667cfd533918fd3ccae394de3cc1ee07c800a0cb2ac7355beeb825a9a7fd791e63e8a058f260a7bf4bed9a1001154b3b9935fcc92f473aa86f933bc91e31677c4b5e08224e67e0b473ef8e82252a8430d6feec4cfd40ba0a64788346d29e1464f7e9cd497dcd35e6b561f8993d664f9d1cb08db555bd5510297cb766b7db0f032ab6ee57a495e485f87fc78fb5312948856b3c0c62b8056dc1308b40faf5bcc2fafdc871e464fb05398f4d47d35a9b39c0fdcb74ccea38bc41a821037a8e30190e998865fa8f0ae714aa4145e981a1601909eba2a9f5cd9584c7a4ae160396a692aa33d8fd686fe951e41d8ab14d01534c12477a5fae4ac715f4ee75da1e38f1689dfee2f4596da9ec069f000e80bb750a6aa2993bd049c1423ce1b677f5a7b6d28a962227507761acc156413d88baaf3bb3cb3c570aedbb11a7cb12f8329739abc44541d9d2811f0407816324433";
@@ -208,11 +210,12 @@ public class TrustAuthorityConnectorTest {
             // Create mock objects for testing
             byte[] expected = {1, 2, 3, 4, 5};
             byte[] actual = {1, 2, 3, 4, 5};
+            String expectedTokenSigningAlg = "mock-token-signing-algo";
             VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(), "mock-iat".getBytes(), "mock-signature".getBytes());
             List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
 
             // Initialize TokenRequest
-            TokenRequest token_request = new TokenRequest(expected, mockNonce, expected, mockPolicyIDs, expected);
+            TokenRequest token_request = new TokenRequest(expected, mockNonce, expected, mockPolicyIDs, expected, expectedTokenSigningAlg);
 
             // Testing setters for TokenRequest
             token_request.setQuote(expected);
@@ -220,11 +223,13 @@ public class TrustAuthorityConnectorTest {
             token_request.setRuntimeData(expected);
             token_request.setPolicyIds(mockPolicyIDs);
             token_request.setEventLog(expected);
+            token_request.setTokenSigningAlg(expectedTokenSigningAlg);
             assertArrayEquals(token_request.getQuote(), actual);
             assertEquals(token_request.getVerifierNonce(), mockNonce);
             assertArrayEquals(token_request.getRuntimeData(), actual);
             assertEquals(token_request.getPolicyIds(), mockPolicyIDs);
             assertArrayEquals(token_request.getEventLog(), actual);
+            assertEquals(token_request.getTokenSigningAlg(), expectedTokenSigningAlg);
         } catch (Exception e) {
             // Fail the test explicitly in the catch block
             Assert.fail("Exception: " + e.getMessage());
@@ -450,8 +455,15 @@ public class TrustAuthorityConnectorTest {
             // Create a mock PolicyIDs object
             List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
 
+            // Sample requestID
+            String expectedRequestID = "mock-request-id";
+
+            // Sample token-signing-algo
+            String expectedTokenSigningAlg = "mock-token-signing-algo";
+
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id");
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, expectedRequestID, expectedTokenSigningAlg);
+
             AttestResponse response = connector.attest(attestArgs);
 
             // Verify the response
@@ -460,12 +472,14 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(response.getHeaders());
 
             // Test setters/getters
-            attestArgs.setRequestId("mock-request-id");
+            attestArgs.setRequestId(expectedRequestID);
             attestArgs.setPolicyIds(mockPolicyIDs);
             attestArgs.setAdapter(mockAdapter);
-            assertEquals(attestArgs.getRequestId(), "mock-request-id");
+            attestArgs.setTokenSigningAlg(expectedTokenSigningAlg);
+            assertEquals(attestArgs.getRequestId(), expectedRequestID);
             assertEquals(attestArgs.getPolicyIds(), mockPolicyIDs);
             assertEquals(attestArgs.getAdapter(), mockAdapter);
+            assertEquals(attestArgs.getTokenSigningAlg(), expectedTokenSigningAlg);
         } catch (Exception e) {
             // Fail the test explicitly in the catch block
             Assert.fail("Exception: " + e.getMessage());
@@ -499,7 +513,7 @@ public class TrustAuthorityConnectorTest {
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id");
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", "mock-token-signing-algo");
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
@@ -546,7 +560,7 @@ public class TrustAuthorityConnectorTest {
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id");
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", "mock-token-signing-algo");
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
@@ -791,6 +805,30 @@ public class TrustAuthorityConnectorTest {
             // Calling the verifyToken() API with valid token
             // wrong jwks with verification failure
             JWTClaimsSet claims = connector.verifyToken(validToken);
+            assertNull(claims);
+        } catch (Exception e) {
+            // Ignore exceptions as they are expected in failure conditions
+        }
+    }
+
+    @Test
+    public void testVerifyTokenInvalidJwtAlgorithm() {
+        try {
+            // Check if config is not null
+            assertNotNull(cfg);
+
+            // Check if connector is not null
+            assertNotNull(connector);
+
+            // Stubbing the response
+            new MockServerClient("localhost", mockServer.getPort())
+                                .when(HttpRequest.request().withPath("/certs"))
+                                .respond(HttpResponse.response().withStatusCode(200)
+                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
+                                .withBody(validJwks));
+
+            // Calling the verifyToken() API with invalid algo token
+            JWTClaimsSet claims = connector.verifyToken(tokenInvalidAlg);
             assertNull(claims);
         } catch (Exception e) {
             // Ignore exceptions as they are expected in failure conditions

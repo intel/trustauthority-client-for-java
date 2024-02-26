@@ -38,21 +38,27 @@ public class TokenRequest {
     @JsonProperty("event_log")
     private byte[] eventLog;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("token_signing_alg")
+    private String tokenSigningAlg;
+
     /**
      * Constructs a new TokenRequest object with the specified quote, verifierNonce, runtimeData, policyIds and eventLog.
      *
-     * @param quote          quote provided by the user.
-     * @param verifierNonce  verifierNonce object provided by user.
-     * @param runtimeData    runtimeData provided by user.
-     * @param policyIds      policyIds provided by user.
-     * @param eventLog       eventLog provided by user.
+     * @param quote             quote provided by the user.
+     * @param verifierNonce     verifierNonce object provided by user.
+     * @param runtimeData       runtimeData provided by user.
+     * @param policyIds         policyIds provided by user.
+     * @param eventLog          eventLog provided by user.
+     * @param tokenSigningAlg   tokenSigningAlg provided by user.
      */
-    public TokenRequest(byte[] quote, VerifierNonce verifierNonce, byte[] runtimeData, List<UUID> policyIds, byte[] eventLog) {
+    public TokenRequest(byte[] quote, VerifierNonce verifierNonce, byte[] runtimeData, List<UUID> policyIds, byte[] eventLog, String tokenSigningAlg) {
         this.quote = quote;
         this.verifierNonce = verifierNonce;
         this.runtimeData = runtimeData;
         this.policyIds = policyIds;
         this.eventLog = eventLog;
+        this.tokenSigningAlg = tokenSigningAlg;
     }
 
     /**
@@ -123,5 +129,19 @@ public class TokenRequest {
      */
     public void setEventLog(byte[] eventLog) {
         this.eventLog = eventLog;
+    }
+
+    /**
+     * getter function for tokenSigningAlg
+     */
+    public String getTokenSigningAlg() {
+        return tokenSigningAlg;
+    }
+
+    /**
+     * setter function for tokenSigningAlg
+     */
+    public void setTokenSigningAlg(String tokenSigningAlg) {
+        this.tokenSigningAlg = tokenSigningAlg;
     }
 }

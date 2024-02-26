@@ -17,18 +17,21 @@ public class AttestArgs {
     private EvidenceAdapter adapter;
     private List<UUID> policyIds;
     private String requestId;
+    private String tokenSigningAlg;
 
     /**
      * Constructs a new AttestArgs object with the specified adapter, policyIds and requestId.
      *
-     * @param adapter         adapter provided by the user.
-     * @param policyIds       policyIds provided by user.
-     * @param requestId       requestId provided by user.
+     * @param adapter           adapter provided by the user.
+     * @param policyIds         policyIds provided by user.
+     * @param requestId         requestId provided by user.
+     * @param tokenSigningAlg   tokenSigningAlg provided by user.
      */
-    public AttestArgs(EvidenceAdapter adapter, List<UUID> policyIds, String requestId) {
+    public AttestArgs(EvidenceAdapter adapter, List<UUID> policyIds, String requestId, String tokenSigningAlg) {
         this.adapter = adapter;
         this.policyIds = policyIds;
         this.requestId = requestId;
+        this.tokenSigningAlg = tokenSigningAlg;
     }
 
     /**
@@ -71,5 +74,19 @@ public class AttestArgs {
      */
     public void setRequestId(String requestId) {
         this.requestId = requestId;
+    }
+
+    /**
+     * getter function for tokenSigningAlg
+     */
+    public String getTokenSigningAlg() {
+        return tokenSigningAlg;
+    }
+
+    /**
+     * setter function for tokenSigningAlg
+     */
+    public void setTokenSigningAlg(String tokenSigningAlg) {
+        this.tokenSigningAlg = tokenSigningAlg;
     }
 }

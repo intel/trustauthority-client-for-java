@@ -19,20 +19,23 @@ public class GetTokenArgs {
     private Evidence evidence;
     private List<UUID> policyIds;
     private String requestId;
+    private String tokenSigningAlg;
 
     /**
      * Constructs a new GetTokenArgs object with the specified nonce, evidence, policyIds and requestId.
      *
-     * @param nonce          VerifierNonce provided by the user.
-     * @param evidence       Evidence object provided by user.
-     * @param policyIds      policyIds provided by the user.
-     * @param requestId      requestId provided by user.
+     * @param nonce             VerifierNonce provided by the user.
+     * @param evidence          Evidence object provided by user.
+     * @param policyIds         policyIds provided by the user.
+     * @param requestId         requestId provided by user.
+     * @param tokenSigningAlg   tokenSigningAlg provided by user.
      */
-    public GetTokenArgs(VerifierNonce nonce, Evidence evidence, List<UUID> policyIds, String requestId) {
+    public GetTokenArgs(VerifierNonce nonce, Evidence evidence, List<UUID> policyIds, String requestId, String tokenSigningAlg) {
         this.nonce = nonce;
         this.evidence = evidence;
         this.policyIds = policyIds;
         this.requestId = requestId;
+        this.tokenSigningAlg = tokenSigningAlg;
     }
 
     /**
@@ -61,5 +64,12 @@ public class GetTokenArgs {
      */
     public String getRequestId() {
         return requestId;
+    }
+
+    /**
+     * getter function for tokenSigningAlg
+     */
+    public String getTokenSigningAlg() {
+        return tokenSigningAlg;
     }
 }

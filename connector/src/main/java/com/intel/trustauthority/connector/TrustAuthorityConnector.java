@@ -171,7 +171,7 @@ public class TrustAuthorityConnector {
             // Create the TokenRequest object
             TokenRequest tr = new TokenRequest(args.getEvidence().getQuote(), args.getNonce(),
                                                args.getEvidence().getUserData(), args.getPolicyIds(),
-                                               args.getEvidence().getEventLog());
+                                               args.getEvidence().getEventLog(), args.getTokenSigningAlg());
 
             // Convert the TokenRequest to a JSON -> String
             // to send as request to server
@@ -259,7 +259,7 @@ public class TrustAuthorityConnector {
             logger.debug("Collected evidence from adapter successfully...");
 
             // Calling the GetToken() API
-            GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId()));
+            GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId(), args.getTokenSigningAlg()));
             if (tokenResponse == null) {
                 throw new Exception("Failed to collect token from Trust Authority");
             }
@@ -329,6 +329,12 @@ public class TrustAuthorityConnector {
             // Retrieve the JWS header
             JWSHeader jwsHeader = signedJWT.getHeader();
 
+            // Get the algorithm name from the JWSHeader
+            String algorithmName = jwsHeader.getAlgorithm().getName();
+            if (!(algorithmName.equals("RS256") || algorithmName.equals("PS384"))) {
+                throw new JOSEException("Unsupported token signing algorithm: " + algorithmName);
+            }
+
             // Fetch kid from parsed token
             String kid = signedJWT.getHeader().getKeyID();
             if (kid == null) {
@@ -363,9 +369,7 @@ public class TrustAuthorityConnector {
 
             // Create a verifier
             JWSVerifier verifier;
-            if (jwsAlgorithm.getName().startsWith("RS")) {
-                verifier = new RSASSAVerifier(publicKey);
-            } else if (jwsAlgorithm.getName().startsWith("PS")) {
+            if (jwsAlgorithm.getName().equals("RS256") || jwsAlgorithm.getName().equals("PS384")) {
                 verifier = new RSASSAVerifier(publicKey);
             } else {
                 throw new JOSEException("Unsupported algorithm: " + jwsAlgorithm.getName());

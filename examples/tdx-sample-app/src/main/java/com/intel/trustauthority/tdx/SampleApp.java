@@ -73,6 +73,7 @@ public class SampleApp {
             String trustAuthorityApiKey = trustAuthorityVariables[2];
             String trustAuthorityRequestID = trustAuthorityVariables[3];
             String trustAuthorityPolicyID = trustAuthorityVariables[4];
+            String tokenSigningAlg = trustAuthorityVariables[7];
 
             // Initialize RetryConfig based on system env set
             int retryMax = 2; // Default: 2 retries
@@ -96,7 +97,7 @@ public class SampleApp {
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
             // Verifying attestation for TDX platform
-            AttestArgs attestArgs = new AttestArgs(tdxAdapter, policyIDs, trustAuthorityRequestID);
+            AttestArgs attestArgs = new AttestArgs(tdxAdapter, policyIDs, trustAuthorityRequestID, tokenSigningAlg);
             AttestResponse response = connector.attest(attestArgs);
 
             // Print the Request ID of token fetched from Trust Authority
@@ -154,7 +155,7 @@ public class SampleApp {
      * @return String[] object containing the trust authority variables
      */
     private static String[] init() {
-        String[] initializer = new String[7];
+        String[] initializer = new String[8];
 
         // Fetch proxy settings from environment
         String httpsHost = System.getenv(Constants.ENV_HTTPS_PROXY_HOST);
@@ -195,6 +196,10 @@ public class SampleApp {
         String trustAuthorityPolicyID = System.getenv(Constants.ENV_TRUSTAUTHORITY_POLICY_ID);
         if (trustAuthorityPolicyID != null) {
             initializer[4] = trustAuthorityPolicyID;
+        }
+        String tokenSigningAlg = System.getenv(Constants.ENV_TOKEN_SIGNING_ALG);
+        if (tokenSigningAlg != null) {
+            initializer[7] = tokenSigningAlg;
         }
         logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustAuthorityBaseUrl + ", TRUSTAUTHORITY_API_URL: " + trustAuthorityApiUrl);
         
