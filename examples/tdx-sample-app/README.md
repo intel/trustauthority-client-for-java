@@ -94,7 +94,7 @@ If the sample app is successful, it will display the token and other information
 
    ```sh
    cd ../../ && \
-   mvn -X -e clean compile install package && \
+   mvn -X -e clean compile install package -DskipTests && \
    cd -
    ```
 

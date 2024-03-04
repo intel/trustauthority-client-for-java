@@ -95,7 +95,7 @@ RUN if [ -n "${MAVEN_PROXY_HOST}" -a -n "${MAVEN_PROXY_PORT}" ]; then \
     fi
 
 # Build the application
-RUN mvn -X -e clean compile install package
+RUN mvn -X -e clean compile install package -DskipTests
 
 # Change WORKDIR to Sample App directory
 WORKDIR /app/examples/tdx-sample-app

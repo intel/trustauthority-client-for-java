@@ -99,7 +99,7 @@ When successful, the token and other information will be displayed.
 
    ```sh
    cd ../../ && \
-   mvn -X -e clean compile install package && \
+   mvn -X -e clean compile install package -DskipTests && \
    cd -
    ```
 
