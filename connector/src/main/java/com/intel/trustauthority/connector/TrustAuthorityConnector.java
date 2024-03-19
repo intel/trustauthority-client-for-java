@@ -375,8 +375,8 @@ public class TrustAuthorityConnector {
                 throw new JOSEException("Unsupported algorithm: " + jwsAlgorithm.getName());
             }
 
-            // Parse the JWKS and retrieve the X.509 certificates
-            List<X509Certificate> certificates = extractCertificatesFromJWKS(jwkSet);
+            // Retrieve the X.509 certificates
+            List<X509Certificate> certificates = jwkKey.getParsedX509CertChain();
 
             // Identify leaf, CA, and intermediate certificates
             X509Certificate leafCertificate = certificates.get(0);
@@ -591,31 +591,6 @@ public class TrustAuthorityConnector {
         } catch (Exception e) {
             throw new Exception("verifyCertificateChain() failed: " + e);
         }
-    }
-
-    /**
-     * Helper function to extract certificates from parsed JWKS
-     *
-     * @param jwkSet    JWKSet object fetched from parsing a JWKS string
-     * @return          The list of root, leaf and intermediate certs
-     */
-    public List<X509Certificate> extractCertificatesFromJWKS(JWKSet jwkSet) throws Exception {
-        List<X509Certificate> certificates = new ArrayList<>();
-
-        // Parse the JWKS and extract X.509 certificates
-        for (RSAKey rsaKey : jwkSet.getKeys().stream()
-                .filter(key -> key instanceof RSAKey)
-                .map(key -> (RSAKey) key)
-                .toList()) {
-            List<Base64> base64CertChain = rsaKey.getX509CertChain();
-            for (Base64 base64Cert : base64CertChain) {
-                byte[] certBytes = base64Cert.decode();
-                CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-                X509Certificate certificate = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
-                certificates.add(certificate);
-            }
-        }
-        return certificates;
     }
 
     /**
