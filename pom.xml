@@ -135,17 +135,17 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
-      <version>9.10</version>
+      <version>9.37.2</version>
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-      <version>1.68</version> 
+      <artifactId>bcprov-jdk18on</artifactId>
+      <version>1.77</version> 
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcmail-jdk15on</artifactId>
-      <version>1.68</version>
+      <artifactId>bcmail-jdk18on</artifactId>
+      <version>1.77</version>
     </dependency>
     <dependency>
       <groupId>org.json</groupId>
