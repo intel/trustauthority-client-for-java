@@ -215,11 +215,12 @@ public class TrustAuthorityConnectorTest {
             byte[] expected = {1, 2, 3, 4, 5};
             byte[] actual = {1, 2, 3, 4, 5};
             String expectedTokenSigningAlg = "mock-token-signing-algo";
+            boolean expectedPolicyMustMatch = false;
             VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(), "mock-iat".getBytes(), "mock-signature".getBytes());
             List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
 
             // Initialize TokenRequest
-            TokenRequest token_request = new TokenRequest(expected, mockNonce, expected, mockPolicyIDs, expected, expectedTokenSigningAlg);
+            TokenRequest token_request = new TokenRequest(expected, mockNonce, expected, mockPolicyIDs, expected, expectedTokenSigningAlg, expectedPolicyMustMatch);
 
             // Testing setters for TokenRequest
             token_request.setQuote(expected);
@@ -228,12 +229,14 @@ public class TrustAuthorityConnectorTest {
             token_request.setPolicyIds(mockPolicyIDs);
             token_request.setEventLog(expected);
             token_request.setTokenSigningAlg(expectedTokenSigningAlg);
+            token_request.setPolicyMustMatch(expectedPolicyMustMatch);
             assertArrayEquals(token_request.getQuote(), actual);
             assertEquals(token_request.getVerifierNonce(), mockNonce);
             assertArrayEquals(token_request.getRuntimeData(), actual);
             assertEquals(token_request.getPolicyIds(), mockPolicyIDs);
             assertArrayEquals(token_request.getEventLog(), actual);
             assertEquals(token_request.getTokenSigningAlg(), expectedTokenSigningAlg);
+            assertEquals(token_request.getPolicyMustMatch(), expectedPolicyMustMatch);
         } catch (Exception e) {
             // Fail the test explicitly in the catch block
             Assert.fail("Exception: " + e.getMessage());
@@ -465,8 +468,11 @@ public class TrustAuthorityConnectorTest {
             // Sample token-signing-algo
             String expectedTokenSigningAlg = "mock-token-signing-algo";
 
+            // Sample policy-must-match
+            boolean expectedPolicyMustMatch = false;
+
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, expectedRequestID, expectedTokenSigningAlg);
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, expectedRequestID, expectedTokenSigningAlg, expectedPolicyMustMatch);
 
             AttestResponse response = connector.attest(attestArgs);
 
@@ -480,10 +486,12 @@ public class TrustAuthorityConnectorTest {
             attestArgs.setPolicyIds(mockPolicyIDs);
             attestArgs.setAdapter(mockAdapter);
             attestArgs.setTokenSigningAlg(expectedTokenSigningAlg);
+            attestArgs.setPolicyMustMatch(expectedPolicyMustMatch);
             assertEquals(attestArgs.getRequestId(), expectedRequestID);
             assertEquals(attestArgs.getPolicyIds(), mockPolicyIDs);
             assertEquals(attestArgs.getAdapter(), mockAdapter);
             assertEquals(attestArgs.getTokenSigningAlg(), expectedTokenSigningAlg);
+            assertEquals(attestArgs.getPolicyMustMatch(), expectedPolicyMustMatch);
         } catch (Exception e) {
             // Fail the test explicitly in the catch block
             Assert.fail("Exception: " + e.getMessage());
@@ -517,7 +525,7 @@ public class TrustAuthorityConnectorTest {
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", "mock-token-signing-algo");
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", "mock-token-signing-algo", false);
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
@@ -564,7 +572,7 @@ public class TrustAuthorityConnectorTest {
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", "mock-token-signing-algo");
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", "mock-token-signing-algo", false);
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {

@@ -54,7 +54,7 @@ To create a TEE adapter,  refer to the [Intel SGX adapter](../sgx/README.md) or 
 
 ```java
 // Initialize AttestArgs required for attestation
-AttestArgs attestArgs = new AttestArgs(adapter, policyIDs, requestID);
+AttestArgs attestArgs = new AttestArgs(adapter, policyIDs, requestID, tokenSigningAlg, policyMustMatch);
 
 // Invoke the attest API of the connector
 AttestResponse response = connector.attest(attestArgs);

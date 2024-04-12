@@ -18,6 +18,7 @@ public class AttestArgs {
     private List<UUID> policyIds;
     private String requestId;
     private String tokenSigningAlg;
+    private boolean policyMustMatch;
 
     /**
      * Constructs a new AttestArgs object with the specified adapter, policyIds and requestId.
@@ -26,12 +27,14 @@ public class AttestArgs {
      * @param policyIds         policyIds provided by user.
      * @param requestId         requestId provided by user.
      * @param tokenSigningAlg   tokenSigningAlg provided by user.
+     * @param policyMustMatch   policyMustMatch provided by user.
      */
-    public AttestArgs(EvidenceAdapter adapter, List<UUID> policyIds, String requestId, String tokenSigningAlg) {
+    public AttestArgs(EvidenceAdapter adapter, List<UUID> policyIds, String requestId, String tokenSigningAlg, boolean policyMustMatch) {
         this.adapter = adapter;
         this.policyIds = policyIds;
         this.requestId = requestId;
         this.tokenSigningAlg = tokenSigningAlg;
+        this.policyMustMatch = policyMustMatch;
     }
 
     /**
@@ -88,5 +91,19 @@ public class AttestArgs {
      */
     public void setTokenSigningAlg(String tokenSigningAlg) {
         this.tokenSigningAlg = tokenSigningAlg;
+    }
+    
+    /**
+     * getter function for policyMustMatch
+     */
+    public boolean getPolicyMustMatch() {
+        return policyMustMatch;
+    }
+
+    /**
+     * setter function for policyMustMatch
+     */
+    public void setPolicyMustMatch(boolean policyMustMatch) {
+        this.policyMustMatch = policyMustMatch;
     }
 }

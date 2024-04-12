@@ -68,6 +68,7 @@ Follow the steps below for installing both **Docker** and **docker-compose**  â€
    TRUSTAUTHORITY_REQUEST_ID=<trustauthority-request-id>
    TRUSTAUTHORITY_POLICY_ID=<trustauthority-policy-id>
    TOKEN_SIGNING_ALG=<token-signing-alg>
+   POLICY_MUST_MATCH=<true/false>
    RETRY_MAX=<max-number-of-retries>
    RETRY_WAIT_TIME=<max-retry-wait-time>
    LOG_LEVEL=<log-level>
@@ -128,6 +129,7 @@ When successful, the token and other information will be displayed.
    export TRUSTAUTHORITY_REQUEST_ID=<TRUSTAUTHORITY_REQUEST_ID>
    export TRUSTAUTHORITY_POLICY_ID=<TRUSTAUTHORITY_POLICY_ID>
    export TOKEN_SIGNING_ALG=<TOKEN_SIGNING_ALG>
+   export POLICY_MUST_MATCH=<true/false>
    export RETRY_MAX=<MAX_NUMBER_OF_RETRIES>
    export RETRY_WAIT_TIME=<MAX_RETRY_WAIT_TIME>
    export LOG_LEVEL=<LOG_LEVEL>

@@ -159,7 +159,10 @@ public class SampleApp {
             String trustAuthorityRequestID = trustAuthorityVariables[3];
             String trustAuthorityPolicyID = trustAuthorityVariables[4];
             String tokenSigningAlg = trustAuthorityVariables[7];
-
+            boolean policyMustMatch = false;
+            if (trustAuthorityVariables[8] != null) {
+                policyMustMatch = trustAuthorityVariables[8].equalsIgnoreCase("true");
+            }
             // Initialize RetryConfig based on system env set
             int retryMax = 2; // Default: 2 retries
             long retryWaitTime = 2; // Default: 2 seconds
@@ -182,7 +185,7 @@ public class SampleApp {
             TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
             // Verifying attestation for SGX platform
-            AttestArgs attestArgs = new AttestArgs(sgxAdapter, policyIDs, trustAuthorityRequestID, tokenSigningAlg);
+            AttestArgs attestArgs = new AttestArgs(sgxAdapter, policyIDs, trustAuthorityRequestID, tokenSigningAlg, policyMustMatch);
             AttestResponse response = connector.attest(attestArgs);
 
             // Print the Request ID of token fetched from Trust Authority
@@ -240,7 +243,7 @@ public class SampleApp {
      * @return String[] object containing the trust authority variables
      */
     private static String[] init() {
-        String[] initializer = new String[8];
+        String[] initializer = new String[9];
 
         // Fetch proxy settings from environment
         String httpsHost = System.getenv(Constants.ENV_HTTPS_PROXY_HOST);
@@ -282,10 +285,7 @@ public class SampleApp {
         if (trustAuthorityPolicyID != null) {
             initializer[4] = trustAuthorityPolicyID;
         }
-        String tokenSigningAlg = System.getenv(Constants.ENV_TOKEN_SIGNING_ALG);
-        if (tokenSigningAlg != null) {
-            initializer[7] = tokenSigningAlg;
-        }
+
         logger.debug("TRUSTAUTHORITY_BASE_URL: " + trustAuthorityBaseUrl + ", TRUSTAUTHORITY_API_URL: " + trustAuthorityApiUrl);
         
         String retry_max = System.getenv(Constants.ENV_RETRY_MAX);
@@ -295,6 +295,14 @@ public class SampleApp {
         String retry_wait_time = System.getenv(Constants.ENV_RETRY_WAIT_TIME);
         if (retry_wait_time != null) {
             initializer[6] = retry_wait_time;
+        }
+        String tokenSigningAlg = System.getenv(Constants.ENV_TOKEN_SIGNING_ALG);
+        if (tokenSigningAlg != null) {
+            initializer[7] = tokenSigningAlg;
+        }
+        String policyMustMatch = System.getenv(Constants.ENV_POLICY_MUST_MATCH);
+        if (policyMustMatch != null) {
+            initializer[8] = policyMustMatch;
         }
 
         // Initialize trust authority variables

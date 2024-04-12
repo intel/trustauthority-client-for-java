@@ -171,7 +171,7 @@ public class TrustAuthorityConnector {
             // Create the TokenRequest object
             TokenRequest tr = new TokenRequest(args.getEvidence().getQuote(), args.getNonce(),
                                                args.getEvidence().getUserData(), args.getPolicyIds(),
-                                               args.getEvidence().getEventLog(), args.getTokenSigningAlg());
+                                               args.getEvidence().getEventLog(), args.getTokenSigningAlg(), args.getPolicyMustMatch());
 
             // Convert the TokenRequest to a JSON -> String
             // to send as request to server
@@ -259,7 +259,7 @@ public class TrustAuthorityConnector {
             logger.debug("Collected evidence from adapter successfully...");
 
             // Calling the GetToken() API
-            GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId(), args.getTokenSigningAlg()));
+            GetTokenResponse tokenResponse = GetToken(new GetTokenArgs(nonceResponse.getNonce(), evidence, args.getPolicyIds(), args.getRequestId(), args.getTokenSigningAlg(), args.getPolicyMustMatch()));
             if (tokenResponse == null) {
                 throw new Exception("Failed to collect token from Trust Authority");
             }

@@ -39,6 +39,10 @@ public class TokenRequest {
     private byte[] eventLog;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("policy_must_match")
+    private boolean policyMustMatch;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("token_signing_alg")
     private String tokenSigningAlg;
 
@@ -51,14 +55,16 @@ public class TokenRequest {
      * @param policyIds         policyIds provided by user.
      * @param eventLog          eventLog provided by user.
      * @param tokenSigningAlg   tokenSigningAlg provided by user.
+     * @param policyMustMatch   policyMustMatch provided by user.
      */
-    public TokenRequest(byte[] quote, VerifierNonce verifierNonce, byte[] runtimeData, List<UUID> policyIds, byte[] eventLog, String tokenSigningAlg) {
+    public TokenRequest(byte[] quote, VerifierNonce verifierNonce, byte[] runtimeData, List<UUID> policyIds, byte[] eventLog, String tokenSigningAlg, boolean policyMustMatch) {
         this.quote = quote;
         this.verifierNonce = verifierNonce;
         this.runtimeData = runtimeData;
         this.policyIds = policyIds;
         this.eventLog = eventLog;
         this.tokenSigningAlg = tokenSigningAlg;
+        this.policyMustMatch = policyMustMatch;
     }
 
     /**
@@ -143,5 +149,19 @@ public class TokenRequest {
      */
     public void setTokenSigningAlg(String tokenSigningAlg) {
         this.tokenSigningAlg = tokenSigningAlg;
+    }
+ 
+    /**
+     * getter function for policyMustMatch
+     */
+    public boolean getPolicyMustMatch() {
+        return policyMustMatch;
+    }
+
+    /**
+     * setter function for policyMustMatch
+     */
+    public void setPolicyMustMatch(boolean policyMustMatch) {
+        this.policyMustMatch = policyMustMatch;
     }
 }

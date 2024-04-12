@@ -20,6 +20,7 @@ public class GetTokenArgs {
     private List<UUID> policyIds;
     private String requestId;
     private String tokenSigningAlg;
+    private boolean policyMustMatch;
 
     /**
      * Constructs a new GetTokenArgs object with the specified nonce, evidence, policyIds and requestId.
@@ -29,13 +30,15 @@ public class GetTokenArgs {
      * @param policyIds         policyIds provided by the user.
      * @param requestId         requestId provided by user.
      * @param tokenSigningAlg   tokenSigningAlg provided by user.
+     * @param policyMustMatch   policyMustMatch provided by user.
      */
-    public GetTokenArgs(VerifierNonce nonce, Evidence evidence, List<UUID> policyIds, String requestId, String tokenSigningAlg) {
+    public GetTokenArgs(VerifierNonce nonce, Evidence evidence, List<UUID> policyIds, String requestId, String tokenSigningAlg, boolean policyMustMatch) {
         this.nonce = nonce;
         this.evidence = evidence;
         this.policyIds = policyIds;
         this.requestId = requestId;
         this.tokenSigningAlg = tokenSigningAlg;
+        this.policyMustMatch = policyMustMatch;
     }
 
     /**
@@ -72,4 +75,11 @@ public class GetTokenArgs {
     public String getTokenSigningAlg() {
         return tokenSigningAlg;
     }
+    
+    /**
+     * getter function for policyMustMatch
+     */
+    public boolean getPolicyMustMatch() {
+        return policyMustMatch;
+    }    
 }

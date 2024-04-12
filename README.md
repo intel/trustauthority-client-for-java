@@ -49,7 +49,7 @@ TrustAuthorityConnector connector = new TrustAuthorityConnector(cfg);
 
 ```java
 // Initialize AttestArgs required for attestation
-AttestArgs attestArgs = new AttestArgs(adapter, policyIDs, requestID);
+AttestArgs attestArgs = new AttestArgs(adapter, policyIDs, requestID, tokenSigningAlg, policyMustMatch);
 
 // Invoke the attest API of the connector
 AttestResponse response = connector.attest(attestArgs);
