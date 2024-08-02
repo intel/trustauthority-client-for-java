@@ -6,40 +6,42 @@
 
 <!-- sgx/pom.xml -->
 <project>
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.intel.trustauthority</groupId>
-        <artifactId>trust-authority-client</artifactId>
-        <version>1.0.0</version>
-    </parent>
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.intel.trustauthority</groupId>
+		<artifactId>trust-authority-client</artifactId>
+		<version>1.1.0</version>
+	</parent>
 
-    <artifactId>sgx</artifactId>
+	<groupId>com.intel.trustauthority</groupId>
+	<artifactId>sgx</artifactId>
+	<version>${sgx.version}</version>
 
-    <build>
-        <resources>
-            <resource>
-                <directory>../resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<resources>
+			<resource>
+				<directory>../resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.intel.trustauthority</groupId>
-            <artifactId>connector</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>com.intel.trustauthority</groupId>
+			<artifactId>connector</artifactId>
+			<version>${connector.version}</version>
+		</dependency>
+	</dependencies>
 </project>

@@ -9,7 +9,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.intel.trustauthority</groupId>
   <artifactId>trust-authority-client</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <packaging>pom</packaging>
 
   <build>
@@ -59,11 +59,20 @@
       </plugin>
     </plugins>
   </build>
+  
+  <properties>
+	<project.version>1.1.0</project.version>
+	<connector.version>1.0.0</connector.version>
+	<sgx.version>1.0.0</sgx.version>
+	<tdx.version>1.1.0</tdx.version>
+	<configfstsm.version>1.0.0</configfstsm.version>
+  </properties>
 
   <modules>
     <module>connector</module>
     <module>sgx</module>
     <module>tdx</module>
+    <module>configfs-tsm</module>
   </modules>
  
   <dependencies>

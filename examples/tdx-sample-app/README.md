@@ -75,12 +75,12 @@ Follow the steps below for installing both **docker** and **docker-compose**. Th
        
    # Use docker to run the TDX Sample App...
    docker run \
+       --privileged \
        --rm \
        --network host \
-       --device=/dev/tdx_guest \
+       -v /sys/kernel/config:/sys/kernel/config \
        --env-file tdx_token.env \
-       --group-add $(getent group <user-group> | cut -d: -f3) \
-       trust-authority-java-client-tdx-sample-app:v1.0.0
+       trust-authority-java-client-tdx-sample-app:v1.1.0
    ```
 
 > [!NOTE]

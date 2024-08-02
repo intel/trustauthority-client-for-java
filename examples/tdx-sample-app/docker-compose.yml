@@ -17,6 +17,5 @@ services:
         - MAVEN_VERSION=${MAVEN_VERSION}
         - MAVEN_PROXY_HOST=${MAVEN_PROXY_HOST}
         - MAVEN_PROXY_PORT=${MAVEN_PROXY_PORT}
-        - DCAP_VERSION=${DCAP_VERSION}
     env_file:
       - ../.env
