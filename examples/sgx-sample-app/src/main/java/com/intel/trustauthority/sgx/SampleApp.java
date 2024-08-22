@@ -204,7 +204,7 @@ public class SampleApp {
 
             logger.info("Successfully verified token.");
         } catch (Exception e) {
-            logger.error("Exception: " + e);
+            logger.error("Token verification failed with exception: " + e);
             System.exit(1);
         }
     }
@@ -260,19 +260,19 @@ public class SampleApp {
 
         // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
         String trustAuthorityBaseUrl = System.getenv(Constants.ENV_TRUSTAUTHORITY_BASE_URL);
-        if (trustAuthorityBaseUrl == null) {
+        if (trustAuthorityBaseUrl == null || trustAuthorityBaseUrl.trim().length() == 0) {
             logger.error("TRUSTAUTHORITY_BASE_URL is not set.");
             // Exit if env variable not set
             System.exit(1);
         }
         String trustAuthorityApiUrl = System.getenv(Constants.ENV_TRUSTAUTHORITY_API_URL);
-        if (trustAuthorityApiUrl == null) {
+        if (trustAuthorityApiUrl == null || trustAuthorityApiUrl.trim().length() == 0) {
             logger.error("TRUSTAUTHORITY_API_URL is not set.");
             // Exit if env variable not set
             System.exit(1);
         }
         String trustAuthorityApiKey = System.getenv(Constants.ENV_TRUSTAUTHORITY_API_KEY);
-        if (trustAuthorityApiKey == null) {
+        if (trustAuthorityApiKey == null || trustAuthorityApiKey.trim().length() == 0) {
             logger.error("TRUSTAUTHORITY_API_KEY is not set.");
             // Exit if env variable not set
             System.exit(1);
