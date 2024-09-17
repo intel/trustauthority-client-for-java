@@ -9,6 +9,8 @@ on:
     tags:
       - '**'
 
+permissions: read-all
+
 jobs:
   build-test:
     runs-on: [ ubuntu-20.04 ]
