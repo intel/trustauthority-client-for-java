@@ -48,12 +48,12 @@
 		<dependency>
 			<groupId>com.intel.trustauthority</groupId>
 			<artifactId>connector</artifactId>
-			<version>1.0.0</version>
+			<version>1.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.intel.trustauthority</groupId>
 			<artifactId>tdx</artifactId>
-			<version>1.1.0</version>
+			<version>1.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.intel.trustauthority</groupId>

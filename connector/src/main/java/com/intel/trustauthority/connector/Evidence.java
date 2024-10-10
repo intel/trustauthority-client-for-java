@@ -10,10 +10,16 @@ package com.intel.trustauthority.connector;
  */
 public class Evidence {
 
-    private long type;
+    public enum EvidenceType {
+        SGX,
+        TDX,
+        AZ_TDX;
+    }
+    private EvidenceType type;
     private byte[] quote;
     private byte[] userData;
     private byte[] eventLog;
+    private byte[] runtimeData;
 
     /**
      * Constructs a new Evidence object with the specified type, quote, userData and eventLog.
@@ -22,19 +28,28 @@ public class Evidence {
      * @param quote          quote provided by user.
      * @param userData       userData by the user.
      * @param eventLog       eventLog provided by user.
+     * @param runtimeData    runtime data calculated.
      */
-    public Evidence(long type, byte[] quote, byte[] userData, byte[] eventLog) {
+    public Evidence(EvidenceType type, byte[] quote, byte[] userData, byte[] eventLog, byte[] runtimeData) {
         this.type = type;
         this.quote = quote;
         this.userData = userData;
         this.eventLog = eventLog;
+        this.runtimeData = runtimeData;
     }
 
     /**
      * getter function for type
      */
-    public long getType() {
+    public EvidenceType getType() {
         return type;
+    }
+
+    /**
+     * setter function for type
+     */
+    public void setType(EvidenceType type) {
+        this.type = type;
     }
 
     /**
@@ -49,6 +64,13 @@ public class Evidence {
      */
     public byte[] getUserData() {
         return userData;
+    }
+
+    /**
+     * getter function for runtimeData
+     */
+    public byte[] getRuntimeData() {
+        return runtimeData;
     }
 
     /**

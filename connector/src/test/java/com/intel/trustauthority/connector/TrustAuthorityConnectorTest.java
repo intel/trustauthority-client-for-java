@@ -27,7 +27,6 @@ import org.mockserver.model.HttpResponse;
 import com.nimbusds.jose.util.Base64;
 
 // Mockito imports for mocking objects and defining behavior
-import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,12 +41,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-// Log4j imports for logging
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 // Nimbus JOSE+JWT library import for JWT claims set
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.intel.trustauthority.connector.Evidence.EvidenceType;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 
@@ -55,9 +51,6 @@ import com.nimbusds.jose.jwk.JWKSet;
  * TrustAuthorityConnectorTest contains unit tests for all APIs exposed by the TrustAuthorityConnector
  */
 public class TrustAuthorityConnectorTest {
-
-    // Logger object
-    private static final Logger logger = LogManager.getLogger(TrustAuthorityConnectorTest.class);
 
     // Initialize Mock Server object
     private ClientAndServer mockServer;
@@ -153,7 +146,6 @@ public class TrustAuthorityConnectorTest {
 
     @Test
     public void testConstants() {
-        Constants constants = new Constants();
         assertEquals(Constants.HEADER_X_API_KEY, "x-api-key");
         assertEquals(Constants.HEADER_ACCEPT, "Accept");
         assertEquals(Constants.HEADER_CONTENT_TYPE, "Content-Type");
@@ -220,7 +212,7 @@ public class TrustAuthorityConnectorTest {
             List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
 
             // Initialize TokenRequest
-            TokenRequest token_request = new TokenRequest(expected, mockNonce, expected, mockPolicyIDs, expected, expectedTokenSigningAlg, expectedPolicyMustMatch);
+            TokenRequest token_request = new TokenRequest(expected, mockNonce, expected, expected, mockPolicyIDs, expected, expectedTokenSigningAlg, expectedPolicyMustMatch);
 
             // Testing setters for TokenRequest
             token_request.setQuote(expected);
@@ -249,13 +241,12 @@ public class TrustAuthorityConnectorTest {
             // Create mock objects for testing
             byte[] expected = {1, 2, 3, 4, 5};
             byte[] actual = {1, 2, 3, 4, 5};
-            long expected_type = 0;
 
             // Initialize Evidence
-            Evidence evidence = new Evidence(expected_type, expected, expected, expected);
+            Evidence evidence = new Evidence(EvidenceType.SGX, expected, expected, expected, expected);
 
             // Testing getters for Evidence
-            assertEquals(evidence.getType(), 0);
+            assertEquals(evidence.getType().ordinal(), 0);
             assertArrayEquals(evidence.getQuote(), actual);
             assertArrayEquals(evidence.getUserData(), actual);
             assertArrayEquals(evidence.getEventLog(), actual);
@@ -353,6 +344,7 @@ public class TrustAuthorityConnectorTest {
             GetTokenArgs mockArgs = mock(GetTokenArgs.class);
             VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(), "mock-iat".getBytes(), "mock-signature".getBytes());
             Evidence mockEvidence = mock(Evidence.class);
+            when(mockEvidence.getType()).thenReturn(EvidenceType.SGX);
             when(mockArgs.getNonce()).thenReturn(mockNonce);
             when(mockArgs.getEvidence()).thenReturn(mockEvidence);
             when(mockArgs.getPolicyIds()).thenReturn(Arrays.asList(UUID.randomUUID()));
@@ -457,6 +449,7 @@ public class TrustAuthorityConnectorTest {
 
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
+            when(mockEvidence.getType()).thenReturn(EvidenceType.SGX);
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Create a mock PolicyIDs object

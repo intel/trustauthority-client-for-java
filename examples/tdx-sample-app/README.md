@@ -65,14 +65,17 @@ Follow the steps below for installing both **docker** and **docker-compose**. Th
        TRUSTAUTHORITY_POLICY_ID=<trustauthority-policy-id>
        TOKEN_SIGNING_ALG=<token-signing-alg>
        POLICY_MUST_MATCH=<true/false>
+       ADAPTER_TYPE=<intel/azure>
        RETRY_MAX=<max-number-of-retries>
        RETRY_WAIT_TIME=<max-retry-wait-time>
        LOG_LEVEL=<log-level>
        EOF
-     
-   # Make sure the Intel(R) TDX driver device is set with the following permissions:
-   #    crw-rw---- root <user-group> /dev/tdx_guest
-       
+   ```    
+> [!NOTE]: Adapter type can be either `intel` or `azure`. The `intel` adapter is used for running the sample app in non-Azure platforms or VMs, while the `azure` adapter is used for running the sample app in Azure platforms or VMs.
+
+3. For running JAVA client in <b>non Azure platforms or VMs</b>. 
+
+   ```sh
    # Use docker to run the TDX Sample App...
    docker run \
        --privileged \
@@ -80,8 +83,26 @@ Follow the steps below for installing both **docker** and **docker-compose**. Th
        --network host \
        -v /sys/kernel/config:/sys/kernel/config \
        --env-file tdx_token.env \
-       trust-authority-java-client-tdx-sample-app:v1.1.0
+       trust-authority-java-client-tdx-sample-app:v1.2.0
    ```
+
+4. For running JAVA client in <b>Azure platforms or VMs</b>. 
+
+   ```sh
+   # Make sure the Intel(R) TPM driver device is set with the following permissions:
+   #    crw-rw---- 1 tss tss  253, 65536 Sep 24 03:59 /dev/tpmrm0
+   #    crw-rw---- 1 tss tss  10,   224 Sep 24 03:59 /dev/tpm0
+       
+   # Use docker to run the TDX Sample App...
+
+   sudo docker run \
+      --rm \
+      --network host \
+      --device=/dev/tpm0 --device=/dev/tpmrm0 \
+      --env-file tdx_token.env \
+      --group-add $(getent group tss | cut -d: -f3) \
+      trust-authority-java-client-tdx-sample-app:v1.2.0
+   ```   
 
 > [!NOTE]
 > - The proxy setting values for `HTTPS_PROXY_HOST` and `HTTPS_PROXY_PORT` have to be set by the user based on the system proxy settings.
@@ -117,6 +138,7 @@ If the sample app is successful, it will display the token and other information
    export TRUSTAUTHORITY_POLICY_ID=<TRUSTAUTHORITY_POLICY_ID>
    export TOKEN_SIGNING_ALG=<TOKEN_SIGNING_ALG>
    export POLICY_MUST_MATCH=<true/false>
+   export ADAPTER_TYPE=<azure/intel>
    export RETRY_MAX=<MAX_NUMBER_OF_RETRIES>
    export RETRY_WAIT_TIME=<MAX_RETRY_WAIT_TIME>
    export LOG_LEVEL=<LOG_LEVEL>

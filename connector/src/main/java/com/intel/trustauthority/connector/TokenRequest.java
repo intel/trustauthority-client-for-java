@@ -31,6 +31,10 @@ public class TokenRequest {
     private byte[] runtimeData;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("user_data")
+    private byte[] userData;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("policy_ids")
     private List<UUID> policyIds;
 
@@ -52,15 +56,17 @@ public class TokenRequest {
      * @param quote             quote provided by the user.
      * @param verifierNonce     verifierNonce object provided by user.
      * @param runtimeData       runtimeData provided by user.
+     * @param userdata          userData provided by user.
      * @param policyIds         policyIds provided by user.
      * @param eventLog          eventLog provided by user.
      * @param tokenSigningAlg   tokenSigningAlg provided by user.
      * @param policyMustMatch   policyMustMatch provided by user.
      */
-    public TokenRequest(byte[] quote, VerifierNonce verifierNonce, byte[] runtimeData, List<UUID> policyIds, byte[] eventLog, String tokenSigningAlg, boolean policyMustMatch) {
+    public TokenRequest(byte[] quote, VerifierNonce verifierNonce, byte[] runtimeData, byte[] userData, List<UUID> policyIds, byte[] eventLog, String tokenSigningAlg, boolean policyMustMatch) {
         this.quote = quote;
         this.verifierNonce = verifierNonce;
         this.runtimeData = runtimeData;
+        this.userData = userData;
         this.policyIds = policyIds;
         this.eventLog = eventLog;
         this.tokenSigningAlg = tokenSigningAlg;
@@ -107,6 +113,20 @@ public class TokenRequest {
      */
     public void setRuntimeData(byte[] runtimeData) {
         this.runtimeData = runtimeData;
+    }
+    
+    /**
+     * getter function for userData
+     */
+    public byte[] getUserData() {
+        return userData;
+    }
+
+    /**
+     * setter function for userData
+     */
+    public void setUserData(byte[] userData) {
+        this.userData = userData;
     }
 
     /**

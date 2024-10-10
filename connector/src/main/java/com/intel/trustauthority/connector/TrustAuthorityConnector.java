@@ -7,23 +7,19 @@ package com.intel.trustauthority.connector;
 
 // Java Standard Library Imports
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
-import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.cert.X509CRL;
 import java.security.cert.X509CRLEntry;
-import java.security.KeyStore;
 import java.security.Security;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -35,27 +31,21 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.x509.CRLDistPoint;
 import org.bouncycastle.asn1.x509.DistributionPoint;
 import org.bouncycastle.asn1.x509.DistributionPointName;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.intel.trustauthority.connector.Evidence.EvidenceType;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.jwk.*;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 
@@ -163,13 +153,19 @@ public class TrustAuthorityConnector {
      */
     public GetTokenResponse GetToken(GetTokenArgs args) throws Exception {
         HttpURLConnection connection = null;
-
+        String url;
         try {
-            // Request for token from TrustAuthority server
-            String url = String.format("%s/appraisal/v1/attest", cfg.getApiUrl());
+            if (args.getEvidence().getType().ordinal() == EvidenceType.AZ_TDX.ordinal()) {
+                url = String.format("%s/appraisal/v1/attest/azure/tdxvm", cfg.getApiUrl());
+            } else if ((args.getEvidence().getType().ordinal() == EvidenceType.TDX.ordinal()) ||
+                       (args.getEvidence().getType().ordinal() == EvidenceType.SGX.ordinal())) {
+                url = String.format("%s/appraisal/v1/attest", cfg.getApiUrl());
+            } else {
+                throw new Exception("Invalid evidence type provided");
+            }
 
             // Create the TokenRequest object
-            TokenRequest tr = new TokenRequest(args.getEvidence().getQuote(), args.getNonce(),
+            TokenRequest tr = new TokenRequest(args.getEvidence().getQuote(), args.getNonce(), args.getEvidence().getRuntimeData(),
                                                args.getEvidence().getUserData(), args.getPolicyIds(),
                                                args.getEvidence().getEventLog(), args.getTokenSigningAlg(), args.getPolicyMustMatch());
 
@@ -532,6 +528,7 @@ public class TrustAuthorityConnector {
                 ASN1OctetString octetString = ASN1OctetString.getInstance(asn1InputStream.readObject());
                 // Convert the octet string to an ASN1Primitive
                 ASN1Primitive primitive = ASN1Primitive.fromByteArray(octetString.getOctets());
+                asn1InputStream.close();
 
                 if (primitive instanceof ASN1Sequence) {
                     // If the primitive is a sequence, proceed with parsing
@@ -600,8 +597,7 @@ public class TrustAuthorityConnector {
      * @param responseCode  Response code of the connection to read input/error message.
      * @return              The server input/error message response as a string
      */
-    private String readResponseBody(HttpURLConnection connection, int responseCode) throws IOException {
-        StringBuilder content = new StringBuilder();
+    public String readResponseBody(HttpURLConnection connection, int responseCode) throws IOException {
 
         // Read the response body
         BufferedReader reader;
@@ -633,7 +629,7 @@ public class TrustAuthorityConnector {
      * @param requestBody           If provided, writes requestBody to the output stream of connection.
      * @return                      HttpURLConnection object on a successful response.
      */
-    private HttpURLConnection openConnectionWithRetries(URL url, String requestMethod, Map<String, String> requestProperties, String requestBody) throws Exception {
+    public HttpURLConnection openConnectionWithRetries(URL url, String requestMethod, Map<String, String> requestProperties, String requestBody) throws Exception {
         // Set maxRetries and retryWaitTimeMillis based on Config
         int maxRetries = cfg.getRetryConfig().getRetryMax();
         long retryWaitTimeMillis = cfg.getRetryConfig().getRetryWaitMin() * 1000;

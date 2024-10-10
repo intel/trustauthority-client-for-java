@@ -61,10 +61,10 @@
   </build>
   
   <properties>
-	<project.version>1.1.0</project.version>
-	<connector.version>1.0.0</connector.version>
+	<project.version>1.2.0</project.version>
+	<connector.version>1.1.0</connector.version>
 	<sgx.version>1.0.0</sgx.version>
-	<tdx.version>1.1.0</tdx.version>
+	<tdx.version>1.2.0</tdx.version>
 	<configfstsm.version>1.0.0</configfstsm.version>
   </properties>
 

@@ -23,6 +23,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 // Trust Authority Connector import
 import com.intel.trustauthority.connector.*;
+import com.intel.trustauthority.connector.Evidence.EvidenceType;
 import com.intel.trustauthority.exception.ConfigfsException;
 import com.intel.trustauthority.exception.GenerationMismatchedException;
 import com.intel.trustauthority.exception.PathException;
@@ -74,6 +75,6 @@ public class TdxAdapter implements EvidenceAdapter {
 			throw new RuntimeException("Caught Exception while getReport ", e.getCause());
 		}
 		// Construct and return Evidence object attached with the fetched TDX Quote
-		return new Evidence(1, resp.getOutBlob(), userData, null);
+		return new Evidence(EvidenceType.TDX, resp.getOutBlob(), userData, null, null);
 	}
 }

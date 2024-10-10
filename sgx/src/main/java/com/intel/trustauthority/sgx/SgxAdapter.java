@@ -16,12 +16,11 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.Memory;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.TypeMapper;
-import com.sun.jna.Structure.FieldOrder;
 import com.sun.jna.Function;
 
 // Trust Authority Connector import
 import com.intel.trustauthority.connector.*;
+import com.intel.trustauthority.connector.Evidence.EvidenceType;
 
 /**
  * SgxAdapter class for SGX Quote collection from SGX enabled platform
@@ -379,6 +378,6 @@ public class SgxAdapter implements EvidenceAdapter {
         byte[] result = quoteBuffer.getByteArray(0, quoteSize.getValue());
 
         // Construct and return Evidence object attached with the fetched SGX Quote
-        return new Evidence(0, result, this.userData, null);
+        return new Evidence(EvidenceType.SGX, result, this.userData, null, null);
     }
 }

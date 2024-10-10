@@ -5,9 +5,6 @@
  */
 package com.intel.trustauthority.connector;
 
-// Java Standard Library Imports
-import java.net.URL;
-
 /**
  * Config class for holding config provided by user for TrustAuthorityConnector
  */
@@ -16,7 +13,6 @@ public class Config {
     private String baseUrl;
     private String apiUrl;
     private String apiKey;
-    private URL url;
     private RetryConfig retryConfig;
 
     /**
@@ -31,7 +27,6 @@ public class Config {
         this.baseUrl = baseUrl;
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
-        this.url = new URL(apiUrl);
         this.retryConfig = retryConfig;
     }
 
@@ -55,7 +50,7 @@ public class Config {
     public String getApiKey() {
         return apiKey;
     }
-
+    
     /**
      * getter function for retryConfig
      */

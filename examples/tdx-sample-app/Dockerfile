@@ -16,7 +16,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
-    openjdk-17-jdk-headless
+    openjdk-17-jdk-headless \
+    tpm2-tools
 
 # Set up environment variables for Java
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64

@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
 
 // Nimbus JOSE + JWT Library Import
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -26,6 +28,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 // trust_authority_client imports
 import com.intel.trustauthority.connector.*;
 import com.intel.trustauthority.tdx.TdxAdapter;
+import com.intel.trustauthority.tdx.AzureTdxAdapter;
 
 /**
  * SampleApp class, a sample application demonstrating TDX Quote collection/verification
@@ -44,8 +47,20 @@ public class SampleApp {
             // For testing
             byte[] bytes = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
 
+            // Initialize Sample App variables
+            String[] trustAuthorityVariables = init();
+            if (trustAuthorityVariables.length == 0) {
+                logger.error("Initialization failed, exiting...");
+                System.exit(1);
+            }
+            String adapterType = trustAuthorityVariables[9];
             // Create the TdxAdapter object
-            TdxAdapter tdxAdapter = new TdxAdapter(bytes);
+            EvidenceAdapter tdxAdapter;
+            if (adapterType.toLowerCase().equals(Constants.ADAPTER_TYPE_AZURE)) {
+                tdxAdapter = new AzureTdxAdapter(bytes);
+            } else {
+                tdxAdapter = new TdxAdapter(bytes);
+            }
 
             // Fetch the Tdx Quote
             Evidence tdxEvidence = tdxAdapter.collectEvidence(bytes);
@@ -62,17 +77,14 @@ public class SampleApp {
             // Print the TDX UserData in Base64 format
             logger.info("TDX user data Base64 Encoded: " + base64UserData);
 
-            // Initialize Sample App variables
-            String[] trustAuthorityVariables = init();
-            if (trustAuthorityVariables.length == 0) {
-                logger.error("Initialization failed, exiting...");
-                System.exit(1);
-            }
             String trustAuthorityBaseUrl = trustAuthorityVariables[0];
             String trustAuthorityApiUrl = trustAuthorityVariables[1];
             String trustAuthorityApiKey = trustAuthorityVariables[2];
             String trustAuthorityRequestID = trustAuthorityVariables[3];
-            String trustAuthorityPolicyID = trustAuthorityVariables[4];
+            List<UUID> policyIDs = null;
+            if (trustAuthorityVariables[4] != null && trustAuthorityVariables[4].trim().length() > 0) {
+                policyIDs = parseUUIDString(trustAuthorityVariables[4]);
+            }
             String tokenSigningAlg = trustAuthorityVariables[7];
             boolean policyMustMatch = false;
             if (trustAuthorityVariables[8] != null) {
@@ -90,9 +102,6 @@ public class SampleApp {
             }
             // RetryConfig with retryWaitMin and retryMax set
             RetryConfig retryConfig  = new RetryConfig(retryWaitTime, 10, retryMax);
-
-            // Create Policy IDs from trustAuthorityPolicyID string
-            List<UUID> policyIDs = parseUUIDString(trustAuthorityPolicyID);
 
             // Initialize config required for connector using trustAuthorityBaseUrl, trustAuthorityApiUrl, trustAuthorityApiKey and retryConfig
             Config cfg = new Config(trustAuthorityBaseUrl, trustAuthorityApiUrl, trustAuthorityApiKey, retryConfig);
@@ -159,7 +168,7 @@ public class SampleApp {
      * @return String[] object containing the trust authority variables
      */
     private static String[] init() {
-        String[] initializer = new String[9];
+        String[] initializer = new String[10];
 
         // Fetch proxy settings from environment
         String httpsHost = System.getenv(Constants.ENV_HTTPS_PROXY_HOST);
@@ -219,6 +228,21 @@ public class SampleApp {
         if (policyMustMatch != null) {
             initializer[8] = policyMustMatch;
         }
+
+        // Read adapter type from environment variable
+        String adapterType = System.getenv(Constants.ENV_ADAPTER_TYPE);
+        Set<String> validAdapterTypes = new HashSet<>(Arrays.asList(Constants.ADAPTER_TYPE_AZURE, Constants.ADAPTER_TYPE_INTEL));
+
+        if (adapterType == null) {
+            logger.info("No adapter type provided. Setting adapter type as 'intel' ...");
+            initializer[9] = Constants.ADAPTER_TYPE_INTEL;
+        } else if (validAdapterTypes.contains(adapterType.toLowerCase())) {
+            initializer[9] = adapterType;
+        } else {
+            logger.error("Invalid adapter type provided. Supported values are 'azure' or 'intel'");
+            System.exit(1);
+        }
+
         // Initialize trust authority variables
         initializer[0] = trustAuthorityBaseUrl;
         initializer[1] = trustAuthorityApiUrl;

@@ -243,7 +243,7 @@ public class SampleApp {
      * @return String[] object containing the trust authority variables
      */
     private static String[] init() {
-        String[] initializer = new String[9];
+        String[] initializer = new String[10];
 
         // Fetch proxy settings from environment
         String httpsHost = System.getenv(Constants.ENV_HTTPS_PROXY_HOST);
