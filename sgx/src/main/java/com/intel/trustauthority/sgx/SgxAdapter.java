@@ -378,6 +378,6 @@ public class SgxAdapter implements EvidenceAdapter {
         byte[] result = quoteBuffer.getByteArray(0, quoteSize.getValue());
 
         // Construct and return Evidence object attached with the fetched SGX Quote
-        return new Evidence(EvidenceType.SGX, result, this.userData, null, null);
+        return new Evidence(EvidenceType.SGX, result, null, null, this.userData);
     }
 }

@@ -75,6 +75,6 @@ public class TdxAdapter implements EvidenceAdapter {
 			throw new RuntimeException("Caught Exception while getReport ", e.getCause());
 		}
 		// Construct and return Evidence object attached with the fetched TDX Quote
-		return new Evidence(EvidenceType.TDX, resp.getOutBlob(), userData, null, null);
+		return new Evidence(EvidenceType.TDX, resp.getOutBlob(), null, null, this.userData);
 	}
 }
