@@ -5,19 +5,27 @@
  */
 package com.intel.trustauthority.connector;
 
-// Java Standard Library Imports
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intel.trustauthority.connector.Evidence.EvidenceType;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.BufferedReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.Security;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.security.cert.X509CRL;
 import java.security.cert.X509CRLEntry;
-import java.security.Security;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,8 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-// Third-party Library Imports
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -36,18 +44,6 @@ import org.bouncycastle.asn1.x509.DistributionPointName;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.intel.trustauthority.connector.Evidence.EvidenceType;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.jwt.JWTClaimsSet;
 
 /**
  * TrustAuthorityConnector exposes functions for calling Intel Trust Authority REST APIs
@@ -155,6 +151,8 @@ public class TrustAuthorityConnector {
         HttpURLConnection connection = null;
         String url;
         try {
+            args.validate();
+            
             if (args.getEvidence().getType().ordinal() == EvidenceType.AZ_TDX.ordinal()) {
                 url = String.format("%s/appraisal/v1/attest/azure/tdxvm", cfg.getApiUrl());
             } else if ((args.getEvidence().getType().ordinal() == EvidenceType.TDX.ordinal()) ||
@@ -225,6 +223,8 @@ public class TrustAuthorityConnector {
      */
     public AttestResponse attest(AttestArgs args) throws Exception {
         try {
+            args.validate();
+
             // Creating an empty AttestResponse object
             AttestResponse response = new AttestResponse(null, null);
 
@@ -327,7 +327,7 @@ public class TrustAuthorityConnector {
 
             // Get the algorithm name from the JWSHeader
             String algorithmName = jwsHeader.getAlgorithm().getName();
-            if (!(algorithmName.equals("RS256") || algorithmName.equals("PS384"))) {
+            if (!(algorithmName.equals(Constants.ALGO_RS256) || algorithmName.equals(Constants.ALGO_PS384))) {
                 throw new JOSEException("Unsupported token signing algorithm: " + algorithmName);
             }
 
@@ -365,7 +365,7 @@ public class TrustAuthorityConnector {
 
             // Create a verifier
             JWSVerifier verifier;
-            if (jwsAlgorithm.getName().equals("RS256") || jwsAlgorithm.getName().equals("PS384")) {
+            if (jwsAlgorithm.getName().equals(Constants.ALGO_RS256) || jwsAlgorithm.getName().equals(Constants.ALGO_PS384)) {
                 verifier = new RSASSAVerifier(publicKey);
             } else {
                 throw new JOSEException("Unsupported algorithm: " + jwsAlgorithm.getName());

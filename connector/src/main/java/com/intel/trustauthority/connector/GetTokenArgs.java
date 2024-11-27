@@ -5,7 +5,7 @@
  */
 package com.intel.trustauthority.connector;
 
-// Java Standard Library Imports
+import com.nimbusds.jose.JOSEException;
 import java.util.List;
 import java.util.UUID;
 
@@ -81,4 +81,13 @@ public class GetTokenArgs {
     public boolean getPolicyMustMatch() {
         return policyMustMatch;
     }    
+
+    /**
+     * validator function for arguments
+     */
+    public void validate() throws JOSEException{
+        if (!"".equals(this.tokenSigningAlg) && !(this.tokenSigningAlg.equals(Constants.ALGO_RS256) || this.tokenSigningAlg.equals(Constants.ALGO_PS384))) {
+            throw new JOSEException("Unsupported token signing algorithm: " + this.tokenSigningAlg);
+        }                
+    }
 }

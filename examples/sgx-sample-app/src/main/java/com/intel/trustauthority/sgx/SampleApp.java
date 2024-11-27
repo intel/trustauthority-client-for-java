@@ -175,8 +175,11 @@ public class SampleApp {
             // RetryConfig with retryWaitMin and retryMax set
             RetryConfig retryConfig  = new RetryConfig(retryWaitTime, 10, retryMax);
 
+            List<UUID> policyIDs = null;
             // Create Policy IDs from trustAuthorityPolicyID string
-            List<UUID> policyIDs = parseUUIDString(trustAuthorityPolicyID);
+            if (trustAuthorityPolicyID != null && trustAuthorityPolicyID.trim().length() > 0) {
+                policyIDs = parseUUIDString(trustAuthorityPolicyID);
+            }
 
             // Initialize config required for connector using trustAuthorityBaseUrl, trustAuthorityApiUrl, trustAuthorityApiKey and retryConfig
             Config cfg = new Config(trustAuthorityBaseUrl, trustAuthorityApiUrl, trustAuthorityApiKey, retryConfig);

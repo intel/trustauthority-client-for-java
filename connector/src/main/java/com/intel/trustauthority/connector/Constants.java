@@ -57,4 +57,9 @@ public class Constants {
         // Make the set unmodifiable to ensure it remains constant
         retryableStatusCodes = Collections.unmodifiableSet(tempSet);
     }
+
+    //Allowed algorithm
+    public static final String ALGO_RS256 = "RS256";        
+    public static final String ALGO_PS384 = "PS384";
+    
 }

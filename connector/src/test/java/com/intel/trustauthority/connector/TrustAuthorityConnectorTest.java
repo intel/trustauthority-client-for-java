@@ -5,47 +5,36 @@
  */
 package com.intel.trustauthority.connector;
 
-// JUnit imports for assertions and test annotations
+import com.intel.trustauthority.connector.Evidence.EvidenceType;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.util.Base64;
+import com.nimbusds.jwt.JWTClaimsSet;
+import java.io.ByteArrayInputStream;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509CRL;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.junit.After;
+import org.junit.Assert;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-// MockServer imports for HTTP server mocking
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
-
-// Base64 utility import
-import com.nimbusds.jose.util.Base64;
-
-// Mockito imports for mocking objects and defining behavior
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
-import static org.mockito.ArgumentMatchers.any;
-
-// Utility imports
-import java.io.ByteArrayInputStream;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.cert.X509CRL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-// Nimbus JOSE+JWT library import for JWT claims set
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.intel.trustauthority.connector.Evidence.EvidenceType;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
 
 /**
  * TrustAuthorityConnectorTest contains unit tests for all APIs exposed by the TrustAuthorityConnector
@@ -206,7 +195,7 @@ public class TrustAuthorityConnectorTest {
             // Create mock objects for testing
             byte[] expected = {1, 2, 3, 4, 5};
             byte[] actual = {1, 2, 3, 4, 5};
-            String expectedTokenSigningAlg = "mock-token-signing-algo";
+            String expectedTokenSigningAlg = Constants.ALGO_RS256;
             boolean expectedPolicyMustMatch = false;
             VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(), "mock-iat".getBytes(), "mock-signature".getBytes());
             List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
@@ -459,7 +448,7 @@ public class TrustAuthorityConnectorTest {
             String expectedRequestID = "mock-request-id";
 
             // Sample token-signing-algo
-            String expectedTokenSigningAlg = "mock-token-signing-algo";
+            String expectedTokenSigningAlg = Constants.ALGO_RS256;
 
             // Sample policy-must-match
             boolean expectedPolicyMustMatch = false;
@@ -492,6 +481,84 @@ public class TrustAuthorityConnectorTest {
     }
 
     @Test
+    public void testAttestSigningAlgoFailure() {
+        try {
+            // Check if config is not null
+            assertNotNull(cfg);
+
+            // Check if connector is not null
+            assertNotNull(connector);
+
+            // Initialize nonce values for serving from mock server
+            String nonce_val = "MjAyMy0xMi0yMCAxNzo0MDowNiArMDAwMCBVVEM=";
+            String nonce_iat = "MjAyMi0wOC0yNCAxMjozNjozMi45Mjk3MjIwNzUgKzAwMDAgVVRD";
+            String nonce_signature = "g9QC7VxV0n8dID0zSJeVLSULqYCJuv4iMepby91xukrhXgKrKscGXB5lxmT2s3POjxVOG+fSPCYpOKYWRRWAyQ==";
+
+            // Stubbing the response
+            new MockServerClient("localhost", mockServer.getPort())
+                                .when(HttpRequest.request().withPath("/appraisal/v1/nonce"))
+                                .respond(HttpResponse.response().withStatusCode(200)
+                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
+                                .withBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
+
+            // Create a mock Evidence object
+            Evidence mockEvidence = mock(Evidence.class);
+
+            // Sample token to be sent from server
+            String token = "mock-token";
+
+            // Stubbing the response
+            new MockServerClient("localhost", mockServer.getPort())
+                                .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
+                                .respond(HttpResponse.response().withStatusCode(200)
+                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
+                                .withBody("{\"token\":\"" + token + "\"}"));
+
+            // Create a mock adapter object
+            EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
+            when(mockEvidence.getType()).thenReturn(EvidenceType.SGX);
+            when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
+
+            // Create a mock PolicyIDs object
+            List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
+
+            // Sample requestID
+            String expectedRequestID = "mock-request-id";
+
+            // Sample token-signing-algo
+            String expectedTokenSigningAlg = "mock-token-signing-algo";
+
+            // Sample policy-must-match
+            boolean expectedPolicyMustMatch = false;
+
+            // Perform the test
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, expectedRequestID, expectedTokenSigningAlg, expectedPolicyMustMatch);
+
+            AttestResponse response = connector.attest(attestArgs);
+
+            // Verify the response
+            assertNotNull(response);
+            assertEquals(response.getToken(), "mock-token");
+            assertNotNull(response.getHeaders());
+
+            // Test setters/getters
+            attestArgs.setRequestId(expectedRequestID);
+            attestArgs.setPolicyIds(mockPolicyIDs);
+            attestArgs.setAdapter(mockAdapter);
+            attestArgs.setTokenSigningAlg(expectedTokenSigningAlg);
+            attestArgs.setPolicyMustMatch(expectedPolicyMustMatch);
+            assertEquals(attestArgs.getRequestId(), expectedRequestID);
+            assertEquals(attestArgs.getPolicyIds(), mockPolicyIDs);
+            assertEquals(attestArgs.getAdapter(), mockAdapter);
+            assertEquals(attestArgs.getTokenSigningAlg(), expectedTokenSigningAlg);
+            assertEquals(attestArgs.getPolicyMustMatch(), expectedPolicyMustMatch);
+            assertNull(response);
+        } catch (Exception e) {
+            // Ignore exceptions as they are expected in failure conditions
+        }
+    }
+
+    @Test
     public void testAttestNonceFailure() {
         try {
             // Check if config is not null
@@ -518,7 +585,7 @@ public class TrustAuthorityConnectorTest {
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", "mock-token-signing-algo", false);
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", Constants.ALGO_RS256, false);
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
@@ -565,7 +632,7 @@ public class TrustAuthorityConnectorTest {
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
-            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", "mock-token-signing-algo", false);
+            AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", Constants.ALGO_RS256, false);
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
