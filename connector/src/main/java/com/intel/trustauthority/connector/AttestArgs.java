@@ -5,9 +5,10 @@
  */
 package com.intel.trustauthority.connector;
 
-import com.nimbusds.jose.JOSEException;
 import java.util.List;
 import java.util.UUID;
+
+import com.nimbusds.jose.JOSEException;
 
 /**
  * AttestArgs class for holding the request object to be sent to attest() API
@@ -111,8 +112,11 @@ public class AttestArgs {
      * validator function for arguments
      */
     public void validate() throws JOSEException{
-        if (!"".equals(this.tokenSigningAlg) && !(this.tokenSigningAlg.equals(Constants.ALGO_RS256) || this.tokenSigningAlg.equals(Constants.ALGO_PS384))) {
-            throw new JOSEException("Unsupported token signing algorithm: " + this.tokenSigningAlg);
+        if (!("".equals(this.tokenSigningAlg) || null == this.tokenSigningAlg)){
+            //Skip validation of alogrithms if tokenSigningAlg is empty or null
+            if (!(this.tokenSigningAlg.equals(Constants.ALGO_RS256) || this.tokenSigningAlg.equals(Constants.ALGO_PS384))) {
+                throw new JOSEException("Unsupported token signing algorithm: " + this.tokenSigningAlg);
+            }                
         }                
     }
 }
