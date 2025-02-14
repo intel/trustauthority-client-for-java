@@ -250,15 +250,21 @@ public class SampleApp {
 
         // Fetch proxy settings from environment
         String httpsHost = System.getenv(Constants.ENV_HTTPS_PROXY_HOST);
+        String httpsPort = System.getenv(Constants.ENV_HTTPS_PROXY_PORT);
+
+        // Check if only one of the proxy settings is present
+        if ((httpsHost != null && httpsPort == null) || (httpsHost == null && httpsPort != null)) {
+            logger.error("Either both HTTPS_PROXY_HOST and HTTPS_PROXY_PORT must be set, or neither.");
+            System.exit(1);
+        }
+
         if (httpsHost != null) {
             // Setting proxy settings host
             System.setProperty("https.proxyHost", httpsHost);
-        }
-        String httpsPort = System.getenv(Constants.ENV_HTTPS_PROXY_PORT);
-        if (httpsPort != null) {
             // Setting proxy settings port
             System.setProperty("https.proxyPort", httpsPort);
         }
+
         logger.debug("HTTPS_PROXY_HOST: " + httpsHost + ", HTTPS_PROXY_PORT: " + httpsPort);
 
         // Fetch TRUSTAUTHORITY_BASE_URL, TRUSTAUTHORITY_API_URL and TRUSTAUTHORITY_API_KEY from environment
