@@ -61,5 +61,7 @@ public class Constants {
     //Allowed algorithm
     public static final String ALGO_RS256 = "RS256";        
     public static final String ALGO_PS384 = "PS384";
-    
+
+    //Allowed regular expresion for request-id
+    public static final String REQUEST_ID_REGEX = "^[a-zA-Z0-9_ \\/.-]{1,128}$";
 }

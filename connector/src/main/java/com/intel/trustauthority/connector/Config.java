@@ -24,11 +24,26 @@ public class Config {
      * @param retryConfig  retryConfig provided by user.
      */
     public Config(String baseUrl, String apiUrl, String apiKey, RetryConfig retryConfig) throws Exception {
-        this.baseUrl = baseUrl;
-        this.apiUrl = apiUrl;
+        //remote trailing slash or space before assinging
+        this.baseUrl = sanitizeUrl(baseUrl);
+        this.apiUrl = sanitizeUrl(apiUrl);
         this.apiKey = apiKey;
         this.retryConfig = retryConfig;
     }
+
+    private String sanitizeUrl(String url) {
+        if (url == null) {
+            return null;
+        }
+        // Remove trailing slash
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        // Remove leading or trailing space
+        url = url.trim();
+        return url;
+    }
+    
 
     /**
      * getter function for baseUrl
@@ -62,14 +77,14 @@ public class Config {
      * setter function for baseUrl
      */
     public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
+        this.baseUrl = sanitizeUrl(baseUrl);
     }
 
     /**
      * setter function for apiUrl
      */
     public void setApiUrl(String apiUrl) {
-        this.apiUrl = apiUrl;
+        this.apiUrl = sanitizeUrl(apiUrl);
     }
 
     /**

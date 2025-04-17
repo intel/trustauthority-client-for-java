@@ -7,6 +7,7 @@ package com.intel.trustauthority.connector;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import com.nimbusds.jose.JOSEException;
 
@@ -117,6 +118,14 @@ public class AttestArgs {
             if (!(this.tokenSigningAlg.equals(Constants.ALGO_RS256) || this.tokenSigningAlg.equals(Constants.ALGO_PS384))) {
                 throw new JOSEException("Unsupported token signing algorithm: " + this.tokenSigningAlg);
             }                
-        }                
+        }
+        
+        if (!("".equals(this.requestId) || null == this.requestId)){
+            //Skip validation of requestId if it is empty or null
+            boolean matches = Pattern.matches(Constants.REQUEST_ID_REGEX, this.requestId);
+            if(!matches){
+                throw new JOSEException("Request ID should be atmost 128 characters long and should contain only alphanumeric characters, _, space, -, ., / or \\");
+            }
+        }
     }
 }
