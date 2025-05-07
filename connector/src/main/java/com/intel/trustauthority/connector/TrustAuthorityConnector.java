@@ -61,6 +61,9 @@ public class TrustAuthorityConnector {
      * @param cfg Config object provided by the user.
      */
     public TrustAuthorityConnector(Config cfg) {
+        //validate configuration
+        cfg.validate();
+        
         this.cfg = cfg;
 
         // Register Bouncy Castle as a JCE provider
@@ -77,8 +80,12 @@ public class TrustAuthorityConnector {
 
     /**
      * setter function for config
+     * @deprecated  Will be remove in next version, Use TrustAuthorityConnector(Config cfg) Constructor
      */
+
     public void setConfig(Config cfg) {
+        //validate configuration
+        cfg.validate();
         this.cfg = cfg;
     }
 

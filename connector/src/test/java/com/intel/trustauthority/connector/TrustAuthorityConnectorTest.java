@@ -11,6 +11,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.JWTClaimsSet;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
@@ -18,6 +19,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import org.junit.After;
 import org.junit.Assert;
 import static org.junit.Assert.assertArrayEquals;
@@ -31,18 +38,15 @@ import org.junit.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
+
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okio.Buffer;
 
 /**
  * TrustAuthorityConnectorTest contains unit tests for all APIs exposed by the TrustAuthorityConnector
  */
 public class TrustAuthorityConnectorTest {
-
-    // Initialize Mock Server object
-    private ClientAndServer mockServer;
 
     // Initialize Config and TrustAuthorityConnector
     private Config cfg;
@@ -72,20 +76,42 @@ public class TrustAuthorityConnectorTest {
     String outdatedCrlHex;
     String certNoDistributionPoints;
     String kid;
+    String mockServerEndpoint;
+    MockWebServer server;
 
     @Before
     public void setup() {
-        try {
-            // Setup Mock Server
-            mockServer = new ClientAndServer(); // No-args constructor will start on a free port
+        try {            
 
+            // Enable HTTPS on MockWebServer
+            server = new MockWebServer();
+            server.useHttps(MockWebServerUtils.createInsecureSslSocketFactory(), false);
+            server.start();        
+
+            // Disable SSL checks (for test only)
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public void checkClientTrusted(X509Certificate[] xcs, String string) {}
+                    public void checkServerTrusted(X509Certificate[] xcs, String string) {}
+                    public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                }
+            };
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            HttpsURLConnection.setDefaultHostnameVerifier((h, s) -> true);
+        
             // Default RetryConfig
             RetryConfig retryConfig = new RetryConfig(2, 2, 2);
 
+            this.mockServerEndpoint = server.url("").url().toString();
+            this.mockServerEndpoint = this.mockServerEndpoint.endsWith("/")?this.mockServerEndpoint.
+                substring(0, this.mockServerEndpoint.length() - 1): this.mockServerEndpoint;
+            
             // Initialize config required for connector
-            cfg = new Config("http://localhost:" + mockServer.getPort(),
-                             "http://localhost:" + mockServer.getPort(),
-                             "some_key", retryConfig);
+            cfg = new Config(this.mockServerEndpoint,
+                            this.mockServerEndpoint,
+                            "some_key", retryConfig);
             assertNotNull(cfg);
 
             // Initializing connector with the config
@@ -130,7 +156,84 @@ public class TrustAuthorityConnectorTest {
     @After
     public void tearDown() {
         // Shut down Mock Server after tests are run
-        mockServer.stop();
+        try {
+            server.shutdown();
+        } catch (IOException ex) {
+        }
+    }
+	
+    //Test positive case with sanitization of urls
+    @Test
+    public void testConfigUrlSanitization(){
+        RetryConfig retryConfig = new RetryConfig(2, 2, 2);
+        Config cfg;
+        try {
+            cfg = new Config("https://test.base.com/",
+                    "https://test.api.com/",
+                    "some_key", retryConfig);
+           assertNotNull(cfg);
+           assertEquals("https://test.base.com", cfg.getBaseUrl());
+           assertEquals("https://test.api.com", cfg.getApiUrl());
+           assertEquals("some_key", cfg.getApiKey());
+        } catch (Exception ex) {
+            assertNull(ex);
+        }    
+    }
+
+    // Unit test cases for negative cases of the configuration
+    @Test
+    public void testNegativeConfiguration(){
+        // Setup
+        RetryConfig retryConfig = new RetryConfig(2, 2, 2);
+        Config cfg;
+        //test secure base url
+        try {
+            cfg = new Config("http://test.base.com/",
+                    "https://test.api.com/",
+                    "some_key", retryConfig);
+        
+            // Act
+            TrustAuthorityConnector conn = new TrustAuthorityConnector(cfg);
+
+            // Assert
+           assertNull(conn);
+        } catch (Exception ex) {
+            assertNotNull(ex);
+            assertEquals("Base URL should be valid secure url", ex.getMessage());
+        }
+
+        //Test api https url
+        try {
+            cfg = new Config("https://test.base.com/",
+                    "http://test.api.com/",
+                    "some_key", retryConfig);
+        
+            // Act
+            TrustAuthorityConnector conn = new TrustAuthorityConnector(cfg);
+
+            // Assert
+           assertNull(conn);
+        } catch (Exception ex) {
+            assertNotNull(ex);
+            assertEquals("API URL should be valid secure url", ex.getMessage());
+        }
+
+        //Test empty api key
+        try {
+            cfg = new Config("https://test.base.com/",
+                    "https://test.api.com/",
+                    "", retryConfig);
+        
+            // Act
+            TrustAuthorityConnector conn = new TrustAuthorityConnector(cfg);
+
+            // Assert
+           assertNull(conn);
+        } catch (Exception ex) {
+            assertNotNull(ex);
+            assertEquals("API Key cannot be null or empty", ex.getMessage());
+        }
+            
     }
 
     @Test
@@ -150,28 +253,27 @@ public class TrustAuthorityConnectorTest {
             RetryConfig retryConfig = new RetryConfig(0, 0, 0);
 
             // Initialize config
-            Config config = new Config("http://localhost:" + mockServer.getPort(),
-                                       "http://localhost:" + mockServer.getPort(),
+            Config config = new Config(this.mockServerEndpoint,
+                                        this.mockServerEndpoint,
                                        "some_key",
                                        retryConfig);
             assertNotNull(config);
 
             // Test connector config setter
-            TrustAuthorityConnector conn = new TrustAuthorityConnector(config);
-            conn.setConfig(config);
+            TrustAuthorityConnector conn = new TrustAuthorityConnector(config);            
             assertEquals(conn.getConfig(), config);
 
             // Testing getters for Config
-            assertEquals(config.getBaseUrl(), "http://localhost:" + mockServer.getPort());
-            assertEquals(config.getApiUrl(), "http://localhost:" + mockServer.getPort());
+            assertEquals(config.getBaseUrl(), this.mockServerEndpoint);
+            assertEquals(config.getApiUrl(), this.mockServerEndpoint);
             assertEquals(config.getApiKey(), "some_key");
 
             // Testing setters for Config
-            config.setBaseUrl("http://localhost:" + mockServer.getPort());
-            config.setApiUrl("http://localhost:" + mockServer.getPort());
+            config.setBaseUrl(this.mockServerEndpoint);
+            config.setApiUrl(this.mockServerEndpoint);
             config.setApiKey("some_key");
-            assertEquals(config.getBaseUrl(), "http://localhost:" + mockServer.getPort());
-            assertEquals(config.getApiUrl(), "http://localhost:" + mockServer.getPort());
+            assertEquals(config.getBaseUrl(), this.mockServerEndpoint);
+            assertEquals(config.getApiUrl(), this.mockServerEndpoint);
             assertEquals(config.getApiKey(), "some_key");
 
             // Testing getters/setters for RetryConfig
@@ -262,14 +364,8 @@ public class TrustAuthorityConnectorTest {
             String nonce_val = "MjAyMy0xMi0yMCAxNzo0MDowNiArMDAwMCBVVEM=";
             String nonce_iat = "MjAyMi0wOC0yNCAxMjozNjozMi45Mjk3MjIwNzUgKzAwMDAgVVRD";
             String nonce_signature = "g9QC7VxV0n8dID0zSJeVLSULqYCJuv4iMepby91xukrhXgKrKscGXB5lxmT2s3POjxVOG+fSPCYpOKYWRRWAyQ==";
-
-            // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/nonce"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
-
+            
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));        
             // Calling the GetNonce() API
             GetNonceResponse nonceResponse = connector.GetNonce(nonce_args);
 
@@ -305,12 +401,8 @@ public class TrustAuthorityConnectorTest {
             GetNonceArgs nonce_args = new GetNonceArgs(null);
             assertNotNull(nonce_args);
 
-            // Stubbing the response with an invalid nonce
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/nonce"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("invalid_nonce"));
+            // Stubbing the response with an invalid nonce            
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("invalid_nonce"));        
 
             // Calling the GetNonce() API
             GetNonceResponse nonceResponse = connector.GetNonce(nonce_args);
@@ -343,11 +435,7 @@ public class TrustAuthorityConnectorTest {
             String token = "mock-token";
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{\"token\":\"" + token + "\"}"));
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"token\":\"" + token + "\"}"));  
 
             // Calling the GetToken() API
             GetTokenResponse tokenResponse = connector.GetToken(mockArgs);
@@ -388,11 +476,7 @@ public class TrustAuthorityConnectorTest {
 
             // Stubbing the response with an invalid token and
             // response code 503 to exercise doRequest() retry
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
-                                .respond(HttpResponse.response().withStatusCode(503)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("invalid_token"));
+            server.enqueue(new MockResponse().setResponseCode(503).setBody("invalid_token"));        
 
             // Calling the GetToken() API
             GetTokenResponse tokenResponse = connector.GetToken(mockArgs);
@@ -417,12 +501,7 @@ public class TrustAuthorityConnectorTest {
             String nonce_signature = "g9QC7VxV0n8dID0zSJeVLSULqYCJuv4iMepby91xukrhXgKrKscGXB5lxmT2s3POjxVOG+fSPCYpOKYWRRWAyQ==";
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/nonce"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));                                        
             // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
 
@@ -430,12 +509,7 @@ public class TrustAuthorityConnectorTest {
             String token = "mock-token";
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{\"token\":\"" + token + "\"}"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"token\":\"" + token + "\"}"));
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
             when(mockEvidence.getType()).thenReturn(EvidenceType.SGX);
@@ -495,12 +569,7 @@ public class TrustAuthorityConnectorTest {
             String nonce_signature = "g9QC7VxV0n8dID0zSJeVLSULqYCJuv4iMepby91xukrhXgKrKscGXB5lxmT2s3POjxVOG+fSPCYpOKYWRRWAyQ==";
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/nonce"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
             // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
 
@@ -508,12 +577,7 @@ public class TrustAuthorityConnectorTest {
             String token = "mock-token";
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{\"token\":\"" + token + "\"}"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"token\":\"" + token + "\"}"));
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
             when(mockEvidence.getType()).thenReturn(EvidenceType.SGX);
@@ -568,12 +632,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response with an invalid nonce
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/nonce"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("invalid_nonce"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("invalid_nonce"));
             // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
 
@@ -608,19 +667,9 @@ public class TrustAuthorityConnectorTest {
             String nonce_signature = "g9QC7VxV0n8dID0zSJeVLSULqYCJuv4iMepby91xukrhXgKrKscGXB5lxmT2s3POjxVOG+fSPCYpOKYWRRWAyQ==";
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/nonce"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));
             // Stubbing the response with an invalid token
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/appraisal/v1/attest"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("invalid_token"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("invalid_token"));
             // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
 
@@ -650,12 +699,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{\"keys\":[{\"kty\":\"RSA\",\"n\":\"u1SU1LfVLPHCozMxH2Mo4lgOEePzNm0tRgeLezV6ffAt0gunVTLw7onLRnrq0/IzW7yWR7QkrmBL7jTKEn5u+qKhbwKfBstIs+bMY2Zkp18gnTxKLxoS2tFczGkPLPgizskuemMghRniWaoLcyehkd3qqGElvW/VDL5AaWTg0nLVkjRo9z+40RQzuVaE8AkAFmxZzow3x+VJYKdjykkJ0iT9wCS0DRTXu269V264Vf/3jvredZiKRkgwlL9xNAwxXFg0x/XFw005UWVRIkdgcKWTjpBP2dPwVZ4WWC+9aGVd+Gyn1o0CLelf4rEjGoXbAAEgAqeGUxrcIlbjXfbcmw==\",\"e\":\"AQAB\",\"alg\":\"PS384\",\"x5c\":[\"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\"],\"kid\":\"12345\"}]}"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"keys\":[{\"kty\":\"RSA\",\"n\":\"u1SU1LfVLPHCozMxH2Mo4lgOEePzNm0tRgeLezV6ffAt0gunVTLw7onLRnrq0/IzW7yWR7QkrmBL7jTKEn5u+qKhbwKfBstIs+bMY2Zkp18gnTxKLxoS2tFczGkPLPgizskuemMghRniWaoLcyehkd3qqGElvW/VDL5AaWTg0nLVkjRo9z+40RQzuVaE8AkAFmxZzow3x+VJYKdjykkJ0iT9wCS0DRTXu269V264Vf/3jvredZiKRkgwlL9xNAwxXFg0x/XFw005UWVRIkdgcKWTjpBP2dPwVZ4WWC+9aGVd+Gyn1o0CLelf4rEjGoXbAAEgAqeGUxrcIlbjXfbcmw==\",\"e\":\"AQAB\",\"alg\":\"PS384\",\"x5c\":[\"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\"],\"kid\":\"12345\"}]}"));
             // Calling the getTokenSigningCertificates() API
             String response = connector.getTokenSigningCertificates();
             assertNotNull(response);
@@ -675,12 +719,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response and induce a failure response code 404
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(404)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("Not Found"));
-
+            server.enqueue(new MockResponse().setResponseCode(404).setBody("Not Found"));
             // Calling the getTokenSigningCertificates() API
             String response = connector.getTokenSigningCertificates();
             assertNull(response);
@@ -699,12 +738,10 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response and induce a response code 503 to exercise retry mechanism
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(503)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("hello-world"));
-
+            // Retry is set to 2 hence need to enqueue 3 times to get a success response
+            server.enqueue(new MockResponse().setResponseCode(503).setBody("hello-world"));
+            server.enqueue(new MockResponse().setResponseCode(503).setBody("hello-world"));
+            server.enqueue(new MockResponse().setResponseCode(503).setBody("hello-world"));
             // Calling the getTokenSigningCertificates() API
             String response = connector.getTokenSigningCertificates();
             assertNull(response);
@@ -723,12 +760,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody(validJwks));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(validJwks));
             // Calling the verifyToken() API with invalid token
             JWTClaimsSet invalidClaims = connector.verifyToken(invalidToken);
             assertNull(invalidClaims);
@@ -747,12 +779,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody(validJwks));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(validJwks));
             // Calling the verifyToken() API with missing Kid token
             JWTClaimsSet missingKidClaims = connector.verifyToken(tokenMissingKid);
             assertNull(missingKidClaims);
@@ -771,12 +798,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody(validJwks));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(validJwks));
             // Calling the verifyToken() API with invalid Kid token
             JWTClaimsSet invalidKidClaims = connector.verifyToken(tokenInvalidKid);
             assertNull(invalidKidClaims);
@@ -795,12 +817,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody(validJwks));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(validJwks));
             // Calling the verifyToken() API with wrong Kid token
             JWTClaimsSet wrongKidClaims = connector.verifyToken(tokenWrongKid);
             assertNull(wrongKidClaims);
@@ -819,12 +836,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("invalid_jwks"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("invalid_jwks"));
             // Calling the verifyToken() API with valid token
             JWTClaimsSet claims = connector.verifyToken(validToken);
             assertNull(claims);
@@ -843,12 +855,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody("{ \"keys\": [] }"));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{ \"keys\": [] }"));
             // Calling the verifyToken() API with valid token
             // and jwks with no keys
             JWTClaimsSet claims = connector.verifyToken(validToken);
@@ -868,12 +875,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody(invalidJwks));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(invalidJwks));
             // Calling the verifyToken() API with valid token
             // wrong jwks with verification failure
             JWTClaimsSet claims = connector.verifyToken(validToken);
@@ -893,12 +895,7 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(connector);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/certs"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody(validJwks));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(validJwks));
             // Calling the verifyToken() API with invalid algo token
             JWTClaimsSet claims = connector.verifyToken(tokenInvalidAlg);
             assertNull(claims);
@@ -906,7 +903,7 @@ public class TrustAuthorityConnectorTest {
             // Ignore exceptions as they are expected in failure conditions
         }
     }
-
+ 
     @Test
     public void testGetCRLEmptyURL() {
         try {
@@ -958,12 +955,7 @@ public class TrustAuthorityConnectorTest {
             byte[] CrlBytes = hexStringToByteArray(crlHex);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/ats-ca-crl.der"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody(CrlBytes));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(new Buffer().write(CrlBytes)));
             X509CRL crl = connector.getCRL(crlUrl);
             assertNotNull(crl);
         } catch (Exception e) {
@@ -987,12 +979,7 @@ public class TrustAuthorityConnectorTest {
             byte[] invalidCertBytes = hexStringToByteArray(invalidCertHex);
 
             // Stubbing the response
-            new MockServerClient("localhost", mockServer.getPort())
-                                .when(HttpRequest.request().withPath("/ats-ca-crl.der"))
-                                .respond(HttpResponse.response().withStatusCode(200)
-                                .withHeader(Constants.HEADER_ACCEPT, Constants.MIME_APPLICATION_JSON)
-                                .withBody(invalidCertBytes));
-
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(new Buffer().write(invalidCertBytes)));
             X509CRL crl = connector.getCRL(crlUrl);
             assertNull(crl);
         } catch (Exception e) {
@@ -1278,7 +1265,7 @@ public class TrustAuthorityConnectorTest {
         } catch (Exception e) {
             // Ignore exceptions as they are expected in failure conditions
         }
-    }
+    } 
 
     /**
      * Helper function to convert hex string to byte[]

@@ -44,6 +44,24 @@ public class Config {
         return url;
     }
     
+     /**
+     * validator function for configuration
+     */
+    public void validate() {
+        if (baseUrl == null || baseUrl.isEmpty() || !isSecured(baseUrl)) {
+            throw new IllegalArgumentException("Base URL should be valid secure url");
+        }
+        if (apiUrl == null || apiUrl.isEmpty() || !isSecured(apiUrl)) {
+            throw new IllegalArgumentException ("API URL should be valid secure url");
+        }
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new IllegalArgumentException ("API Key cannot be null or empty");
+        }
+    }
+
+    private boolean isSecured(String url){
+        return url.startsWith("https://");
+    }
 
     /**
      * getter function for baseUrl
