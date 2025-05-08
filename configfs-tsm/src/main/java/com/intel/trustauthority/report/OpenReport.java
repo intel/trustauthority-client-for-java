@@ -53,7 +53,7 @@ public class OpenReport {
 
 	protected String attribute(String subtree) {
 		//For every attribute create a clone as not to set attribute to object
-		TsmPath iEntry = this.entry.clone();
+		TsmPath iEntry = new TsmPath(this.entry);
 		iEntry.attribute = subtree;
 		return iEntry.toString();
 	}

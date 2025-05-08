@@ -5,11 +5,6 @@
  */
 package com.intel.trustauthority.connector;
 
-import com.intel.trustauthority.connector.Evidence.EvidenceType;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.util.Base64;
-import com.nimbusds.jwt.JWTClaimsSet;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.cert.CertificateFactory;
@@ -19,12 +14,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-
 import org.junit.After;
 import org.junit.Assert;
 import static org.junit.Assert.assertArrayEquals;
@@ -42,6 +35,12 @@ import static org.mockito.Mockito.when;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
+
+import com.intel.trustauthority.connector.Evidence.EvidenceType;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.util.Base64;
+import com.nimbusds.jwt.JWTClaimsSet;
 
 /**
  * TrustAuthorityConnectorTest contains unit tests for all APIs exposed by the TrustAuthorityConnector
@@ -408,7 +407,7 @@ public class TrustAuthorityConnectorTest {
             GetNonceResponse nonceResponse = connector.GetNonce(nonce_args);
             assertNull(nonceResponse);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertTrue(e.getMessage().contains("Unrecognized token 'invalid_nonce'"));
         }
     }
 
@@ -482,7 +481,7 @@ public class TrustAuthorityConnectorTest {
             GetTokenResponse tokenResponse = connector.GetToken(mockArgs);
             assertNull(tokenResponse);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("GetToken() failed: java.lang.NullPointerException: Cannot invoke \"com.intel.trustauthority.connector.Evidence$EvidenceType.ordinal()\" because the return value of \"com.intel.trustauthority.connector.Evidence.getType()\" is null", e.getMessage());
         }
     }
 
@@ -504,7 +503,7 @@ public class TrustAuthorityConnectorTest {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"val\":\"" + nonce_val + "\",\"iat\":\"" + nonce_iat + "\",\"signature\":\"" + nonce_signature + "\"}"));                                        
             // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
-
+            assertNotNull(mockEvidence);
             // Sample token to be sent from server
             String token = "mock-token";
 
@@ -512,6 +511,8 @@ public class TrustAuthorityConnectorTest {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"token\":\"" + token + "\"}"));
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
+            assertNotNull(mockAdapter);
+
             when(mockEvidence.getType()).thenReturn(EvidenceType.SGX);
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
@@ -573,6 +574,7 @@ public class TrustAuthorityConnectorTest {
             // Create a mock Evidence object
             Evidence mockEvidence = mock(Evidence.class);
 
+            assertNotNull(mockEvidence);
             // Sample token to be sent from server
             String token = "mock-token";
 
@@ -580,6 +582,7 @@ public class TrustAuthorityConnectorTest {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"token\":\"" + token + "\"}"));
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
+            assertNotNull(mockAdapter);
             when(mockEvidence.getType()).thenReturn(EvidenceType.SGX);
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
@@ -597,7 +600,7 @@ public class TrustAuthorityConnectorTest {
 
             // Perform the test
             AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, expectedRequestID, expectedTokenSigningAlg, expectedPolicyMustMatch);
-
+            
             AttestResponse response = connector.attest(attestArgs);
 
             // Verify the response
@@ -618,7 +621,7 @@ public class TrustAuthorityConnectorTest {
             assertEquals(attestArgs.getPolicyMustMatch(), expectedPolicyMustMatch);
             assertNull(response);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("attest() failed: com.nimbusds.jose.JOSEException: Unsupported token signing algorithm: mock-token-signing-algo", e.getMessage());
         }
     }
 
@@ -645,10 +648,11 @@ public class TrustAuthorityConnectorTest {
 
             // Perform the test
             AttestArgs attestArgs = new AttestArgs(mockAdapter, mockPolicyIDs, "mock-request-id", Constants.ALGO_RS256, false);
+            assertNotNull(connector);
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertTrue(e.getMessage().contains("Unrecognized token 'invalid_nonce'"));
         }
     }
 
@@ -678,6 +682,7 @@ public class TrustAuthorityConnectorTest {
 
             // Create a mock adapter object
             EvidenceAdapter mockAdapter = mock(EvidenceAdapter.class);
+            assertNotNull(mockAdapter);
             when(mockAdapter.collectEvidence(any())).thenReturn(mockEvidence);
 
             // Perform the test
@@ -685,7 +690,7 @@ public class TrustAuthorityConnectorTest {
             AttestResponse response = connector.attest(attestArgs);
             assertNull(response);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("attest() failed: java.lang.Exception: GetToken() failed: java.lang.NullPointerException: Cannot invoke \"com.intel.trustauthority.connector.Evidence$EvidenceType.ordinal()\" because the return value of \"com.intel.trustauthority.connector.Evidence.getType()\" is null", e.getMessage());
         }
     }
 
@@ -724,7 +729,7 @@ public class TrustAuthorityConnectorTest {
             String response = connector.getTokenSigningCertificates();
             assertNull(response);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("getTokenSigningCertificates() failed: java.lang.Exception: Connection failed with response code: 404 and error: Not Found", e.getMessage());
         }
     }
 
@@ -746,7 +751,7 @@ public class TrustAuthorityConnectorTest {
             String response = connector.getTokenSigningCertificates();
             assertNull(response);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("getTokenSigningCertificates() failed: java.lang.Exception: Maximum retries reached. Request failed.", e.getMessage());
         }
     }
 
@@ -765,7 +770,7 @@ public class TrustAuthorityConnectorTest {
             JWTClaimsSet invalidClaims = connector.verifyToken(invalidToken);
             assertNull(invalidClaims);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("verifyToken() failed: java.lang.Exception: Could not find Key matching the key id", e.getMessage());
         }
     }
 
@@ -784,7 +789,7 @@ public class TrustAuthorityConnectorTest {
             JWTClaimsSet missingKidClaims = connector.verifyToken(tokenMissingKid);
             assertNull(missingKidClaims);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("verifyToken() failed: java.lang.Exception: kid field missing in token header", e.getMessage());
         }
     }
 
@@ -803,7 +808,7 @@ public class TrustAuthorityConnectorTest {
             JWTClaimsSet invalidKidClaims = connector.verifyToken(tokenInvalidKid);
             assertNull(invalidKidClaims);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("verifyToken() failed: java.text.ParseException: Invalid JWS header: Unexpected type of JSON object member with key kid", e.getMessage());
         }
     }
 
@@ -822,7 +827,7 @@ public class TrustAuthorityConnectorTest {
             JWTClaimsSet wrongKidClaims = connector.verifyToken(tokenWrongKid);
             assertNull(wrongKidClaims);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("verifyToken() failed: java.lang.Exception: Could not find Key matching the key id", e.getMessage());
         }
     }
 
@@ -841,7 +846,7 @@ public class TrustAuthorityConnectorTest {
             JWTClaimsSet claims = connector.verifyToken(validToken);
             assertNull(claims);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("verifyToken() failed: java.text.ParseException: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $", e.getMessage());
         }
     }
 
@@ -861,7 +866,7 @@ public class TrustAuthorityConnectorTest {
             JWTClaimsSet claims = connector.verifyToken(validToken);
             assertNull(claims);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("verifyToken() failed: java.lang.Exception: No keys present in JWKSet", e.getMessage());
         }
     }
 
@@ -881,7 +886,7 @@ public class TrustAuthorityConnectorTest {
             JWTClaimsSet claims = connector.verifyToken(validToken);
             assertNull(claims);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("verifyToken() failed: java.lang.Exception: Could not find Key matching the key id", e.getMessage());
         }
     }
 
@@ -900,7 +905,8 @@ public class TrustAuthorityConnectorTest {
             JWTClaimsSet claims = connector.verifyToken(tokenInvalidAlg);
             assertNull(claims);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            String msg = e.getMessage();
+            assertEquals("verifyToken() failed: com.nimbusds.jose.JOSEException: Unsupported token signing algorithm: HS384", msg);
         }
     }
  
@@ -917,7 +923,7 @@ public class TrustAuthorityConnectorTest {
             X509CRL crl = connector.getCRL(null);
             assertNull(crl);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertTrue(e.getMessage().contains("java.net.MalformedURLException"));
         }
     }
 
@@ -936,7 +942,7 @@ public class TrustAuthorityConnectorTest {
             X509CRL crl = connector.getCRL(crlUrl);
             assertNull(crl);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("getCRL() failed: java.net.MalformedURLException: no protocol: :trustauthority.intel.com", e.getMessage());
         }
     }
 
@@ -983,7 +989,7 @@ public class TrustAuthorityConnectorTest {
             X509CRL crl = connector.getCRL(crlUrl);
             assertNull(crl);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("getCRL() failed: java.security.cert.CRLException: Parsing error: algid parse error, not a sequence", e.getMessage());
         }
     }
 
@@ -1003,7 +1009,7 @@ public class TrustAuthorityConnectorTest {
             boolean verified = connector.verifyCRL(null, leafCertificate, intermediateCertificate);
             assertFalse(verified);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("null certificate provided", e.getMessage());
         }
     }
 
@@ -1106,7 +1112,7 @@ public class TrustAuthorityConnectorTest {
             boolean verified = connector.verifyCRL(crl, leafCertificate, intermediateCertificate);
             assertFalse(verified);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertTrue(e.getMessage().contains("signed overrun"));
         }
     }
 
@@ -1152,7 +1158,7 @@ public class TrustAuthorityConnectorTest {
             List<String> listcrlDistributionPointsUriLeafCert = connector.getCRLDistributionPoints(certificate);
             assertNull(listcrlDistributionPointsUriLeafCert);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("getCRLDistributionPoints() failed: java.lang.Exception: CRL Distribution Points extension not found in the certificate.", e.getMessage());
         }
     }
 
@@ -1168,6 +1174,7 @@ public class TrustAuthorityConnectorTest {
             // Parse the JWKS
             JWKSet jwkSet = JWKSet.parse(validJwks);
             
+            assertNotNull(jwkSet);
             JWK jwkKey = jwkSet.getKeyByKeyId(kid);
             if (jwkKey == null) {
                 throw new Exception("Could not find Key matching the key id");
@@ -1175,7 +1182,9 @@ public class TrustAuthorityConnectorTest {
 
             // Retrieve the X.509 certificates
             List<X509Certificate> certificates = jwkKey.getParsedX509CertChain();
-
+            assertNotNull(certificates);
+            assertEquals(3, certificates.size());
+            assertNotNull(connector);
             // Verify the certificate chain
             if (!connector.verifyCertificateChain(certificates)) {
                 throw new Exception("Certificate chain verification failed");
@@ -1206,10 +1215,13 @@ public class TrustAuthorityConnectorTest {
             // Retrieve the X.509 certificates
             List<X509Certificate> certificates = jwkKey.getParsedX509CertChain();
 
+            assertNotNull(certificates);
+            assertEquals(3, certificates.size());
+            assertNotNull(connector);
             // Verify the certificate chain
             assertFalse(connector.verifyCertificateChain(certificates));
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 0", e.getMessage());
         }
     }
 
@@ -1224,6 +1236,7 @@ public class TrustAuthorityConnectorTest {
 
             // Parse the JWKS
             JWKSet jwkSet = JWKSet.parse(intermediateVerificationFailureJWKS);
+            assertNotNull(jwkSet);
 
             JWK jwkKey = jwkSet.getKeyByKeyId(kid);
             if (jwkKey == null) {
@@ -1236,7 +1249,7 @@ public class TrustAuthorityConnectorTest {
             // Verify the certificate chain
             assertFalse(connector.verifyCertificateChain(certificates));
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 1", e.getMessage());
         }
     }
 
@@ -1251,6 +1264,7 @@ public class TrustAuthorityConnectorTest {
 
             // Parse the JWKS
             JWKSet jwkSet = JWKSet.parse(rootVerificationFailureJWKS);
+            assertNotNull(jwkSet);
 
             JWK jwkKey = jwkSet.getKeyByKeyId(kid);
             if (jwkKey == null) {
@@ -1259,11 +1273,12 @@ public class TrustAuthorityConnectorTest {
 
             // Retrieve the X.509 certificates
             List<X509Certificate> certificates = jwkKey.getParsedX509CertChain();
-
+            assertNotNull(connector);
+            assertNotNull(certificates);
             // Verify the certificate chain
             assertFalse(connector.verifyCertificateChain(certificates));
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 2", e.getMessage());
         }
     } 
 

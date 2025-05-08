@@ -31,6 +31,13 @@ public class TsmPath {
 		this.entry = entry;
 		this.attribute = attribute;
 	}
+
+	// "CWE 580" Copy constructor is better approach than clone object 
+	public TsmPath(TsmPath tsmPath) {
+		this.subsystem = tsmPath.subsystem;
+		this.entry = tsmPath.entry;
+		this.attribute = tsmPath.attribute;
+	}
 	
 	@Override
 	public String toString(){
@@ -39,11 +46,6 @@ public class TsmPath {
 		}else {
 			return Paths.get(Constants.TSM_PREFIX, this.subsystem, this.entry, this.attribute).toString();
 		}
-	}
-	
-	public TsmPath clone() {
-		return new TsmPath(this.subsystem, this.entry, this.attribute);
-		
 	}
 	
 	@Override

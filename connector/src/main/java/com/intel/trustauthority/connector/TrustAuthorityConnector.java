@@ -381,6 +381,12 @@ public class TrustAuthorityConnector {
             // Retrieve the X.509 certificates
             List<X509Certificate> certificates = jwkKey.getParsedX509CertChain();
 
+            if (certificates == null || certificates.isEmpty()) {
+                throw new Exception("No X.509 certificates found in the JWK set");
+            }
+            if (certificates.size() < 3) { // < 3 condition used because we need at least 3 certs: leaf, intermediate, and root CA
+                throw new Exception("Insufficient number of certificates in the chain. Expected at least 3.");
+            }
             // Identify leaf, CA, and intermediate certificates
             X509Certificate leafCertificate = certificates.get(0);
             X509Certificate caCertificate = certificates.get(certificates.size() - 1);
@@ -523,6 +529,10 @@ public class TrustAuthorityConnector {
     public List<String> getCRLDistributionPoints(X509Certificate certificate) throws Exception {
         List<String> crlDistributionPoints = new ArrayList<>();
 
+        if (null == certificate) {
+            throw new Exception("Null certificate provided");
+        }
+        
         try {
             // Get the extension value for CRL Distribution Points
             byte[] crlDPExtensionValue = certificate.getExtensionValue(Constants.DEFAULT_OID_CRL_DISTRIBUTION_POINTS);

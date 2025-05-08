@@ -124,7 +124,10 @@ public class AzureTdxAdapter implements EvidenceAdapter {
                 throw new IOException("TPM nvread command failed with exit code " + exitCode);
             }
             // Read the TPM report into the byte array
-            pr.getInputStream().read(tpmReport);
+            int bytesRead = pr.getInputStream().read(tpmReport);
+            if (bytesRead == -1 ){
+                throw new IOException("Failed to read TPM report");                
+            }
         } catch (IOException | InterruptedException exc) {
             // Catch and rethrow any IO or interruption exceptions
             throw new IOException("Error occurred", exc);
