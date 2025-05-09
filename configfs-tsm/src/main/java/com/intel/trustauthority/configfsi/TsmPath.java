@@ -6,16 +6,17 @@
 package com.intel.trustauthority.configfsi;
 
 import java.nio.file.Paths;
+
 import com.intel.trustauthority.exception.PathException;
 
 public class TsmPath {
 	
 	
-	public static final String SEPERATOR = "/";
+	private static final String SEPERATOR = "/";
 	
-	public String subsystem;
-	public String entry;
-	public String attribute;
+	private String subsystem;
+	private String entry;
+	private String attribute;
 	
 	public TsmPath(String subsystem) {
 		this.subsystem = subsystem;
@@ -59,6 +60,16 @@ public class TsmPath {
 				(tsmPath.entry == this.entry || (tsmPath.entry != null && tsmPath.entry.equals(this.entry))) && 
 				(tsmPath.attribute == this.attribute || (tsmPath.attribute != null && tsmPath.attribute.equals(this.attribute)));
 	}
+
+	@Override
+	public int hashCode() {
+		int hash = 7; //Using base value as 7
+		// Multiplication by 31: The number 31 is used because it is an odd prime number, which helps in generating a more uniform distribution of hash codes. Multiplying by a prime number reduces the likelihood of hash collisions.
+		hash = 31 * hash + (this.subsystem == null ? 0 : this.subsystem.hashCode());
+		hash = 31 * hash + (this.entry == null ? 0 : this.entry.hashCode());
+		hash = 31 * hash + (this.attribute == null ? 0 : this.attribute.hashCode());
+		return hash;
+	}
 	
 	/* Getters and setters*/
 	public String getSubsystem() {
@@ -94,7 +105,7 @@ public class TsmPath {
 		//check if mentioned path has sub-system or not.  
 		// this code is applicable only for linux hence using "/"
 		String subSystemPath = path.trim().replace(Constants.TSM_PREFIX, "").replaceFirst(SEPERATOR, "").trim();
-		if(subSystemPath == "") {
+		if("".equals(subSystemPath)) {
 			throw new PathException(String.format("%s does not contain a subsystem", path));
 		}		
 		

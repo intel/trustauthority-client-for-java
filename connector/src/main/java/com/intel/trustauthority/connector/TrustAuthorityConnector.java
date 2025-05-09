@@ -7,20 +7,26 @@ package com.intel.trustauthority.connector;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intel.trustauthority.connector.Evidence.EvidenceType;
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.security.Security;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
@@ -33,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
@@ -620,10 +627,10 @@ public class TrustAuthorityConnector {
         BufferedReader reader;
         if (responseCode == HttpURLConnection.HTTP_OK) {
             // Read InputStream if connection is successful
-            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charset.forName("UTF-8")));
         } else {
             // Read ErrorStream if connection is unsuccessful
-            reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+            reader = new BufferedReader(new InputStreamReader(connection.getErrorStream(), Charset.forName("UTF-8")));
         }
 
         // Read the response or error message
@@ -678,7 +685,10 @@ public class TrustAuthorityConnector {
             // Write output value if provided
             if (requestBody != null) {
                 connection.setDoOutput(true);
-                connection.getOutputStream().write(requestBody.getBytes("UTF-8"));
+                try(OutputStream out = connection.getOutputStream()){
+                    out.write(requestBody.getBytes("UTF-8"));
+                    out.flush(); // Ensure all data sent
+                }
             }
 
             // Establish connection

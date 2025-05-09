@@ -8,6 +8,7 @@ package com.intel.trustauthority.tdx;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -21,8 +22,13 @@ import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.util.Arrays;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.intel.trustauthority.connector.*;
+import com.intel.trustauthority.connector.Config;
+import com.intel.trustauthority.connector.Constants;
+import com.intel.trustauthority.connector.Evidence;
 import com.intel.trustauthority.connector.Evidence.EvidenceType;
+import com.intel.trustauthority.connector.EvidenceAdapter;
+import com.intel.trustauthority.connector.RetryConfig;
+import com.intel.trustauthority.connector.TrustAuthorityConnector;
 
 public class AzureTdxAdapter implements EvidenceAdapter {
 
@@ -123,8 +129,13 @@ public class AzureTdxAdapter implements EvidenceAdapter {
                 // Throw an exception if the read command fails
                 throw new IOException("TPM nvread command failed with exit code " + exitCode);
             }
-            // Read the TPM report into the byte array
-            int bytesRead = pr.getInputStream().read(tpmReport);
+            int bytesRead;
+
+            //Using try block to close inputstream after reading
+            try ( // Read the TPM report into the byte array
+                InputStream iStream = pr.getInputStream()) {
+                bytesRead = iStream.read(tpmReport);
+            }
             if (bytesRead == -1 ){
                 throw new IOException("Failed to read TPM report");                
             }

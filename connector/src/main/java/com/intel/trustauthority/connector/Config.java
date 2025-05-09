@@ -23,7 +23,7 @@ public class Config {
      * @param apiKey       apiKey provided by user.
      * @param retryConfig  retryConfig provided by user.
      */
-    public Config(String baseUrl, String apiUrl, String apiKey, RetryConfig retryConfig) throws Exception {
+    public Config(String baseUrl, String apiUrl, String apiKey, RetryConfig retryConfig){
         //remote trailing slash or space before assinging
         this.baseUrl = sanitizeUrl(baseUrl);
         this.apiUrl = sanitizeUrl(apiUrl);

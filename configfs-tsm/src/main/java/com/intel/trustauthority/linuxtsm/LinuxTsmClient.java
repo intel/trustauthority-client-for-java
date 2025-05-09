@@ -13,9 +13,9 @@ import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.intel.trustauthority.configfsi.Client;
 import com.intel.trustauthority.configfsi.Constants;
 import com.intel.trustauthority.exception.PathException;
-import com.intel.trustauthority.configfsi.Client;
 
 /**
  * LinuxTsmClient provides implementation of com.intel.trustauthority.configfsi.Client for
@@ -58,10 +58,9 @@ public class LinuxTsmClient implements Client {
 		}
 	}
 	
+	private static final Random RANDOM = new Random() ;
 	public int getRandomNumber(int min, int max) {
-		Random random = new Random() ;
-		int randomNumber = random.nextInt(max + 1 - min) + min;        
+		int randomNumber = RANDOM.nextInt(max + 1 - min) + min;        
 		return randomNumber;
 	}
-
 }

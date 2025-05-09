@@ -7,6 +7,7 @@ package com.intel.trustauthority.connector;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
@@ -14,10 +15,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
 import org.junit.After;
 import org.junit.Assert;
 import static org.junit.Assert.assertArrayEquals;
@@ -41,6 +44,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.JWTClaimsSet;
+
 
 /**
  * TrustAuthorityConnectorTest contains unit tests for all APIs exposed by the TrustAuthorityConnector
@@ -298,7 +302,8 @@ public class TrustAuthorityConnectorTest {
             byte[] actual = {1, 2, 3, 4, 5};
             String expectedTokenSigningAlg = Constants.ALGO_RS256;
             boolean expectedPolicyMustMatch = false;
-            VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(), "mock-iat".getBytes(), "mock-signature".getBytes());
+            VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(Charset.forName("UTF-8")), "mock-iat".getBytes(Charset.forName("UTF-8")), 
+                    "mock-signature".getBytes(Charset.forName("UTF-8")));
             List<UUID> mockPolicyIDs = Arrays.asList(UUID.randomUUID());
 
             // Initialize TokenRequest
@@ -422,7 +427,8 @@ public class TrustAuthorityConnectorTest {
 
             // Create a mock GetTokenArgs object
             GetTokenArgs mockArgs = mock(GetTokenArgs.class);
-            VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(), "mock-iat".getBytes(), "mock-signature".getBytes());
+            VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(Charset.forName("UTF-8")), "mock-iat".getBytes(Charset.forName("UTF-8")), 
+            "mock-signature".getBytes(Charset.forName("UTF-8")));
             Evidence mockEvidence = mock(Evidence.class);
             when(mockEvidence.getType()).thenReturn(EvidenceType.SGX);
             when(mockArgs.getNonce()).thenReturn(mockNonce);
@@ -466,7 +472,8 @@ public class TrustAuthorityConnectorTest {
 
             // Create a mock GetTokenArgs object
             GetTokenArgs mockArgs = mock(GetTokenArgs.class);
-            VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(), "mock-iat".getBytes(), "mock-signature".getBytes());
+            VerifierNonce mockNonce = new VerifierNonce("mock-val".getBytes(Charset.forName("UTF-8")), "mock-iat".getBytes(Charset.forName("UTF-8")), 
+            "mock-signature".getBytes(Charset.forName("UTF-8")));
             Evidence mockEvidence = mock(Evidence.class);
             when(mockArgs.getNonce()).thenReturn(mockNonce);
             when(mockArgs.getEvidence()).thenReturn(mockEvidence);
@@ -1152,7 +1159,7 @@ public class TrustAuthorityConnectorTest {
             // Convert string to X509Certificate
             X509Certificate certificate = (X509Certificate) CertificateFactory
                                             .getInstance("X.509")
-                                            .generateCertificate(new ByteArrayInputStream(certNoDistributionPoints.getBytes()));
+                                            .generateCertificate(new ByteArrayInputStream(certNoDistributionPoints.getBytes(Charset.forName("UTF-8"))));
 
             // Testing getCRLDistributionPoints() function
             List<String> listcrlDistributionPointsUriLeafCert = connector.getCRLDistributionPoints(certificate);
@@ -1245,7 +1252,10 @@ public class TrustAuthorityConnectorTest {
 
             // Retrieve the X.509 certificates
             List<X509Certificate> certificates = jwkKey.getParsedX509CertChain();
-
+            assertNotNull(certificates);
+            assertEquals(3, certificates.size());
+            assertNotNull(connector);
+            
             // Verify the certificate chain
             assertFalse(connector.verifyCertificateChain(certificates));
         } catch (Exception e) {
