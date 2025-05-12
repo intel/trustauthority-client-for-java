@@ -8,6 +8,8 @@ package com.intel.trustauthority.connector;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
@@ -150,7 +152,7 @@ public class TrustAuthorityConnectorTest {
 
             // kid to be extracted for testing the JWKS related functionalities
             kid = "1a1a2fe5fcf89009e4b96c45e0dceb005ea635d8ba2f6ed9caeef44ae235970decc586154fd9f740fb3b72ca176abb59";
-        } catch (Exception e) {
+        } catch (IOException | KeyManagementException | NoSuchAlgorithmException e) {
             // Fail the test explicitly in the catch block
             Assert.fail("Exception: " + e.getMessage());
         }
@@ -241,12 +243,12 @@ public class TrustAuthorityConnectorTest {
 
     @Test
     public void testConstants() {
-        assertEquals(Constants.HEADER_X_API_KEY, "x-api-key");
-        assertEquals(Constants.HEADER_ACCEPT, "Accept");
-        assertEquals(Constants.HEADER_CONTENT_TYPE, "Content-Type");
-        assertEquals(Constants.HEADER_REQUEST_ID, "request-id");
-        assertEquals(Constants.HEADER_TRACE_ID, "trace-id");
-        assertEquals(Constants.MIME_APPLICATION_JSON, "application/json");
+        assertEquals("x-api-key", Constants.HEADER_X_API_KEY);
+        assertEquals( "Accept", Constants.HEADER_ACCEPT);
+        assertEquals("Content-Type", Constants.HEADER_CONTENT_TYPE);
+        assertEquals("request-id", Constants.HEADER_REQUEST_ID);
+        assertEquals("trace-id", Constants.HEADER_TRACE_ID);
+        assertEquals("application/json", Constants.MIME_APPLICATION_JSON);
     }
 
     @Test
@@ -267,17 +269,17 @@ public class TrustAuthorityConnectorTest {
             assertEquals(conn.getConfig(), config);
 
             // Testing getters for Config
-            assertEquals(config.getBaseUrl(), this.mockServerEndpoint);
-            assertEquals(config.getApiUrl(), this.mockServerEndpoint);
-            assertEquals(config.getApiKey(), "some_key");
+            assertEquals(this.mockServerEndpoint, config.getBaseUrl());
+            assertEquals(this.mockServerEndpoint, config.getApiUrl());
+            assertEquals("some_key", config.getApiKey());
 
             // Testing setters for Config
             config.setBaseUrl(this.mockServerEndpoint);
             config.setApiUrl(this.mockServerEndpoint);
             config.setApiKey("some_key");
-            assertEquals(config.getBaseUrl(), this.mockServerEndpoint);
-            assertEquals(config.getApiUrl(), this.mockServerEndpoint);
-            assertEquals(config.getApiKey(), "some_key");
+            assertEquals(this.mockServerEndpoint, config.getBaseUrl());
+            assertEquals(this.mockServerEndpoint, config.getApiUrl());
+            assertEquals("some_key", config.getApiKey());
 
             // Testing getters/setters for RetryConfig
             RetryConfig customRetryConfig = new RetryConfig(2, 10, 3);
@@ -317,13 +319,13 @@ public class TrustAuthorityConnectorTest {
             token_request.setEventLog(expected);
             token_request.setTokenSigningAlg(expectedTokenSigningAlg);
             token_request.setPolicyMustMatch(expectedPolicyMustMatch);
-            assertArrayEquals(token_request.getQuote(), actual);
-            assertEquals(token_request.getVerifierNonce(), mockNonce);
-            assertArrayEquals(token_request.getRuntimeData(), actual);
-            assertEquals(token_request.getPolicyIds(), mockPolicyIDs);
-            assertArrayEquals(token_request.getEventLog(), actual);
-            assertEquals(token_request.getTokenSigningAlg(), expectedTokenSigningAlg);
-            assertEquals(token_request.getPolicyMustMatch(), expectedPolicyMustMatch);
+            assertArrayEquals(actual, token_request.getQuote());
+            assertEquals(mockNonce, token_request.getVerifierNonce());
+            assertArrayEquals(actual, token_request.getRuntimeData());
+            assertEquals(mockPolicyIDs, token_request.getPolicyIds());
+            assertArrayEquals(actual, token_request.getEventLog());
+            assertEquals(expectedTokenSigningAlg, token_request.getTokenSigningAlg());
+            assertEquals(expectedPolicyMustMatch, token_request.getPolicyMustMatch());
         } catch (Exception e) {
             // Fail the test explicitly in the catch block
             Assert.fail("Exception: " + e.getMessage());
@@ -453,8 +455,8 @@ public class TrustAuthorityConnectorTest {
             Map<String, List<String>> mockHeaders = mock(Map.class);
             GetTokenResponse testTokenResponse = new GetTokenResponse(token, mockHeaders);
             assertNotNull(testTokenResponse);
-            assertEquals(testTokenResponse.getToken(), token);
-            assertEquals(testTokenResponse.getHeaders(), mockHeaders);
+            assertEquals(token, testTokenResponse.getToken());
+            assertEquals(mockHeaders, testTokenResponse.getHeaders());
         } catch (Exception e) {
             // Fail the test explicitly in the catch block
             Assert.fail("Exception: " + e.getMessage());
@@ -551,11 +553,11 @@ public class TrustAuthorityConnectorTest {
             attestArgs.setAdapter(mockAdapter);
             attestArgs.setTokenSigningAlg(expectedTokenSigningAlg);
             attestArgs.setPolicyMustMatch(expectedPolicyMustMatch);
-            assertEquals(attestArgs.getRequestId(), expectedRequestID);
-            assertEquals(attestArgs.getPolicyIds(), mockPolicyIDs);
-            assertEquals(attestArgs.getAdapter(), mockAdapter);
-            assertEquals(attestArgs.getTokenSigningAlg(), expectedTokenSigningAlg);
-            assertEquals(attestArgs.getPolicyMustMatch(), expectedPolicyMustMatch);
+            assertEquals(expectedRequestID, attestArgs.getRequestId());
+            assertEquals(mockPolicyIDs, attestArgs.getPolicyIds());
+            assertEquals(mockAdapter, attestArgs.getAdapter() );
+            assertEquals(expectedTokenSigningAlg, attestArgs.getTokenSigningAlg());
+            assertEquals(expectedPolicyMustMatch, attestArgs.getPolicyMustMatch());
         } catch (Exception e) {
             // Fail the test explicitly in the catch block
             Assert.fail("Exception: " + e.getMessage());
@@ -624,8 +626,8 @@ public class TrustAuthorityConnectorTest {
             assertEquals(attestArgs.getRequestId(), expectedRequestID);
             assertEquals(attestArgs.getPolicyIds(), mockPolicyIDs);
             assertEquals(attestArgs.getAdapter(), mockAdapter);
-            assertEquals(attestArgs.getTokenSigningAlg(), expectedTokenSigningAlg);
-            assertEquals(attestArgs.getPolicyMustMatch(), expectedPolicyMustMatch);
+            assertEquals(expectedTokenSigningAlg, attestArgs.getTokenSigningAlg());
+            assertEquals(expectedPolicyMustMatch, attestArgs.getPolicyMustMatch());
             assertNull(response);
         } catch (Exception e) {
             assertEquals("attest() failed: com.nimbusds.jose.JOSEException: Unsupported token signing algorithm: mock-token-signing-algo", e.getMessage());
@@ -1085,7 +1087,7 @@ public class TrustAuthorityConnectorTest {
             boolean verified = connector.verifyCRL(crl, leafCertificate, intermediateCertificate);
             assertFalse(verified);
         } catch (Exception e) {
-            // Ignore exceptions as they are expected in failure conditions
+            assertEquals("verifyCRL() failed: java.security.SignatureException: Signature does not match.", e.getMessage());
         }
     }
 
