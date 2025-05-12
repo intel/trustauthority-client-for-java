@@ -17,7 +17,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -545,14 +544,23 @@ public class TrustAuthorityConnector {
             byte[] crlDPExtensionValue = certificate.getExtensionValue(Constants.DEFAULT_OID_CRL_DISTRIBUTION_POINTS);
 
             if (crlDPExtensionValue != null) {
-                // Parse the extension value and extract the URIs
-                // Create an ASN1InputStream from the extension value
-                ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(crlDPExtensionValue));
-                // Extract the octet string
-                ASN1OctetString octetString = ASN1OctetString.getInstance(asn1InputStream.readObject());
-                // Convert the octet string to an ASN1Primitive
-                ASN1Primitive primitive = ASN1Primitive.fromByteArray(octetString.getOctets());
-                asn1InputStream.close();
+                ASN1Primitive primitive;
+                
+                try ( // Parse the extension value and extract the URIs
+                    // Create an ASN1InputStream from the extension value
+                    ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(crlDPExtensionValue))) {
+                    if(null == asn1InputStream){
+                        throw new Exception("Unable to read ASN1InputStream, ASN1InputStream is null");
+                    }
+                        
+                    // Extract the octet string
+                    ASN1OctetString octetString = ASN1OctetString.getInstance(asn1InputStream.readObject());                    
+                    if(null == octetString){
+                        throw new Exception("Unable to read octetString, octetString is null");
+                    }
+                    // Convert the octet string to an ASN1Primitive
+                    primitive = ASN1Primitive.fromByteArray(octetString.getOctets());
+                }
 
                 if (primitive instanceof ASN1Sequence) {
                     // If the primitive is a sequence, proceed with parsing

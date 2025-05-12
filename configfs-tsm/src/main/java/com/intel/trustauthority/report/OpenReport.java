@@ -6,6 +6,7 @@
 package com.intel.trustauthority.report;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.logging.log4j.LogManager;
@@ -54,7 +55,7 @@ public class OpenReport {
 	protected String attribute(String subtree) {
 		//For every attribute create a clone as not to set attribute to object
 		TsmPath iEntry = new TsmPath(this.entry);
-		iEntry.attribute = subtree;
+		iEntry.setAttribute(subtree);
 		return iEntry.toString();
 	}
 	
@@ -62,7 +63,7 @@ public class OpenReport {
 	public void destroy() throws IOException, ConfigfsException {
 		if (this.entry != null) {
 			//Setting attribute null to get path upto entry
-			this.entry.attribute = null;
+			this.entry.setAttribute(null);
 			String entryPath = this.entry.toString();
 			logger.debug("Destroying path {}", entryPath);
 			this.client.RemoveAll(entryPath);
@@ -106,7 +107,7 @@ public class OpenReport {
 		//Write tsmpath/inblob 
 		this.writeOption(Constants.IN_BLOB, this.inBlob);
 		if (this.privilege != null) {
-			this.writeOption("privlevel", String.format("%d", this.privilege.level).getBytes());
+			this.writeOption("privlevel", String.format("%d", this.privilege.level).getBytes(Charset.forName("UTF-8")));
 		}
 
 		Response response = new Response();

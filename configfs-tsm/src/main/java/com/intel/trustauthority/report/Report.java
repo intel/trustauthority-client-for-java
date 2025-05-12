@@ -35,7 +35,7 @@ public class Report {
 	
 	public static OpenReport unsafeWrap(Client client, String entryPath) throws IOException, ConfigfsException{
 		TsmPath p = TsmPath.ParseTsmPath(entryPath);
-		OpenReport r = new OpenReport(client, new TsmPath(SUB_SYSTEM, p.entry));
+		OpenReport r = new OpenReport(client, new TsmPath(SUB_SYSTEM, p.getEntry()));
 		r.expectedGeneration = readUint64File(client, r.attribute(Constants.GENERATION));
 		logger.debug("Received expected geneartion {}", r.expectedGeneration);
 		return r;

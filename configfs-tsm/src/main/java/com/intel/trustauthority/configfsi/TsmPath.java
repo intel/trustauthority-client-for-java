@@ -12,7 +12,7 @@ import com.intel.trustauthority.exception.PathException;
 public class TsmPath {
 	
 	
-	private static final String SEPERATOR = "/";
+	public static final String SEPERATOR = "/";
 	
 	private String subsystem;
 	private String entry;
@@ -96,8 +96,6 @@ public class TsmPath {
 		this.attribute = attribute;
 	}
 
-	
-	
 	public static TsmPath ParseTsmPath(String path) throws PathException {
 		if(!path.startsWith(Constants.TSM_PREFIX)) {
 			throw new PathException(String.format("%s does not begin with %s", path, Constants.TSM_PREFIX));
