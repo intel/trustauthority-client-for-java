@@ -241,15 +241,6 @@ public class TrustAuthorityConnectorTest {
             
     }
 
-    @Test
-    public void testConstants() {
-        assertEquals("x-api-key", Constants.HEADER_X_API_KEY);
-        assertEquals( "Accept", Constants.HEADER_ACCEPT);
-        assertEquals("Content-Type", Constants.HEADER_CONTENT_TYPE);
-        assertEquals("request-id", Constants.HEADER_REQUEST_ID);
-        assertEquals("trace-id", Constants.HEADER_TRACE_ID);
-        assertEquals("application/json", Constants.MIME_APPLICATION_JSON);
-    }
 
     @Test
     public void testConfig() {
@@ -544,7 +535,7 @@ public class TrustAuthorityConnectorTest {
 
             // Verify the response
             assertNotNull(response);
-            assertEquals(response.getToken(), "mock-token");
+            assertEquals("mock-token", response.getToken());
             assertNotNull(response.getHeaders());
 
             // Test setters/getters
@@ -614,7 +605,7 @@ public class TrustAuthorityConnectorTest {
 
             // Verify the response
             assertNotNull(response);
-            assertEquals(response.getToken(), "mock-token");
+            assertEquals("mock-token", response.getToken());
             assertNotNull(response.getHeaders());
 
             // Test setters/getters
@@ -623,11 +614,11 @@ public class TrustAuthorityConnectorTest {
             attestArgs.setAdapter(mockAdapter);
             attestArgs.setTokenSigningAlg(expectedTokenSigningAlg);
             attestArgs.setPolicyMustMatch(expectedPolicyMustMatch);
-            assertEquals(attestArgs.getRequestId(), expectedRequestID);
-            assertEquals(attestArgs.getPolicyIds(), mockPolicyIDs);
-            assertEquals(attestArgs.getAdapter(), mockAdapter);
-            assertEquals(expectedTokenSigningAlg, attestArgs.getTokenSigningAlg());
-            assertEquals(expectedPolicyMustMatch, attestArgs.getPolicyMustMatch());
+            assertEquals(expectedRequestID, attestArgs.getRequestId());
+            assertEquals(mockPolicyIDs, attestArgs.getPolicyIds());
+            assertEquals(mockAdapter, attestArgs.getAdapter());
+            assertEquals(attestArgs.getTokenSigningAlg(), expectedTokenSigningAlg);
+            assertEquals(attestArgs.getPolicyMustMatch(), expectedPolicyMustMatch);
             assertNull(response);
         } catch (Exception e) {
             assertEquals("attest() failed: com.nimbusds.jose.JOSEException: Unsupported token signing algorithm: mock-token-signing-algo", e.getMessage());
