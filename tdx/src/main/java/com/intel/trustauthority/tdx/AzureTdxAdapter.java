@@ -22,12 +22,12 @@ import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.util.Arrays;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.intel.trustauthority.connector.Config;
 import com.intel.trustauthority.connector.Constants;
 import com.intel.trustauthority.connector.Evidence;
 import com.intel.trustauthority.connector.Evidence.EvidenceType;
 import com.intel.trustauthority.connector.EvidenceAdapter;
 import com.intel.trustauthority.connector.RetryConfig;
+import com.intel.trustauthority.connector.RetryConfiguration;
 import com.intel.trustauthority.connector.TrustAuthorityConnector;
 
 public class AzureTdxAdapter implements EvidenceAdapter {
@@ -164,7 +164,7 @@ public class AzureTdxAdapter implements EvidenceAdapter {
 
             // Create a new TrustAuthorityConnector object
             // Config in this instance has been set to null except for retry config since there is no need for others in this context
-            Config config = new Config(null, null, null, new RetryConfig(0, 0, 1));
+            RetryConfiguration config = new RetryConfiguration(new RetryConfig(0, 0, 1));
             TrustAuthorityConnector trustAuthorityConnector = new TrustAuthorityConnector(config);
 
             // Create a map of request properties to set the headers for the request
