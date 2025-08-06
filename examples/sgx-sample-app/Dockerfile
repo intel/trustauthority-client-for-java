@@ -104,12 +104,11 @@ ARG MAVEN_PROXY_HOST
 ARG MAVEN_PROXY_PORT
 
 # Create /home/intel/.m2/settings.xml file with proxy settings added if MAVEN_PROXY_HOST/MAVEN_PROXY_PORT are set
-
 RUN mkdir -p /home/intel/.m2
 RUN if [ -n "${MAVEN_PROXY_HOST}" -a -n "${MAVEN_PROXY_PORT}" ]; then \
         echo "<settings><proxies><proxy><id>example-proxy</id><active>true</active><protocol>http</protocol><host>${MAVEN_PROXY_HOST}</host><port>${MAVEN_PROXY_PORT}</port></proxy></proxies></settings>" > /home/intel/.m2/settings.xml; \
     else \
-        echo "Proxy not set, creating empty settings file"; && \
+        echo "Proxy not set, creating empty settings file"; \
         echo "<settings></settings>" > /home/intel/.m2/settings.xml; \
     fi
 
