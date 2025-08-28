@@ -22,6 +22,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import static org.junit.Assert.*;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -32,20 +33,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okio.Buffer;
 
 import com.intel.trustauthority.connector.Evidence.EvidenceType;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.JWTClaimsSet;
+
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okio.Buffer;
 
 
 /**
@@ -795,21 +798,22 @@ public class TrustAuthorityConnectorTest {
 
     @Test
     public void testVerifyTokenInvalidKid() {
-        try {
-            // Check if config is not null
-            assertNotNull(cfg);
+        // Check if config is not null
+        assertNotNull(cfg);
 
-            // Check if connector is not null
-            assertNotNull(connector);
+        // Check if connector is not null
+        assertNotNull(connector);
 
-            // Stubbing the response
-            server.enqueue(new MockResponse().setResponseCode(200).setBody(validJwks));
-            // Calling the verifyToken() API with invalid Kid token
-            JWTClaimsSet invalidKidClaims = connector.verifyToken(tokenInvalidKid);
-            assertNull(invalidKidClaims);
-        } catch (Exception e) {
-            assertEquals("verifyToken() failed: java.text.ParseException: Invalid JWS header: Unexpected type of JSON object member with key kid", e.getMessage());
-        }
+        // Stubbing the response
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(validJwks));
+        // Calling the verifyToken() API with invalid Kid token
+        Exception exp = assertThrows(
+        Exception.class,
+            () -> {
+                JWTClaimsSet invalidKidClaims = connector.verifyToken(tokenInvalidKid);
+                assertNull(invalidKidClaims);
+            });
+        assertEquals("verifyToken() failed: java.text.ParseException: Invalid JWS header: Unexpected type of JSON object member kid", exp.getMessage());            
     }
 
     @Test
@@ -833,7 +837,6 @@ public class TrustAuthorityConnectorTest {
 
     @Test
     public void testVerifyTokenMalformedJwks() {
-        try {
             // Check if config is not null
             assertNotNull(cfg);
 
@@ -843,11 +846,14 @@ public class TrustAuthorityConnectorTest {
             // Stubbing the response
             server.enqueue(new MockResponse().setResponseCode(200).setBody("invalid_jwks"));
             // Calling the verifyToken() API with valid token
-            JWTClaimsSet claims = connector.verifyToken(validToken);
-            assertNull(claims);
-        } catch (Exception e) {
-            assertEquals("verifyToken() failed: java.text.ParseException: Invalid JSON: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $", e.getMessage());
-        }
+            Exception exp = assertThrows(
+            Exception.class,
+                () -> {
+                    JWTClaimsSet claims = connector.verifyToken(validToken);
+                    assertNull(claims);
+                }
+            );
+            assertEquals("verifyToken() failed: java.text.ParseException: Invalid JSON object", exp.getMessage());        
     }
 
     @Test
@@ -1197,37 +1203,41 @@ public class TrustAuthorityConnectorTest {
 
     @Test
     public void testVerifyCertificateChainWrongLeafCA() {
-        try {
-            // Check if config is not null
-            assertNotNull(cfg);
+        Exception exp = assertThrows(
+            Exception.class,
+                () -> {
 
-            // Check if connector is not null
-            assertNotNull(connector);
+                // Check if config is not null
+                assertNotNull(cfg);
 
-            // Parse the JWKS
-            JWKSet jwkSet = JWKSet.parse(leafVerificationFailureJWKS);
+                // Check if connector is not null
+                assertNotNull(connector);
 
-            JWK jwkKey = jwkSet.getKeyByKeyId(kid);
-            if (jwkKey == null) {
-                throw new Exception("Could not find Key matching the key id");
-            }
+                // Parse the JWKS
+                JWKSet jwkSet = JWKSet.parse(leafVerificationFailureJWKS);
 
-            // Retrieve the X.509 certificates
-            List<X509Certificate> certificates = jwkKey.getParsedX509CertChain();
+                JWK jwkKey = jwkSet.getKeyByKeyId(kid);
+                if (jwkKey == null) {
+                    throw new Exception("Could not find Key matching the key id");
+                }
 
-            assertNotNull(certificates);
-            assertEquals(3, certificates.size());
-            assertNotNull(connector);
-            // Verify the certificate chain
-            assertFalse(connector.verifyCertificateChain(certificates));
-        } catch (Exception e) {
-            assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 0", e.getMessage());
-        }
-    }
+                // Retrieve the X.509 certificates
+                List<X509Certificate> certificates = jwkKey.getParsedX509CertChain();
+
+                assertNotNull(certificates);
+                assertEquals(3, certificates.size());
+                assertNotNull(connector);
+                // Verify the certificate chain
+                assertFalse(connector.verifyCertificateChain(certificates));            
+            });
+            assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 0: signed fields invalid", exp.getMessage());
+    }    
 
     @Test
     public void testVerifyCertificateChainWrongInterCA() {
-        try {
+        Exception exp = assertThrows(
+            Exception.class,
+            () -> {
             // Check if config is not null
             assertNotNull(cfg);
 
@@ -1249,16 +1259,18 @@ public class TrustAuthorityConnectorTest {
             assertEquals(3, certificates.size());
             assertNotNull(connector);
             
-            // Verify the certificate chain
-            assertFalse(connector.verifyCertificateChain(certificates));
-        } catch (Exception e) {
-            assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 1", e.getMessage());
-        }
+            
+                // Verify the certificate chain
+                assertFalse(connector.verifyCertificateChain(certificates));
+            });     
+        assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 1: signed fields invalid", exp.getMessage());        
     }
 
     @Test
     public void testVerifyCertificateChainWrongRootCA() {
-        try {
+        Exception exp = assertThrows(
+            Exception.class,
+            () -> {
             // Check if config is not null
             assertNotNull(cfg);
 
@@ -1280,10 +1292,9 @@ public class TrustAuthorityConnectorTest {
             assertNotNull(certificates);
             // Verify the certificate chain
             assertFalse(connector.verifyCertificateChain(certificates));
-        } catch (Exception e) {
-            assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 2", e.getMessage());
+            });
+            assertEquals("Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 2: signed fields invalid", exp.getMessage());
         }
-    } 
 
     /**
      * Helper function to convert hex string to byte[]
