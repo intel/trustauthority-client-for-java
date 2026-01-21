@@ -55,7 +55,7 @@ RUN mvn -e install -DskipTests
 WORKDIR /app/examples/tdx-sample-app
 
 # Compile TDX Sample App and build executable jar file
-RUN mvn compile assembly:single 
+RUN mvn package
 
 # Run TDX Sample App
-CMD ["java","-jar","target/tdxsampleapp-1.1.0-jar-with-dependencies.jar"]
+CMD ["java","-jar","target/tdxsampleapp-1.1.0.jar"]
