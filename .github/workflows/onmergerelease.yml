@@ -1,0 +1,88 @@
+name: OnMergeRelease
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'release/*'
+    tags:
+      - '**'
+
+permissions: read-all
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.step1.outputs.runner }}
+    steps:
+      - name: Check repository
+        id: step1
+        run: |
+          if [ ${{ github.repository }} == 'intel/trustauthority-client-for-java' ]; then
+            echo "runner=ubuntu-latest" >> $GITHUB_OUTPUT
+          else
+            echo "runner=self-hosted" >> $GITHUB_OUTPUT
+          fi
+
+  build-test:
+    needs: [setup]
+    runs-on: ${{ needs.setup.outputs.runner }}
+    env:
+      http_proxy: ${{ secrets.HTTP_PROXY }}
+      https_proxy: ${{ secrets.HTTPS_PROXY }}
+      no_proxy: ${{ secrets.NO_PROXY }}
+    steps:
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Maven manually
+        run: |
+          curl -LO https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+          tar -xzf apache-maven-3.6.3-bin.tar.gz
+
+      - name: Update Maven proxy settings
+        run: |
+          # Fetch MAVEN_PROXY_HOST and MAVEN_PROXY_PORT from secrets.HTTP_PROXY
+          export HTTP_PROXY_VALUE=$(echo "${{ secrets.HTTP_PROXY }}" | sed 's|^http://||;s|^https://||')
+          export MAVEN_PROXY_HOST=$(echo $HTTP_PROXY_VALUE | cut -d':' -f1)
+          export MAVEN_PROXY_PORT=$(echo $HTTP_PROXY_VALUE | cut -d':' -f2 | sed 's/\///')
+
+          # Update Maven with the proxy settings
+          if [ -n "${MAVEN_PROXY_HOST}" -a -n "${MAVEN_PROXY_PORT}" ]; then \
+            mkdir -p ~/.m2 && \
+            echo "<settings><proxies><proxy><id>example-proxy</id><active>true</active><protocol>http</protocol><host>${MAVEN_PROXY_HOST}</host><port>${MAVEN_PROXY_PORT}</port></proxy></proxies></settings>" > ~/.m2/settings.xml; \
+          fi
+
+      - name: Unit Test Coverage
+        run: |
+          # Add maven binary location to PATH
+          export PATH="$PWD/apache-maven-3.6.3/bin:$PATH"
+          # Compile, build and install the package
+          # This also runs the unit tests internally
+          mvn -X -e clean compile install package
+          if [ $? -ne 0 ]; then
+            echo "Build failed..."
+            exit 1
+          fi
+
+          # Fetch coverage for unit tests
+          COVERAGE=$(cd connector && \
+                     awk -F, \
+                     '{ instructions += $4 + $5; covered += $5 } END \
+                     { print covered, "/", instructions, " instructions covered"; \
+                     print 100*covered/instructions, "% covered" }' \
+                     target/site/jacoco/jacoco.csv)
+          result=$(echo "$COVERAGE" | grep -oE "[0-9]+\.[0-9]+")
+          echo "Unit test coverage for Client is - $result%"
+          if (( $(echo "$result < 80" | bc -l) )); then
+              echo "Unit test coverage must be above 80%"
+              exit 1
+          fi
