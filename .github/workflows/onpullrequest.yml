@@ -1,13 +1,7 @@
-name: CI
+name: OnPullRequest
 
 on:
   pull_request:
-  push:
-    branches:
-      - 'main'
-      - 'release/*'
-    tags:
-      - '**'
 
 permissions: read-all
 
@@ -58,6 +52,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Install Maven manually
+        run: |
+          curl -LO https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+          tar -xzf apache-maven-3.6.3-bin.tar.gz
 
       - name: Update Maven proxy settings
         run: |
